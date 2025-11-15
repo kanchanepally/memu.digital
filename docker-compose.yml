@@ -1,0 +1,45 @@
+﻿version: '3.8'
+
+networks:
+  hearth:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  synapse_data:
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: hearth_db
+    restart: unless-stopped
+    networks:
+      - hearth
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    environment:
+      POSTGRES_USER: hearth
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: hearth_family
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "hearth"]
+      interval: 5s
+
+  synapse:
+    image: matrixdotorg/synapse:latest
+    container_name: hearth_synapse
+    restart: unless-stopped
+    networks:
+      - hearth
+    volumes:
+      - synapse_data:/data
+    environment:
+      SYNAPSE_SERVER_NAME: family.hearth.local
+      SYNAPSE_REPORT_STATS: "no"
+      SYNAPSE_ENABLE_REGISTRATION: "true"
+    ports:
+      - "8008:8008"
+    depends_on:
+      postgres:
+        condition: service_healthy
