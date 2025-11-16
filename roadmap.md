@@ -1,14 +1,172 @@
-# Hearth: The Only Roadmap You Need
+# Hearth: The Focused 90-Day Roadmap
+------
+Last Updated: 2025-11-16 (PM)
+Status: 🚀 Software Prototype Validated! Ready for Transplant.
+Goal: Get a working, stable product for your family to validate the core idea.
+------
 
-**Last Updated**: 2025-11-16 (End of Day 1)  
-**Status**: ✅ Week 1 Backend Complete!  
-**Goal**: Working product for your family by December 1st
+YOUR CURRENT SITUATION (AS OF NOV 16, 2025)
 
----
+What you have NOW (This is a HUGE accomplishment) ✅:
 
-## YOUR CURRENT SITUATION (AS OF NOV 16, 2025 - 1:00 PM)
+A fully working Docker Compose stack (Postgres, Synapse, Element) running on your laptop.
 
-**What you have NOW** ✅:
+This proves our core software configuration is 100% viable.
+
+You can access your server at http://localhost:8080 (which means "this computer").
+
+You have created test accounts and successfully sent messages.
+
+The Blocker (What we must fix NEXT):
+
+Your server is currently trapped on your laptop. Your wife cannot access it, and the server turns off when you close your laptop.
+
+We cannot start our 7-day family validation test until the server is "always-on" and accessible to everyone on your home Wi-Fi.
+
+Our Immediate Mission:
+We must "transplant" this working software from your laptop to the Raspberry Pi. This will turn it into a true, shared, always-on Hearth Hub.
+
+THE ACTUAL NEXT STEPS (Week by Week)
+
+📍 WEEK 1 (Starting Now): THE TRANSPLANT
+
+Goal: Move the working software stack from your laptop to the Raspberry Pi.
+
+Your Tasks for this week:
+
+[ ] Assemble the Pi: Put your Raspberry Pi 5, SD card, and case together.
+
+[ ] First Boot (One-Time Setup): Connect the Pi to a TV/monitor and keyboard. Boot it up.
+
+[ ] Run the On-Screen Wizard:
+
+Set your password.
+
+Connect to your Wi-Fi.
+
+Run any software updates.
+
+[ ] Enable SSH: On the Pi's desktop, go to Menu > Preferences > Raspberry Pi Configuration > Interfaces and Enable SSH.
+
+[ ] Find the Pi's IP Address: Open a Terminal on the Pi and type hostname -I. (It will be something like 192.168.1.123). Write this down.
+
+[ ] Go Headless: Shut down the Pi, disconnect the TV/keyboard. Plug it in somewhere convenient. It's now a headless server.
+
+[ ] Install Docker on the Pi:
+
+From your laptop's terminal, SSH into the Pi: ssh pi@YOUR_PI_IP_ADDRESS
+
+Run the Docker install script: curl -sSL https://get.docker.com | sh
+
+Add your user to the Docker group: sudo usermod -aG docker pi
+
+Log out and log back in.
+
+[ ] Transfer Your Code:
+
+From your laptop's terminal, copy your working hearth-os folder to the Pi:
+scp -r /path/to/your/hearth-os-folder pi@YOUR_PI_IP_ADDRESS:~/
+
+[ ] LAUNCH!:
+
+SSH back into the Pi: ssh pi@YOUR_PI_IP_ADDRESS
+
+Navigate to your folder: cd hearth-os
+
+Launch the server: docker compose up -d
+
+Success Criteria for Week 1:
+
+[ ] docker compose ps on the Pi shows all services (postgres, synapse, element) are "Up".
+
+[ ] From your laptop, you can access the server at http://YOUR_PI_IP_ADDRESS:8080.
+
+[ ] CRITICAL: From your wife's laptop or phone, she can ALSO access http://YOUR_PI_IP_ADDRESS:8080.
+
+[ ] You and your wife can both log in to your accounts (hari and rach) and send messages to each other.
+
+[ ] You can close your laptop, and the server stays online.
+
+WEEK 2 (Nov 24-30): THE 7-DAY VALIDATION SPRINT
+
+Goal: Use the Hub daily to validate if the core experience is worth building on.
+
+Prerequisites:
+
+Week 1 was a success. The Hub is stable and accessible to your whole family.
+
+Your ONLY tasks:
+
+Commit to using it: You and your wife agree to use the Element web client (at http://YOUR_PI_IP_ADDRESS:8080) for all family-related chat.
+
+Send 5+ messages per day each.
+
+Share 1+ photos per day each.
+
+Track friction: Keep a simple log. What was annoying? What was slow? What did you wish it could do?
+
+Test stability: Does it stay up 24/7? Is there any data loss?
+
+DO NOT:
+
+❌ Build anything new yet.
+
+❌ Start the mobile app.
+
+❌ Add AI features.
+
+❌ Write new APIs.
+
+Success Criteria for Week 2:
+
+[ ] The Hub stayed online for 7 days straight.
+
+[ ] You and your wife successfully used it every day.
+
+[ ] You have a clear, written list of the Top 3 annoyances.
+
+[ ] You can honestly say: "Okay, the foundation is stable. Now we can make it better."
+
+WEEK 3 (Dec 1-7): DECISION POINT & NEXT STEPS
+
+After 7 days of real family use, we will make our first strategic decision.
+
+If "Yes": The system was stable and usable (even if a bit clunky).
+
+Action: Proceed to Week 4: Build Backend APIs. We will start building the dedicated Photos and Tasks services as planned, now that we have a stable platform to build upon.
+
+If "No": The system was unstable, messages were lost, or it was too slow to use.
+
+Action: We fix it. We spend this week debugging the core server. We do not write any new code until the foundation is solid.
+
+THE REST OF THE 90-DAY PLAN (Timeline Adjusted)
+
+Weeks 4-5 (Dec 8-21): Build Photos & Tasks Backend APIs (as defined in the old roadmap).
+
+Weeks 6-9 (Dec 22 - Jan 18): Build Mobile App (Messaging ONLY).
+
+Weeks 10-11 (Jan 19-Feb 1): Integrate Photos & Tasks tabs into Mobile App.
+
+Week 12 (Feb 2-8): Polish & Final Family Testing (Wife Acceptance Test).
+
+Week 13 (Feb 9): FINAL DECISION POINT. Is this real?
+
+WHAT TO IGNORE FOR NOW
+
+This list is more important than ever. Do not let yourself get distracted.
+
+❌ Cloudflare Tunnels (Remote access is a future feature)
+❌ AI / Ollama (This comes after the core product is proven useful)
+❌ Production hardware (The Pi 5 + SD card is our R&D lab)
+❌ Pricing, legal, or patents
+❌ The "School" version
+
+The cure for complexity is focus. Your focus for this week is Step 1: The Transplant. Nothing else matters.
+
+
+## My CURRENT SITUATION (AS OF NOV 16, 2025 - 1:00 PM)
+
+**What I have NOW** ✅:
 - Docker Compose stack (fully working!)
 - PostgreSQL 15 (with correct C locale)
 - Matrix/Synapse (healthy and running)
@@ -18,7 +176,7 @@
 - Message persistence working
 - All containers healthy
 
-**What you DON'T have**:
+**What I DON'T have**:
 - Working mobile app
 - Photos service (API)
 - Tasks service (API)
