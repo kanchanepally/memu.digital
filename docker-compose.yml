@@ -1,4 +1,8 @@
-﻿version: '3.8'
+﻿# Hearth Family - Docker Compose
+# Three features: Messages, Photos, Tasks
+# No school features. No complexity.
+
+version: '3.8'
 
 networks:
   hearth:
@@ -7,8 +11,10 @@ networks:
 volumes:
   postgres_data:
   synapse_data:
+  photos:
 
 services:
+  # Database
   postgres:
     image: postgres:15-alpine
     container_name: hearth_db
@@ -17,7 +23,7 @@ services:
       - hearth
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./database/schema.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./init-family.sql:/docker-entrypoint-initdb.d/init.sql:ro
     environment:
       POSTGRES_USER: hearth
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -25,10 +31,13 @@ services:
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "hearth"]
       interval: 5s
+      timeout: 3s
+      retries: 5
 
+  # Chat/Messages - Matrix Synapse
   synapse:
     image: matrixdotorg/synapse:latest
-    container_name: hearth_synapse
+    container_name: hearth_chat
     restart: unless-stopped
     networks:
       - hearth
@@ -43,3 +52,50 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+
+  # Web Interface - Chat
+  element:
+    image: vectorim/element-web:latest
+    container_name: hearth_messages
+    restart: unless-stopped
+    networks:
+      - hearth
+    ports:
+      - "80:80"
+    volumes:
+      - ./element-config.json:/app/config.json:ro
+
+  # Photos & Tasks - Simple Node.js App
+  family_app:
+    build:
+      context: ./family-app
+      dockerfile: Dockerfile
+    container_name: hearth_family_app
+    restart: unless-stopped
+    networks:
+      - hearth
+    ports:
+      - "3000:3000"
+    volumes:
+      - photos:/app/photos
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: hearth_family
+      DB_USER: hearth
+      DB_PASSWORD: ${DB_PASSWORD}
+      MATRIX_SERVER: http://synapse:8008
+    depends_on:
+      - postgres
+
+  # AI (Optional - Add Week 2)
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: hearth_ai
+  #   restart: unless-stopped
+  #   networks:
+  #     - hearth
+  #   volumes:
+  #     - ollama_models:/root/.ollama
+  #   ports:
+  #     - "11434:11434"
