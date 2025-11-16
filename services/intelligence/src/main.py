@@ -10,7 +10,6 @@ import json
 import logging
 from typing import List, Dict, Optional
 from datetime import datetime, timedelta
-
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import httpx
@@ -36,7 +35,7 @@ class HearthIntelligence:
         }
         self.ollama_url = os.getenv('OLLAMA_HOST', 'http://ollama:11434')
         self.model = os.getenv('OLLAMA_MODEL', 'phi3:mini')
-        self.ai_enabled = os.getenv('AI_ENABLED', 'true').lower() == 'true'
+        self.ai_enabled = os.getenv('AI_ENABLED', 'false').lower() == 'true'
         self.ai_timeout = int(os.getenv('AI_TIMEOUT', 30))
         
         logger.info(f"Intelligence Service initialized")
@@ -70,6 +69,13 @@ class HearthIntelligence:
             return await self.handle_show_list(message)
         elif content.startswith('/done'):
             return await self.handle_mark_done(message)
+        elif content.startswith('/summarize'):
+            summary = await self.generate_daily_summary(message['room_id'])
+            return {
+                'action': 'send_message',
+                'room_id': message['room_id'],
+                'content': summary
+            }
         
         # For natural language detection, use AI if enabled
         if self.ai_enabled and await self.contains_implicit_command(content):

@@ -1,4 +1,4 @@
-﻿# Hearth OS - Your Family's Data, Your Family's Home
+# Hearth OS - Your Family's Data, Your Family's Home
 
 > **Self-hosted family communication platform that works when AWS doesn't.**
 

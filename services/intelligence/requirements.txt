@@ -3,29 +3,3 @@ psycopg2-binary==2.9.9
 
 # HTTP client for Ollama
 httpx==0.25.2
-
-# Async support
-asyncio==3.4.3
-
-# Logging
-python-json-logger==2.0.7
-
-# ===================================
-# services/intelligence/.dockerignore
-# ===================================
-
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-*.so
-*.egg
-*.egg-info/
-dist/
-build/
-.pytest_cache/
-.coverage
-htmlcov/
-.env
-*.log

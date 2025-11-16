@@ -1,20 +1,12 @@
-﻿# Hearth Family - Docker Compose
-# Three features: Messages, Photos, Tasks
-# No school features. No complexity.
-
-version: '3.8'
-
 networks:
   hearth:
     driver: bridge
 
 volumes:
-  postgres_data:
   synapse_data:
-  photos:
+  postgres_data:
 
 services:
-  # Database
   postgres:
     image: postgres:15-alpine
     container_name: hearth_db
@@ -23,79 +15,42 @@ services:
       - hearth
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init-family.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./init-db.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     environment:
-      POSTGRES_USER: hearth
+      POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: hearth_family
+      POSTGRES_DB: ${DB_NAME}
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "hearth"]
-      interval: 5s
-      timeout: 3s
+      test: ["CMD-SHELL", "pg_isready -U hearth"]
+      interval: 10s
+      timeout: 5s
       retries: 5
 
-  # Chat/Messages - Matrix Synapse
   synapse:
     image: matrixdotorg/synapse:latest
-    container_name: hearth_chat
+    container_name: hearth_synapse
     restart: unless-stopped
     networks:
       - hearth
     volumes:
       - synapse_data:/data
     environment:
-      SYNAPSE_SERVER_NAME: family.hearth.local
+      SYNAPSE_SERVER_NAME: ${HEARTH_DOMAIN}
       SYNAPSE_REPORT_STATS: "no"
-      SYNAPSE_ENABLE_REGISTRATION: "true"
+      SYNAPSE_ENABLE_REGISTRATION: "${ENABLE_REGISTRATION}"
     ports:
       - "8008:8008"
     depends_on:
       postgres:
         condition: service_healthy
 
-  # Web Interface - Chat
   element:
     image: vectorim/element-web:latest
-    container_name: hearth_messages
+    container_name: hearth_element
     restart: unless-stopped
     networks:
       - hearth
     ports:
-      - "80:80"
+      - "8080:80"
     volumes:
       - ./element-config.json:/app/config.json:ro
-
-  # Photos & Tasks - Simple Node.js App
-  family_app:
-    build:
-      context: ./family-app
-      dockerfile: Dockerfile
-    container_name: hearth_family_app
-    restart: unless-stopped
-    networks:
-      - hearth
-    ports:
-      - "3000:3000"
-    volumes:
-      - photos:/app/photos
-    environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: hearth_family
-      DB_USER: hearth
-      DB_PASSWORD: ${DB_PASSWORD}
-      MATRIX_SERVER: http://synapse:8008
-    depends_on:
-      - postgres
-
-  # AI (Optional - Add Week 2)
-  # ollama:
-  #   image: ollama/ollama:latest
-  #   container_name: hearth_ai
-  #   restart: unless-stopped
-  #   networks:
-  #     - hearth
-  #   volumes:
-  #     - ollama_models:/root/.ollama
-  #   ports:
-  #     - "11434:11434"

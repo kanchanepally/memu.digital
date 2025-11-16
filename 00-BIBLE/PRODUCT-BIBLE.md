@@ -1,4 +1,4 @@
-﻿# Hearth Product Bible - AI Agent Instructions
+# Hearth Product Bible - AI Agent Instructions
 
 > **This document is the single source of truth for all Hearth development.**
 
@@ -363,6 +363,7 @@ User data paths:
 - Smart categorization: "Fix the fence" → Garden category
 - Due date extraction: "Buy milk tomorrow" → Due date set
 - Voice commands: "/remember WiFi password is X"
+- Daily summaries: Type "/summarize" in chat -> Get a summary of the day's conversation.
 
 ### Tab 4: Settings
 
@@ -1165,11 +1166,13 @@ This is a separate product decision tree.
 - Zero data loss incidents
 - Ready for public launch
 
+
 ## Week 13-16: AI Features
 
 **Deliverables**:
 - [ ] Ollama integrated on Pi
 - [ ] `/remember` command working
+- [x] `/summarize` command working
 - [ ] `/recall` command working
 - [ ] Natural language task creation
 - [ ] Smart categorization
@@ -1329,6 +1332,7 @@ GET    /api/tasks/categories    # List categories with counts
 ```
 POST   /api/memories/remember   # Store a memory
 POST   /api/memories/recall     # Search memories
+POST   /api/memories/summarize  # Get a summary of today's conversation
 GET    /api/memories            # List all memories
 DELETE /api/memories/:id        # Delete memory
 ```
@@ -1857,3 +1861,16 @@ If no → simplify.
 
 **Created**: 2025-11-15
 **Status**: Placeholder - needs full content from artifacts
+
+
+## Week 17+: Community & Scale
+
+**Deliverables**:
+- [ ] GitHub repo public
+- [ ] Documentation site live
+- [ ] Community support channels
+- [ ] First 100 external users
+- [ ] Pre-order page for hardware
+
+---
+
