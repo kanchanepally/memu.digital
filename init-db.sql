@@ -1,56 +1,70 @@
-CREATE TABLE IF NOT EXISTS households (
+﻿-- Hearth Family Database
+-- Simple schema for: Messages (Matrix), Photos, Tasks
+
+-- Family Members
+CREATE TABLE family_members (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(255) NOT NULL,
+    matrix_user_id VARCHAR(255) UNIQUE NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    avatar_url TEXT,
     created_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS users (
+-- Photos
+CREATE TABLE photos (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    household_id UUID REFERENCES households(id),
-    matrix_user_id VARCHAR(255) UNIQUE,
-    display_name VARCHAR(255),
-    created_at TIMESTAMP DEFAULT NOW()
+    filename VARCHAR(255) NOT NULL,
+    filepath TEXT NOT NULL,
+    caption TEXT,
+    uploaded_by UUID REFERENCES family_members(id),
+    uploaded_at TIMESTAMP DEFAULT NOW(),
+    tags TEXT[]
 );
 
-CREATE TABLE IF NOT EXISTS shared_tasks (
+-- Tasks (with AI categories)
+CREATE TABLE tasks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    household_id UUID,
+    title VARCHAR(500) NOT NULL,
     category VARCHAR(50) DEFAULT 'general',
-    task VARCHAR(500) NOT NULL,
-    created_by VARCHAR(255),
+    -- Categories: shopping, housework, errands, kids, garden, other
+    notes TEXT,
+    created_by UUID REFERENCES family_members(id),
     created_at TIMESTAMP DEFAULT NOW(),
+    due_date DATE,
     completed BOOLEAN DEFAULT false,
     completed_at TIMESTAMP,
-    completed_by VARCHAR(255)
+    completed_by UUID REFERENCES family_members(id)
 );
 
-CREATE INDEX idx_tasks ON shared_tasks(household_id, category, completed);
-
-CREATE TABLE IF NOT EXISTS household_memory (
+-- Memories (AI-powered recall)
+CREATE TABLE memories (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    room_id VARCHAR(255) NOT NULL,
-    fact TEXT NOT NULL,
-    created_by VARCHAR(255),
-    created_at TIMESTAMP DEFAULT NOW()
+    content TEXT NOT NULL,
+    category VARCHAR(50),
+    -- Categories: passwords, important-dates, health, home, financial, other
+    created_by UUID REFERENCES family_members(id),
+    created_at TIMESTAMP DEFAULT NOW(),
+    last_accessed TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS messages (
+-- Plans (Future events, trips, etc.)
+CREATE TABLE plans (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    room_id VARCHAR(255) NOT NULL,
-    sender VARCHAR(255) NOT NULL,
-    content TEXT,
-    timestamp TIMESTAMP NOT NULL,
-    processed_by_ai BOOLEAN DEFAULT false
+    title VARCHAR(200) NOT NULL,
+    description TEXT,
+    plan_date DATE,
+    created_by UUID REFERENCES family_members(id),
+    created_at TIMESTAMP DEFAULT NOW(),
+    completed BOOLEAN DEFAULT false
 );
 
-CREATE TABLE IF NOT EXISTS shared_lists (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    room_id VARCHAR(255) NOT NULL,
-    item VARCHAR(255) NOT NULL,
-    added_by VARCHAR(255),
-    added_at TIMESTAMP DEFAULT NOW(),
-    completed BOOLEAN DEFAULT false,
-    completed_at TIMESTAMP
-);
+-- Indexes for performance
+CREATE INDEX idx_photos_uploaded ON photos(uploaded_at DESC);
+CREATE INDEX idx_tasks_category ON tasks(category, completed);
+CREATE INDEX idx_tasks_due ON tasks(due_date) WHERE completed = false;
+CREATE INDEX idx_memories_category ON memories(category);
+CREATE INDEX idx_plans_date ON plans(plan_date) WHERE completed = false;
 
-INSERT INTO households (name) VALUES ('My Household');
+-- Sample data
+INSERT INTO family_members (matrix_user_id, name) 
+VALUES ('@demo:family.hearth.local', 'Demo User');

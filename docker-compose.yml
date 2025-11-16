@@ -1,9 +1,8 @@
-networks:
+﻿networks:
   hearth:
     driver: bridge
 
 volumes:
-  synapse_data:
   postgres_data:
 
 services:
@@ -20,6 +19,7 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C --lc-ctype=C"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U hearth"]
       interval: 10s
@@ -33,11 +33,7 @@ services:
     networks:
       - hearth
     volumes:
-      - synapse_data:/data
-    environment:
-      SYNAPSE_SERVER_NAME: ${HEARTH_DOMAIN}
-      SYNAPSE_REPORT_STATS: "no"
-      SYNAPSE_ENABLE_REGISTRATION: "${ENABLE_REGISTRATION}"
+      - ./synapse:/data
     ports:
       - "8008:8008"
     depends_on:
