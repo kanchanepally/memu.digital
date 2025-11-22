@@ -1,0 +1,12 @@
+[Unit]
+Description=Kin OS Setup Wizard
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/home/hareesh/kin-os/bootstrap
+ExecStart=/usr/bin/python3 app.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

@@ -1,19 +1,40 @@
-﻿networks:
-  hearth:
+﻿version: '3.8'
+
+networks:
+  kin_net:
     driver: bridge
 
 volumes:
-  postgres_data:
+  kin_postgres_data:
+  kin_synapse_data:
+
 
 services:
-  postgres:
-    image: postgres:15-alpine
-    container_name: hearth_db
+  # --- THE FRONT DOOR (NGINX) ---
+  # Routes traffic for [family].ourkin.app
+  nginx:
+    image: nginx:alpine
+    container_name: kin_proxy
     restart: unless-stopped
     networks:
-      - hearth
+      - kin_net
+    ports:
+      - "80:80"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      - synapse
+      - element
+
+  # --- DATABASE ---
+  postgres:
+    image: postgres:15-alpine
+    container_name: kin_db
+    restart: unless-stopped
+    networks:
+      - kin_net
+    volumes:
+      - kin_postgres_data:/var/lib/postgresql/data
       - ./init-db.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     environment:
       POSTGRES_USER: ${DB_USER}
@@ -21,32 +42,34 @@ services:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C --lc-ctype=C"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U hearth"]
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER}" ]
       interval: 10s
       timeout: 5s
       retries: 5
 
+  # --- CHAT SERVER ---
   synapse:
     image: matrixdotorg/synapse:latest
-    container_name: hearth_synapse
+    container_name: kin_synapse
     restart: unless-stopped
     networks:
-      - hearth
+      - kin_net
     volumes:
-      - ./synapse:/data
-    ports:
-      - "8008:8008"
+      - kin_synapse_data:/data
+    environment:
+      SYNAPSE_SERVER_NAME: "${KIN_DOMAIN}"
+      SYNAPSE_REPORT_STATS: "no"
+      SYNAPSE_ENABLE_REGISTRATION: "${ENABLE_REGISTRATION}"
     depends_on:
       postgres:
         condition: service_healthy
 
+  # --- WEB INTERFACE ---
   element:
     image: vectorim/element-web:latest
-    container_name: hearth_element
+    container_name: kin_element
     restart: unless-stopped
     networks:
-      - hearth
-    ports:
-      - "8080:80"
+      - kin_net
     volumes:
       - ./element-config.json:/app/config.json:ro
