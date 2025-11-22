@@ -1,72 +1,81 @@
-PART 2: TECHNICAL ARCHITECTURE
+Kin OS Architecture
+
 System Overview
-┌─────────────────────────────────────────────┐
-│         Hearth Mobile App (iOS/Android)     │
-│         - React Native                      │
-│         - Custom UI (NOT Element)           │
-│         - Matrix SDK underneath             │
-└─────────────┬───────────────────────────────┘
-              │
-              │ Matrix Protocol (E2EE)
-              │
-┌─────────────▼───────────────────────────────┐
-│         Raspberry Pi 5 (User's Home)        │
-│  ┌─────────────────────────────────────┐   │
-│  │  Synapse (Matrix Server)            │   │
-│  │  PostgreSQL (Data Storage)          │   │
-│  │  Hearth Services (Photos/Tasks/AI)  │   │
-│  └─────────────────────────────────────┘   │
-└─────────────────────────────────────────────┘
-Core Technology Stack
-Backend (Raspberry Pi)
 
-OS: Raspberry Pi OS Lite (64-bit, Bookworm)
-Container Engine: Docker Compose
-Matrix Server: Synapse (latest stable)
-Database: PostgreSQL 15
-Reverse Proxy: Caddy 2 (auto-HTTPS)
-AI: Ollama with Phi-3-mini (Week 2+)
-Language: Python 3.11 for services
+Kin OS is a microservices architecture wrapped in a single appliance experience. It is designed to be Tenant-Isolated (one family per device) and Network Agnostic (works behind any router).
 
-Mobile App (Custom - NOT Element)
+The Stack
 
-Framework: React Native (latest stable)
-Matrix SDK: matrix-js-sdk
-State Management: Zustand (simple, not Redux)
-UI Library: React Native Paper (Material Design)
-Navigation: React Navigation 6
-Image Handling: react-native-image-picker + react-native-fast-image
-Local Storage: @react-native-async-storage/async-storage
-Network: Axios for REST, Matrix SDK for real-time
+Hardware Layer:
 
-Design System
+Raspberry Pi 5 (4GB or 8GB RAM)
 
-Inspiration: WhatsApp (familiar), Signal (clean), Telegram (fluid)
-NOT Element: Avoid their UX mistakes entirely
-Colors: Warm, inviting (not corporate blue)
-Typography: SF Pro (iOS), Roboto (Android)
-Animations: Smooth, 60fps, delightful micro-interactions
+NVMe SSD (PCIe Gen 2) - Data Storage & OS
 
-Key Architectural Principles
-1. Zero Cloud Dependency
-❌ NO: AWS, Google Cloud, Azure, Cloudflare Workers
-✅ YES: User's Pi, user's network, user's control
-⚠️ MAYBE: Cloudflare Tunnel (for remote access only, not data storage)
-2. Offline-First Design
-The app MUST work when:
-- Pi is offline (queued messages)
-- Phone is offline (cached data)
-- Internet is down (local network still works)
-3. Appliance-Like Simplicity
-Setup flow (total time: 5 minutes):
-1. Plug in Pi
-2. Open Hearth app
-3. Scan QR code from Pi
-4. Done
-No "homeserver" configuration. No server URLs. No technical jargon.
-4. Privacy by Architecture
-User data paths:
-✅ Phone → Local WiFi → Pi (encrypted)
-✅ Pi → User's chosen backup (encrypted)
-❌ NEVER: Phone → Our servers → Pi
-❌ NEVER: Any telemetry without explicit opt-in
+SD Card - Bootloader only
+
+Routing Layer (The "Front Door"):
+
+Cloudflare Tunnel (cloudflared): Ingress from the internet. No open ports on router.
+
+Nginx Proxy: Internal traffic director. Terminates SSL, handles /.well-known discovery, routes to containers.
+
+Application Layer (Docker):
+
+Synapse: The Matrix Homeserver (Chat Backend).
+
+PostgreSQL: The source of truth (Database).
+
+Immich: The Photo Server (Coming Phase 2).
+
+Kin Bootstrap: (Python/Flask) Temporary service for initial setup.
+
+Client Layer (The Interface):
+
+Kin Mobile: React Native (Expo) app. Uses Matrix SDK + Custom APIs.
+
+Kin Web: (Legacy/Desktop) Skinned Element Web instance.
+
+Network Flow
+
+1. Setup Mode (Day 0)
+
+User: Connects to WiFi.
+
+Discovery: mDNS broadcasts kin.local.
+
+Traffic: Phone -> http://kin.local -> Nginx -> Bootstrap App (Port 5000).
+
+Action: User inputs "Smiths". System writes .env, generates Nginx config, and restarts.
+
+2. Production Mode (Day 1+)
+
+External Traffic:
+smiths.ourkin.app -> Cloudflare Edge -> Tunnel -> Localhost:80 -> Nginx.
+
+/ -> Kin Web (Optional Desktop Access).
+
+/_matrix -> Synapse (API for Mobile App).
+
+Mobile App Connectivity:
+The App attempts to resolve smiths.ourkin.app.
+
+Remote: Connects via Cloudflare Tunnel.
+
+Local (Future): Will connect via Split DNS for max speed.
+
+Data Sovereignty Strategy
+
+Storage
+
+Location: /var/lib/docker/volumes/kin_*
+
+Medium: NVMe SSD (ext4).
+
+Backup Protocol (3-2-1)
+
+Live: PostgreSQL WAL (Write Ahead Log).
+
+Nightly: pg_dump to local compressed archive.
+
+Offsite: Encrypted .tar.gz.enc pushed to User's Cloud Storage (Rclone) or Local USB.

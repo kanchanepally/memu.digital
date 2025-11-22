@@ -1,41 +1,51 @@
-# Hearth OS - Your Family's Data, Your Family's Home
+Kin OS 🏠
 
-> **Self-hosted family communication platform that works when AWS doesn't.**
+The operating system for your family.
+Private chat, photos, and AI, hosted physically in your home.
 
-## Quick Start
+What is Kin?
 
-```bash
+Kin OS turns a Raspberry Pi 5 into a Kin Hub—a private server for your family. It replaces WhatsApp, Google Photos, and iCloud with a system you actually own.
+
+Private: Data never leaves your home unencrypted.
+
+Simple: Setup via http://kin.local. No terminal required.
+
+Resilient: Works offline. Automatic encrypted backups.
+
+The Tech Stack
+
+Core: Matrix (Synapse)
+
+Database: PostgreSQL
+
+Routing: Nginx + Cloudflare Tunnels
+
+Client: Kin Mobile (React Native)
+
+Intelligence: Ollama (Llama 3)
+
+Installation (For Developers)
+
+Prerequisites: Raspberry Pi 5, NVMe SSD.
+
+Flash the OS:
+Install Raspberry Pi OS Lite (64-bit).
+
+Clone & Install:
+
+git clone [https://github.com/kanchanepally/kin-os.git](https://github.com/kanchanepally/kin-os.git)
+cd kin-os
 ./scripts/install.sh
-```
 
-## What Is This?
 
-Hearth replaces:
-- **WhatsApp** -> Private messaging (Matrix E2EE)
-- **Google Photos** -> Family gallery (unlimited, full quality)  
-- **Shared Notes** -> AI-powered tasks
+Setup:
+Visit http://kin.local (or the Pi's IP) to configure your family domain.
 
-**Key Difference**: Runs on YOUR Raspberry Pi. No cloud dependency.
+Roadmap
 
-## Features
+See Roadmap for the 90-day plan.
 
-- [x] Project structure
-- [x] Documentation
-- [ ] Docker stack
-- [ ] Mobile app
-- [ ] Photo management
-- [ ] Task system
+License
 
-## Documentation
-
-- [Product Bible](00-BIBLE/PRODUCT-BIBLE.md) - Complete vision
-- [Installation](docs/installation.md) - Setup guide
-- [Architecture](docs/architecture.md) - System design
-
-## License
-
-AGPL-3.0 - Open core
-
----
-
-**Setup date**: 2025-11-15
+AGPL-3.0. Your data is yours. The code is open.
