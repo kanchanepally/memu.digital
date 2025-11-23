@@ -1,6 +1,6 @@
 #!/bin/bash
-# Kin OS Installation Script
-# "Your kin, your network, your data"
+# Memu OS Installation Script
+# "Your family, your network, your data"
 
 set -e
 
@@ -9,14 +9,14 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 echo -e "${BLUE}╔═══════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║        Welcome to Kin OS              ║${NC}"
+echo -e "${BLUE}║        Welcome to Memu OS             ║${NC}"
 echo -e "${BLUE}╚═══════════════════════════════════════╝${NC}"
 echo ""
 
 # 1. Gather User Input
 read -p "Enter your Family Name (e.g. smiths): " FAMILY_SLUG
-DOMAIN="${FAMILY_SLUG}.ourkin.app"
-echo -e "Setting up Kin for: ${GREEN}${DOMAIN}${NC}"
+DOMAIN="${FAMILY_SLUG}.memu.digital"
+echo -e "Setting up Memu for: ${GREEN}${DOMAIN}${NC}"
 
 # 2. Generate .env
 echo "Generating secrets..."
@@ -24,9 +24,9 @@ DB_PASS=$(openssl rand -base64 24 | tr -d "=+/" | cut -c1-25)
 SYNAPSE_TOKEN=$(openssl rand -hex 32)
 
 cat > .env << ENVEOF
-KIN_DOMAIN=${DOMAIN}
-DB_NAME=kin_core
-DB_USER=kin_user
+MEMU_DOMAIN=${DOMAIN}
+DB_NAME=memu_core
+DB_USER=memu_user
 DB_PASSWORD=${DB_PASS}
 SYNAPSE_ADMIN_TOKEN=${SYNAPSE_TOKEN}
 ENABLE_REGISTRATION=true
@@ -44,14 +44,14 @@ server {
 
     # Route root traffic to Element (The App)
     location / {
-        proxy_pass http://kin_element:80;
+        proxy_pass http://memu_element:80;
         proxy_set_header Host \$host;
         proxy_set_header X-Forwarded-For \$remote_addr;
     }
 
     # Route Matrix API traffic to Synapse (The Server)
     location ~ ^/(_matrix|_synapse/client) {
-        proxy_pass http://kin_synapse:8008;
+        proxy_pass http://memu_synapse:8008;
         proxy_set_header X-Forwarded-For \$remote_addr;
         proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_set_header Host \$host;
@@ -81,11 +81,11 @@ cat > element-config.json << ELEMENTEOF
             "server_name": "${DOMAIN}"
         }
     },
-    "brand": "Our Kin",
+    "brand": "Memu",
     "default_theme": "light"
 }
 ELEMENTEOF
 
 echo ""
 echo -e "${GREEN}Configuration complete!${NC}"
-echo "To start Kin OS, run: docker compose up -d"
+echo "To start Memu OS, run: docker compose up -d"

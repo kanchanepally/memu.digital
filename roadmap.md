@@ -1,7 +1,7 @@
-Kin OS: 90-Day Execution Plan
+Memu OS: 90-Day Execution Plan
 
 Current Phase: Productization & Mobile MVP
-Status: Foundation Secure (Kin OS v0.1)
+Status: Foundation Secure (Memu OS v0.1)
 
 PHASE 1: The "Ironclad" Foundation (Weeks 1-4)
 
@@ -9,7 +9,7 @@ Goal: Stable hardware, zero data loss, one-click setup.
 
 [x] Week 1: Prototype: Prove the Stack (Docker, Synapse, Postgres).
 
-[x] Week 2: The Pivot: Rebrand to Kin, implement Nginx, launch ourkin.app.
+[x] Week 2: The Pivot: Rebrand to Memu, implement Nginx, launch memu.digital.
 
 [ ] Week 3: The Hardware Standard:
 
@@ -17,7 +17,7 @@ Migrate to NVMe SSD (Reliability).
 
 Finalize "Golden Image" for SD Cards.
 
-Validate http://kin.local bootstrap wizard on real hardware.
+Validate http://memu.local bootstrap wizard on real hardware.
 
 [ ] Week 4: The Safety Net:
 
@@ -25,7 +25,7 @@ Verify backup.sh (Encrypted nightly dumps).
 
 Test "Disaster Recovery" (Flash new drive -> Restore data).
 
-PHASE 2: The "Kin Mobile" Build (Weeks 5-8)
+PHASE 2: The "Memu Mobile" Build (Weeks 5-8)
 
 Goal: Build the Super-App. No more generic clients.
 
@@ -41,7 +41,7 @@ Integrate Matrix SDK.
 
 Build "Chat List" and "Message View" (Native UI).
 
-Milestone: Send a message from the Kin App to the Pi.
+Milestone: Send a message from the Memu App to the Pi.
 
 [ ] Week 7: Memories MVP:
 
@@ -53,7 +53,7 @@ Implement basic photo upload.
 
 [ ] Week 8: Alpha Testing:
 
-Give a pre-flashed Kin Hub to 1 non-technical friend.
+Give a pre-flashed Memu Hub to 1 non-technical friend.
 
 Observe their setup process silently.
 
@@ -71,7 +71,7 @@ Build "Assistant" tab in Mobile App.
 
 Film the promo video using the Alpha unit.
 
-Update ourkin.app with real app screenshots.
+Update memu.digital with real app screenshots.
 
 [ ] Week 11: Beta Batch:
 
@@ -81,7 +81,7 @@ Ship to early access list.
 
 [ ] Week 12: Public Launch:
 
-Open orders for "Kin Hub Kit".
+Open orders for "Memu Hub Kit".
 
 "Kill List" (What we are NOT doing yet)
 

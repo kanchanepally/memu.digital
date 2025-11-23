@@ -1,40 +1,40 @@
-Kin OS - Product Bible
+Memu OS - Product Bible
 
-The single source of truth for Kin OS development.
-"Your kin, your network, your data."
+The single source of truth for Memu OS development.
+"Your family, your network, your data."
 
 1. Vision & Mission
 
 The Problem: Families currently rent their digital lives from Big Tech. Their memories are mined for ads, their chats are metadata-harvested, and their history disappears when a cloud service shuts down.
 
-The Solution: Kin OS.
-We are not building just another messaging app. We are building a Private Digital Appliance (The Kin Hub) that gives a household complete ownership of their data, paired with a beautiful Super-App (Kin Mobile) that aggregates their digital life.
+The Solution: Memu OS.
+We are not building just another messaging app. We are building a Private Digital Appliance (The Memu Hub) that gives a household complete ownership of their data, paired with a beautiful Super-App (Memu Mobile) that aggregates their digital life.
 
 The Core Philosophy:
 
-Identity vs. Infrastructure: We provide the address (smiths.ourkin.app), but the user owns the house (The Raspberry Pi).
+Identity vs. Infrastructure: We provide the address (smiths.memu.digital), but the user owns the house (The Raspberry Pi).
 
-Sovereignty: If our company goes bankrupt tomorrow, the user's Kin Hub must keep working forever.
+Sovereignty: If our company goes bankrupt tomorrow, the user's Memu Hub must keep working forever.
 
 Zero-Terminal: The user should never see a command line.
 
-One App Rule: The user downloads one app ("Kin"), not three (Element, Immich, WebUI).
+One App Rule: The user downloads one app ("Memu"), not three (Element, Immich, WebUI).
 
-2. The Architecture: "Kin Hub"
+2. The Architecture: "Memu Hub"
 
-The Kin Hub is a Raspberry Pi 5 (with NVMe SSD) running Kin OS.
+The Memu Hub is a Raspberry Pi 5 (with NVMe SSD) running Memu OS.
 
 The "Magic" Setup Flow
 
 Plug in: User connects Power & Ethernet.
 
-Discover: User visits http://kin.local on their phone.
+Discover: User visits http://memu.local on their phone.
 
-Claim: User creates their family identity (e.g., rachandhari).
+Claim: User creates their family identity (e.g., smiths).
 
-Live: The system configures the Cloudflare Tunnel, secures the SSL, and launches https://rachandhari.ourkin.app.
+Live: The system configures the Cloudflare Tunnel, secures the SSL, and launches https://smiths.memu.digital.
 
-3. Core Features (The "Kin Super-App")
+3. Core Features (The "Memu Super-App")
 
 A. Chat (The Communication Layer)
 

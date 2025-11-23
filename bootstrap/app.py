@@ -6,7 +6,7 @@ import secrets
 app = Flask(__name__)
 
 # Path to your project root
-PROJECT_ROOT = "/home/hareesh/kin-os"
+PROJECT_ROOT = "/home/hareesh/memu-os"
 
 @app.route('/')
 def welcome():
@@ -22,7 +22,7 @@ def configure():
 
     # Clean the family name to be safe for URLs
     clean_slug = "".join(c for c in family_name if c.isalnum()).lower()
-    domain = f"{clean_slug}.ourkin.app"
+    domain = f"{clean_slug}.memu.digital"
     
     # Generate Secrets
     db_pass = secrets.token_urlsafe(16)
@@ -30,9 +30,9 @@ def configure():
     
     # Create .env content
     env_content = f"""
-KIN_DOMAIN={domain}
-DB_NAME=kin_core
-DB_USER=kin_user
+MEMU_DOMAIN={domain}
+DB_NAME=memu_core
+DB_USER=memu_user
 DB_PASSWORD={db_pass}
 SYNAPSE_ADMIN_TOKEN={synapse_token}
 ENABLE_REGISTRATION=true

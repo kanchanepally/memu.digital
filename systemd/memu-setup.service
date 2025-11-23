@@ -1,10 +1,10 @@
 [Unit]
-Description=Kin OS Setup Wizard
+Description=Memu OS Setup Wizard
 After=network.target
 
 [Service]
 User=root
-WorkingDirectory=/home/hareesh/kin-os/bootstrap
+WorkingDirectory=/home/hareesh/memu-os/bootstrap
 ExecStart=/usr/bin/python3 app.py
 Restart=always
 

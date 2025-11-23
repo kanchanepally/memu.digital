@@ -1,8 +1,8 @@
-Kin OS Architecture
+Memu OS Architecture
 
 System Overview
 
-Kin OS is a microservices architecture wrapped in a single appliance experience. It is designed to be Tenant-Isolated (one family per device) and Network Agnostic (works behind any router).
+Memu OS is a microservices architecture wrapped in a single appliance experience. It is designed to be Tenant-Isolated (one family per device) and Network Agnostic (works behind any router).
 
 The Stack
 
@@ -28,13 +28,13 @@ PostgreSQL: The source of truth (Database).
 
 Immich: The Photo Server (Coming Phase 2).
 
-Kin Bootstrap: (Python/Flask) Temporary service for initial setup.
+Memu Bootstrap: (Python/Flask) Temporary service for initial setup.
 
 Client Layer (The Interface):
 
-Kin Mobile: React Native (Expo) app. Uses Matrix SDK + Custom APIs.
+Memu Mobile: React Native (Expo) app. Uses Matrix SDK + Custom APIs.
 
-Kin Web: (Legacy/Desktop) Skinned Element Web instance.
+Memu Web: (Legacy/Desktop) Skinned Element Web instance.
 
 Network Flow
 
@@ -42,23 +42,23 @@ Network Flow
 
 User: Connects to WiFi.
 
-Discovery: mDNS broadcasts kin.local.
+Discovery: mDNS broadcasts memu.local.
 
-Traffic: Phone -> http://kin.local -> Nginx -> Bootstrap App (Port 5000).
+Traffic: Phone -> http://memu.local -> Nginx -> Bootstrap App (Port 5000).
 
 Action: User inputs "Smiths". System writes .env, generates Nginx config, and restarts.
 
 2. Production Mode (Day 1+)
 
 External Traffic:
-smiths.ourkin.app -> Cloudflare Edge -> Tunnel -> Localhost:80 -> Nginx.
+smiths.memu.digital -> Cloudflare Edge -> Tunnel -> Localhost:80 -> Nginx.
 
-/ -> Kin Web (Optional Desktop Access).
+/ -> Memu Web (Optional Desktop Access).
 
 /_matrix -> Synapse (API for Mobile App).
 
 Mobile App Connectivity:
-The App attempts to resolve smiths.ourkin.app.
+The App attempts to resolve smiths.memu.digital.
 
 Remote: Connects via Cloudflare Tunnel.
 
@@ -68,7 +68,7 @@ Data Sovereignty Strategy
 
 Storage
 
-Location: /var/lib/docker/volumes/kin_*
+Location: /var/lib/docker/volumes/memu_*
 
 Medium: NVMe SSD (ext4).
 

@@ -1,6 +1,6 @@
 # services/intelligence/src/main.py
 """
-Hearth Intelligence Service
+Memu Intelligence Service
 Processes messages locally using AI without sending data to external services.
 """
 
@@ -19,18 +19,18 @@ logging.basicConfig(
     level=os.getenv("LOG_LEVEL", "INFO"),
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-logger = logging.getLogger("hearth.intelligence")
+logger = logging.getLogger("memu.intelligence")
 
 
-class HearthIntelligence:
+class MemuIntelligence:
     """Main intelligence service that processes messages and executes AI commands."""
     
     def __init__(self):
         self.db_config = {
             'host': os.getenv('DB_HOST', 'postgres'),
             'port': int(os.getenv('DB_PORT', 5432)),
-            'database': os.getenv('DB_NAME', 'hearth'),
-            'user': os.getenv('DB_USER', 'hearth'),
+            'database': os.getenv('DB_NAME', 'memu_core'),
+            'user': os.getenv('DB_USER', 'memu_user'),
             'password': os.getenv('DB_PASSWORD'),
         }
         self.ollama_url = os.getenv('OLLAMA_HOST', 'http://ollama:11434')
@@ -528,9 +528,9 @@ Summary:""",
 
 async def main():
     """Main event loop that processes new messages from the database."""
-    intelligence = HearthIntelligence()
+    intelligence = MemuIntelligence()
     
-    logger.info("Hearth Intelligence Service starting...")
+    logger.info("Memu Intelligence Service starting...")
     logger.info("Waiting for database connection...")
     
     # Wait for database to be ready

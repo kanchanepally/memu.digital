@@ -1,23 +1,23 @@
 ﻿version: '3.8'
 
 networks:
-  kin_net:
+  memu_net:
     driver: bridge
 
 volumes:
-  kin_postgres_data:
-  kin_synapse_data:
+  memu_postgres_data:
+  memu_synapse_data:
 
 
 services:
   # --- THE FRONT DOOR (NGINX) ---
-  # Routes traffic for [family].ourkin.app
+  # Routes traffic for [family].memu.digital
   nginx:
     image: nginx:alpine
-    container_name: kin_proxy
+    container_name: memu_proxy
     restart: unless-stopped
     networks:
-      - kin_net
+      - memu_net
     ports:
       - "80:80"
     volumes:
@@ -29,12 +29,12 @@ services:
   # --- DATABASE ---
   postgres:
     image: postgres:15-alpine
-    container_name: kin_db
+    container_name: memu_db
     restart: unless-stopped
     networks:
-      - kin_net
+      - memu_net
     volumes:
-      - kin_postgres_data:/var/lib/postgresql/data
+      - memu_postgres_data:/var/lib/postgresql/data
       - ./init-db.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     environment:
       POSTGRES_USER: ${DB_USER}
@@ -50,14 +50,14 @@ services:
   # --- CHAT SERVER ---
   synapse:
     image: matrixdotorg/synapse:latest
-    container_name: kin_synapse
+    container_name: memu_synapse
     restart: unless-stopped
     networks:
-      - kin_net
+      - memu_net
     volumes:
-      - kin_synapse_data:/data
+      - memu_synapse_data:/data
     environment:
-      SYNAPSE_SERVER_NAME: "${KIN_DOMAIN}"
+      SYNAPSE_SERVER_NAME: "${MEMU_DOMAIN}"
       SYNAPSE_REPORT_STATS: "no"
       SYNAPSE_ENABLE_REGISTRATION: "${ENABLE_REGISTRATION}"
     depends_on:
@@ -67,9 +67,9 @@ services:
   # --- WEB INTERFACE ---
   element:
     image: vectorim/element-web:latest
-    container_name: kin_element
+    container_name: memu_element
     restart: unless-stopped
     networks:
-      - kin_net
+      - memu_net
     volumes:
       - ./element-config.json:/app/config.json:ro
