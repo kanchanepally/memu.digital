@@ -1,75 +1,160 @@
-﻿version: '3.8'
-
-networks:
-  memu_net:
-    driver: bridge
-
-volumes:
-  memu_postgres_data:
-  memu_synapse_data:
-
+﻿name: memu-suite
 
 services:
-  # --- THE FRONT DOOR (NGINX) ---
-  # Routes traffic for [family].memu.digital
-  nginx:
-    image: nginx:alpine
-    container_name: memu_proxy
-    restart: unless-stopped
-    networks:
-      - memu_net
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
-    depends_on:
-      - synapse
-      - element
+  # ---------------------------------------------------------------------------
+  # CORE INFRASTRUCTURE (Database & Cache)
+  # ---------------------------------------------------------------------------
 
-  # --- DATABASE ---
-  postgres:
-    image: postgres:15-alpine
-    container_name: memu_db
-    restart: unless-stopped
-    networks:
-      - memu_net
-    volumes:
-      - memu_postgres_data:/var/lib/postgresql/data
-      - ./init-db.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+  # We use the Immich-specific Postgres because it includes the 'pgvecto.rs' 
+  # extension required for AI search. Synapse works fine with this version too.
+  database:
+    container_name: memu_postgres
+    image: ghcr.io/immich-app/immich-postgres:release
+    restart: always
     environment:
-      POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C --lc-ctype=C"
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_DB: immich # Default DB
+      # Synapse DB will be created via init script if needed, 
+      # or we map a separate volume for initialization.
+    volumes:
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER}" ]
-      interval: 10s
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d immich" ]
+      interval: 5s
       timeout: 5s
       retries: 5
 
-  # --- CHAT SERVER ---
-  synapse:
-    image: matrixdotorg/synapse:latest
-    container_name: memu_synapse
-    restart: unless-stopped
-    networks:
-      - memu_net
+  redis:
+    container_name: memu_redis
+    image: redis:6.2-alpine@sha256:70a7a5b66d949b569cd5f54e6cfdffe9952125023a01741983c48b2074e50337
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli ping || exit 1" ]
     volumes:
-      - memu_synapse_data:/data
-    environment:
-      SYNAPSE_SERVER_NAME: "${MEMU_DOMAIN}"
-      SYNAPSE_REPORT_STATS: "no"
-      SYNAPSE_ENABLE_REGISTRATION: "${ENABLE_REGISTRATION}"
-    depends_on:
-      postgres:
-        condition: service_healthy
+      - redisdata:/data
 
-  # --- WEB INTERFACE ---
-  element:
-    image: vectorim/element-web:latest
-    container_name: memu_element
-    restart: unless-stopped
-    networks:
-      - memu_net
+  # ---------------------------------------------------------------------------
+  # CHAT MODULE (Matrix/Synapse + Element)
+  # ---------------------------------------------------------------------------
+
+  synapse:
+    container_name: memu_chat_core
+    image: matrixdotorg/synapse:latest
+    restart: always
+    environment:
+      - SYNAPSE_CONFIG_PATH=/data/homeserver.yaml
+      - SYNAPSE_SERVER_NAME=${SERVER_NAME}
+      - SYNAPSE_REPORT_STATS=no
     volumes:
-      - ./element-config.json:/app/config.json:ro
+      - ./synapse:/data
+    depends_on:
+      - database
+    ports:
+      - "8008:8008"
+
+  element:
+    container_name: memu_chat_ui
+    image: vectorim/element-web:latest
+    restart: always
+    volumes:
+      - ./element-config.json:/app/config.json
+      # NEW: Map the local assets folder so the browser can load the logo
+      - ./assets:/app/assets
+    ports:
+      - "80:80"
+
+  # ---------------------------------------------------------------------------
+  # PHOTOS MODULE (Immich)
+  # ---------------------------------------------------------------------------
+
+  immich-server:
+    container_name: memu_photos_server
+    image: ghcr.io/immich-app/immich-server:release
+    command: [ "start.sh", "immich" ]
+    restart: always
+    volumes:
+      - ${UPLOAD_LOCATION}:/usr/src/app/upload
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - DB_HOSTNAME=database
+      - DB_USERNAME=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_DATABASE_NAME=immich
+      - REDIS_HOSTNAME=redis
+    depends_on:
+      - redis
+      - database
+    ports:
+      - "2283:3001"
+
+  immich-microservices:
+    container_name: memu_photos_workers
+    image: ghcr.io/immich-app/immich-server:release
+    # Extends the server configuration but runs microservices command
+    command: [ "start.sh", "microservices" ]
+    restart: always
+    volumes:
+      - ${UPLOAD_LOCATION}:/usr/src/app/upload
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - DB_HOSTNAME=database
+      - DB_USERNAME=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_DATABASE_NAME=immich
+      - REDIS_HOSTNAME=redis
+    depends_on:
+      - redis
+      - database
+
+  # ---------------------------------------------------------------------------
+  # SAFETY & AI MODULE (Local Scanning)
+  # ---------------------------------------------------------------------------
+
+  immich-machine-learning:
+    container_name: memu_safety_engine
+    # Using standard release for now, but configured for hardware access below
+    image: ghcr.io/immich-app/immich-machine-learning:release
+    volumes:
+      - model-cache:/cache
+    # -------------------------------------------------------
+    # CRITICAL: RASPBERRY PI AI KIT (HAILO-8L) CONFIGURATION
+    # -------------------------------------------------------
+    # Uncomment 'devices' only when the AI Kit is physically installed.
+    # If installed, this offloads safety scanning to the NPU.
+    # devices:
+    #   - /dev/hailo0:/dev/hailo0 
+    environment:
+      - MACHINE_LEARNING_WORKERS=1
+      - MACHINE_LEARNING_WORKER_TIMEOUT=120
+    restart: always
+
+  ollama:
+    container_name: memu_brain
+    image: ollama/ollama:latest
+    restart: always
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    # Map NPU if supported by Ollama in future, for now runs on CPU/RAM
+    # Llama 3.2 3B fits in approx 2GB RAM
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+
+  # ---------------------------------------------------------------------------
+  # NETWORKING (The Tunnel)
+  # ---------------------------------------------------------------------------
+
+  cloudflared:
+    container_name: memu_tunnel
+    image: cloudflare/cloudflared:latest
+    restart: always
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARED_TOKEN}
+
+volumes:
+  pgdata:
+  redisdata:
+  model-cache:

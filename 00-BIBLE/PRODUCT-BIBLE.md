@@ -1,468 +1,237 @@
-# Memu OS - Product Specification & Bible v3.0**
+# Memu OS - Product Specification & Bible v4.0**
 
 **The Single Source of Truth.**  
  *If it is in this document, it is being built. If it is not here, it is out of scope.*
 
 ---
-## 1. Product Definition**
+## 1. The Manifesto: From Privacy to Sanctuary
 
-Memu OS is a **vertically integrated Private Cloud Appliance** consisting of three inseparable layers:
+**The Philosophy:** We do not sell "Privacy Tech" (which implies hiding). We sell "Digital Real Estate" (which implies ownership). Memu is a **Digital Sanctuary**: A physical vault in the user's home where their data lives, protected from Big Tech surveillance and commercial exploitation.
+
+**The Trust & Safety Promise (Edge-Based Safety):** We reject the false choice between Safety and Privacy. We enforce safety at the **Edge (The Device)**, not the Cloud.
+- **CSAM/Harm Prevention:** The Memu Hub uses local, on-device AI (Hailo NPU) to classify and block harmful content _before_ it is written to storage.
+- **Abuse Prevention:** Immutable local audit logs prevent coercive controllers from hiding their tracks.
+- **The "Paper Trail":** We require valid payment methods for Relay access to deter anonymous criminal usage.
+## 2. The Product: The Memu Suite**
+
+Memu OS is a **vertically integrated Appliance** that hosts a suite of best-in-class applications:
 
 **The Three Layers:**
 
-**1. The Hardware (Memu Hub)**
+1. **The Hardware (Memu Hub)**
 
 * Physical server: Raspberry Pi 5 (8GB RAM recommended)  
 * Storage: NVMe SSD (256GB minimum, 1TB recommended)  
 * Form factor: Fanless case with passive cooling  
-* Network: Gigabit Ethernet \+ WiFi 6  
+* Network: Gigabit Ethernet + WiFi 6  +Cloudflare Tunnel (Zero configuration remote access).
 * Power: USB-C PD (27W official adapter)  
 * Status indicator: Single RGB LED
+* **AI Accelerator:** **Raspberry Pi AI Kit (Hailo-8L NPU)** – _Crucial for local safety scanning._
 
-**2. The Operating System (Memu OS)**
+2. **The Operating System (Memu OS)**
 
 * Base: Debian 12 (Bookworm) Lite 64-bit  
 * Containerization: Docker \+ Docker Compose  
 * Process supervisor: systemd  
 * Auto-updates: GitOps pull model  
 * Zero-configuration networMemug: mDNS (Avahi)
+* **Database:** Unified Postgres (with `pgvecto.rs` extension) + Redis.
+* **Update System:** GitOps (Pull-based updates via `cron`).
 
-**3. The Interface (Memu Mobile)**
+3. **The Application Suite (The User Experience)**
 
-* Technology: React Native (single codebase, iOS \+ Android)  
-* Architecture: Offline-first with sync  
-* Design system: Custom (family-focused, not corporate)
+Instead of a monolithic custom app, we deploy pre-configured, "skinned" versions of industry-standard protocols.
 
----
-**The Core Value Proposition**
-
-**"The convenience of iCloud, with the sovereignty of a hard drive."**
-
-Users get:
-
-* Cloud-like experience (always accessible, always synced)  
-* Self-hosting reality (data never leaves their home)  
-* No recurring cloud fees (one-time hardware \+ optional relay)
+| Capability       | Backend Engine     | Frontend App (User)       | Branding Strategy                                       |
+| ---------------- | ------------------ | ------------------------- | ------------------------------------------------------- |
+| **Photos**       | **Immich**         | **Immich Mobile App**     | Server Name: "Memu Sanctuary"                           |
+| **Chat**         | **Matrix/Synapse** | **Element (Memu Config)** | Custom Theme & Default Home Server                      |
+| **Safety**       | **Hailo/Local AI** | **Middleware**            | Invisible "Guardian" process                            |
+| **Intelligence** | **Ollama**         | **Middleware**           | Create automatic plans, tasks, digital family organiser |
 
 ---
-## 2. Feature Specifications**
+## 3. Feature Specifications**
 
-**Feature 1: Memu Chat (Communication Layer)**
+### Feature 1: Memu Chat 
 
-**User Story:**  
- *"I want to text my wife and share photos of the kids without Meta mining the metadata."*
+**User Story:** "I want to text my wife and share photos without Meta mining the metadata."
 
-**Technology Stack:**
+**Implementation:**
+- **Backend:** Matrix Synapse (Stock)
+- **Frontend:** Element Web (Hosted locally) + Element Mobile (App Store)
+- **Configuration:** "Skinned" via `config.json` and QR Code onboarding.
 
-* **Backend:** Matrix Synapse v1.96+ (homeserver)  
-* **Database:** PostgreSQL 15  
-* **Protocol:** Matrix (HTTP REST \+ JSON)  
-* **Client library:** matrix-js-sdk (React Native wrapper)
 
-**Detailed Requirements:**
+**Core Capabilities (Inherited from Element):**
+- **E2EE:** ON by default. Keys stored in device Secure Enclave.
+- **Media:** Auto-compressed for transit, full-res saved to Memories.
+- **Offline Mode:** Local caching of last 1,000 messages.
+- **Push:** UnifiedPush (Android) / APNs Relay (iOS).
 
-**2.1.1 End-to-End Encryption (E2EE)**
+### Feature 2: Memu Memories (The Vault)
 
-* Default: ON for all direct messages and family rooms  
-* Algorithm: Olm (1-to-1) \+ Megolm (group chat)  
-* Key storage: React Native Secure Storage (Keychain on iOS, KeyStore on Android)  
-* Key backup: Encrypted backup to Hub (user sets recovery passphrase)  
-* Device verification: QR code or emoji comparison
+**User Story:** "I want my camera roll backed up automatically, and I want to find 'dog' instantly."
 
-**2.1.2 Media Handling**
+**Implementation:**
 
-* Images sent in chat:  
-  * Compressed to \<500KB for transmission (JPEG quality 85%)  
-  * Original HEIC/PNG automatically copied to Memu Memories (full resolution)  
-  * Thumbnail generated on-device (256x256px) for fast loading  
-* Videos:  
-  * Compressed to 720p for chat transmission  
-  * Original 4K version saved to Memories  
-  * Maximum chat video: 2 minutes or 50MB
+- **Backend/Frontend:** Immich (Stock)
+    
+- **AI Hardware Strategy:**
+    
+    - **Vision (Face/Object):** Offloaded to **Hailo-8L NPU** (via Immich ML container).
+        
+    - **Transcoding:** Hardware accelerated (Pi 5 VideoCore).
+        
 
-**2.1.3 Offline Mode**
+**Core Capabilities:**
 
-* App caches last 1,000 messages per room (SQLite local database)  
-* Drafts queue locally if Hub unreachable  
-* On reconnection, messages sync in chronological order  
-* Conflict resolution: Last-write-wins (Matrix handles this)
+- **Sync:** Background differential sync (WiFi only default).
+    
+- **Search:** Semantic search (CLIP model running on NPU).
+    
+- **Family Albums:** Shared albums with granular privacy.
+    
 
-**2.1.4 Push Notifications**
+### Feature 3: Memu Intelligence (The Brain)
 
-* **Android:** UnifiedPush (self-hosted, privacy-preserving)  
-* **iOS:** APNs via ntfy.sh relay (encrypted payload, relay sees only "New message" metadata)  
-* Battery optimization: Notification channels, not polling  
-* Settings: Per-room notification preferences (all/mentions/off)
+**User Story:** "I want a smart assistant that knows my family context but never sends data to the cloud."
 
-**2.1.5 Message Features**
+**Implementation:**
 
-* Text formatting: Markdown (bold, italic, code blocks)  
-* Reactions: Emoji reactions (Unicode, not custom)  
-* Replies: Thread-style (quote parent message)  
-* Editing: Edit sent messages (shows "edited" timestamp)  
-* Deletion: Soft delete (removes from view, not from database for E2EE reasons)  
-* Read receipts: Optional (privacy setting)
+- **Engine:** Ollama (Local LLM Server).
+    
+- **Model:** Llama 3.2 3B Instruct (4-bit Quantized).
+    
+- **Memory:** ChromaDB (Vector Store for RAG).
+    
+- **Interface:** "Memu Bot" (A Matrix Bot user in the family room).
+    
 
----
+**Capabilities:**
 
-**Feature 2: Memu Memories (Storage Layer)**
-
-**User Story:**  
- *"I want my camera roll backed up automatically when I walk in the door, and to search for 'dog' to find pictures of our pet."*
-
-**Technology Stack:**
-
-* **Engine:** Immich v1.91+ (open-source Google Photos alternative)  
-* **Database:** PostgreSQL 15 (shared with Synapse)  
-* **Object storage:** Local filesystem (/Memu/data/media)  
-* **Transcoding:** FFmpeg with hardware acceleration (Pi 5 H.265 encoder)  
-* **Face detection:** CLIP (REMOVE - use Immich's built-in face recognition)  
-* **ML:** Immich's built-in ML service (TensorFlow Lite optimized for ARM)
-
-**Detailed Requirements:**
-
-**2.2.1 Background Sync**
-
-* Trigger: Device connects to known WiFi SSID (user configures in setup)  
-* Method: Differential sync (only new/modified files)  
-* Protocol: HTTPS upload to Immich API  
-* Frequency: Check every 30 minutes when on WiFi, upload immediately when new photo taken  
-* Battery: Only sync when battery \>20% or charging  
-* Cellular: User-configurable (default: WiFi only)
-
-**2.2.2 Machine Learning (On-Device)**
-
-* Use Immich's built-in ML service, NOT separate CLIP/ONNX  
-* Immich ML service runs:  
-  * Object detection (e.g., "dog", "beach", "birthday cake")  
-  * Face detection and clustering (groups faces, user labels names)  
-  * Image embeddings for similarity search  
-* **Schedule:** ML jobs run 2 AM - 6 AM only (prevent thermal throttling)  
-* **Performance:** Process \~100 photos per hour on Pi 5  
-* **Priority:** New uploads processed first, backlog processed incrementally
-
-**2.2.3 Timeline View**
-
-* UI: Infinite scroll, reverse chronological  
-* Grouping: By day (e.g., "Today", "Yesterday", "November 20, 2024")  
-* Thumbnails: 256x256px JPEG (generated by Immich)  
-* Loading: Lazy load (fetch 50 at a time as user scrolls)  
-* Caching: App caches last 200 thumbnails locally
-
-**2.2.4 Search**
-
-* **Text search:** Metadata (filename, date, location if available)  
-* **Object search:** "dog", "car", "food" (via ML tags)  
-* **Face search:** "Show me photos of Mom"  
-* **Date search:** "Photos from July 2024"  
-* **Combination:** "Dog at beach in summer"
-
-**2.2.5 Albums**
-
-* **Shared albums:** Multiple family members can add/remove photos  
-* **Privacy:** Albums are private by default, explicit sharing required  
-* **Collaboration:** Real-time sync (one person adds photo, others see it instantly)  
-* **Example albums:** "Summer Holiday 2025", "Mia's Birthday", "House Renovation"
-
-**2.2.6 Media Management**
-
-* **Duplicate detection:** Immich detects and flags duplicates (perceptual hashing)  
-* **Favorites:** Star important photos (synced across devices)  
-* **Archive:** Hide photos from main timeline without deleting  
-* **Trash:** 30-day soft delete (recoverable), then permanent deletion
+1. **Smart Task Extraction:**
+    
+    - _Trigger:_ Bot listens to messages in "Family" room.
+        
+    - _Action:_ Extracts tasks ("Buy milk") -> Saves to Todo list.
+        
+2. **Natural Query:**
+    
+    - _Query:_ "What is the WiFi password?"
+        
+    - _Action:_ RAG search against stored "Home Notes."
+        
+3. **Privacy Guard:**
+    
+    - _Constraint:_ LLM has **NO** internet access. It is air-gapped within the container.
+        
+    - _Thermal Throttling:_ Service pauses if CPU temp > 75°C.
 
 ---
-
-**Feature 3: Memu Intelligence (The Brain)**
-
-**Definition:**  
- Memu Intelligence is NOT a chatbot. It is a **Local LLM Service** that powers specific utility features. It runs **strictly offline**.
-
-**Technology Stack:**
-
-* **Engine:** Ollama (local LLM server)  
-* **Model:** Llama 3.2 3B Instruct (quantized to 4-bit, \~2GB RAM)  
-  * **Why Llama 3.2 3B:** Fast enough on Pi 5, good instruction following, small footprint  
-  * **Alternative:** Phi-3 Mini (3.8B) if better performance needed  
-* **Context:** 8K token context window  
-* **RAG (Retrieval):** ChromaDB (vector database for household notes/documents)
-
-**Use Cases:**
-
-**2.3.1 Smart Task Extraction**
-
-**Input:** User types in Chat:  
- "We need to buy milk and book the dentist."
-
-**Process:**
-
-1. Message sent to Synapse (normal chat message)  
-2. Memu Intelligence monitors new messages (via Matrix webhook)  
-3. LLM prompt:
-
-   Extract actionable tasks from: "We need to buy milk and book the dentist."
-
-   Return JSON: \[{"task": "...", "category": "..."}\]
-
-4. LLM response:
-
-json
-
-\ \ \
-   \[
-
- 	{"task": "Buy milk", "category": "Shopping"},
-
- 	{"task": "Book dentist appointment", "category": "Health"}
-
-   \]
-\ \ \
-
-5. Tasks written to Tasks database
-
-**Output:** 
-
-Tasks app shows:
-
-- [  ] Buy milk (Shopping)
-
-- [  ] Book dentist appointment (Health)
-
- 
-**User sees:** Bot reply in chat: "✅ Added 2 tasks to your list"
-
----
-
-**2.3.2 Natural Query (Household Knowledge)**
-
-**Input:** User asks in Chat: 
-
-\`"What is the WiFi password for the guest network?"\`
-
-**Process:**
-
-1. Memu Intelligence searches RAG database (ChromaDB)
-
-2. Finds document: "Kitchen Note: Guest WiFi \= GuestHouse2025"
-
-3. LLM generates response using retrieved context
- 
-
-**Output:** 
-
-Bot replies: \*"Your guest WiFi password is 'GuestHouse2025' (from your Kitchen note)."\*
-
----
-
-**2.3.3 Photo Search Enhancement**
-
-**Input:** User types in Memories search: 
-
-\`"Photos of the kids at the beach last summer"\`
-
- 
-
-**Process:**
-
-1. LLM parses intent:
-
-   - Objects: \["kids", "beach"\]
-
-   - Time: \["summer 2024"\]
-
-2. Converts to Immich search query:
-
-\`\`\`
-
-   objects:beach AND date:2024-06-01..2024-08-31
-
-\`\`\`
-
-**Output:** Returns matching photos
-
----
-
-**2.3.4 Constraints & Limits**
-
-- **No internet access:** LLM cannot browse web, only local data
-
-- **No personal data training:** Model is frozen, never fine-tuned on user data
-
-- **Rate limiting:** Max 10 queries/minute per user (prevent abuse/overheating)
-
-- **Thermal protection:** If Pi temp \>75°C, Intelligence service pauses
-
-- **Context limit:** 8K tokens (\~6,000 words of context)
-
----
-
-## 3. System Architecture: "Memu OS"
+## 4. System Architecture: "Memu OS"
 
 Memu OS transforms a Raspberry Pi into a consumer appliance, not a Linux server.
 
-### 3.1 The Boot Process
+### 4.1 The Boot Process
 
 **Step-by-step boot sequence:**
  
 1. **Hardware Boot (0-5 seconds)**
-
    - Pi 5 EEPROM firmware loads from SPI flash
-
    - Bootloader checks NVMe SSD for OS
-
-
+   
 2. **OS Load (5-15 seconds)**
-
    - Debian 12 Bookworm kernel loads from \`/boot\`
-
    - initramfs mounts NVMe as root filesystem
-
    - systemd becomes PID 1
 
- 
-
 3. **Memu Supervisor Start (15-20 seconds)**
-
    - \`Memu-supervisor.service\` starts (systemd unit)
-
    - Supervisor checks \`/Memu/system/version.txt\` for current OS version
-
    - Checks \`/Memu/data\` mount status
-
- 
-
+   
 4. **Container Orchestration (20-40 seconds)**
-
    - \`docker-compose up -d\` in \`/Memu/system/docker-compose.yml\`
-
    - Services start in order (defined by \`depends\_on\`):
+	 	1. PostgreSQL (database)
+	 	2. Synapse (Matrix homeserver)
+	 	3. Immich (photo backend)
+	 	4. Ollama (LLM server)
+	 	5. Nginx (reverse proxy, serves Element Web \+ APIs)
 
- 	1. PostgreSQL (database)
-
- 	2. Synapse (Matrix homeserver)
-
- 	3. Immich (photo backend)
-
- 	4. Ollama (LLM server)
-
- 	5. Nginx (reverse proxy, serves Element Web \+ APIs)
-
- 
-
-5. **Health Check (40-50 seconds)**
-
+3. **Health Check (40-50 seconds)**
    - Supervisor pings \`http:*//localhost:8080/health\`*
-
    - Each service reports status (healthy/unhealthy)
-
    - LED indicator:
+	 	- **Solid Green:** All services healthy
+	 	- **Flashing Yellow:** Services starting
+	 	- **Flashing Red:** Service failed (check logs via web UI)
+	 	- **Solid Red:** Critical failure (OS corruption, hardware issue)
 
- 	- **Solid Green:** All services healthy
-
- 	- **Flashing Yellow:** Services starting
-
- 	- **Flashing Red:** Service failed (check logs via web UI)
-
- 	- **Solid Red:** Critical failure (OS corruption, hardware issue)
-
- 
-
-6. **Network Broadcasting (50-60 seconds)**
-
-   - Avahi (mDNS) broadcasts: \`Memu.local\`
-
+ 6. **Network Broadcasting (50-60 seconds)**
+  - Avahi (mDNS) broadcasts: \`Memu.local\`
    - Users can access via \`http:*//Memu.local:8080\` on local network*
-
  
-
 **Total boot time:** \~60 seconds from power-on to usable
 
 ---
 
-### 3.2 The File System Hierarchy
+### 4.2 The File System Hierarchy
 
 **READ-ONLY (Immutable OS):**
 
-\`\`\`
+```
 
 /boot       	→ Bootloader, kernel, device tree
 
 /Memu/system 	→ OS code (Git repo, never edited by user)
-
   ├── docker-compose.yml
-
   ├── nginx.conf
-
   ├── update.sh
-
   └── version.txt
-
-\`\`\`
+```
 
 **READ-WRITE (User Data - THE HOLY GRAIL):**
 
-\`\`\`
+```
 
 /Memu/data   	→ ALL user data lives here
 
   ├── postgres/     	→ Database files
-
   ├── media/        	→ Photos, videos (Immich storage)
-
-  │   ├── upload/   	→ Original files
-
-  │   ├── thumbs/   	→ Thumbnails
-
-  │   └── encoded/  	→ Transcoded videos
-
+     ├── upload/   	→ Original files
+     ├── thumbs/   	→ Thumbnails
+     └── encoded/  	→ Transcoded videos
   ├── synapse/      	→ Matrix homeserver data
-
-  │   ├── media\_store/  → Chat attachments
-
-  │   └── homeserver.db → (if using SQLite, but we use Postgres)
-
+     ├── media\_store/  → Chat attachments
+     └── homeserver.db → (if using SQLite, but we use Postgres)
   ├── config/       	→ User preferences
-
-  │   ├── users.json	→ Family member accounts
-
-  │   └── wifi.json 	→ Known SSIDs for auto-sync
-
+     ├── users.json	→ Family member accounts
+     └── wifi.json 	→ Known SSIDs for auto-sync
   └── ollama/       	→ LLM models
-
   	└── models/   	→ Downloaded Llama/Phi models
 
-\`\`\`
-
+```
 
 **Why this matters:**
-
 - **Backup:** Only \`/Memu/data\` needs bacMemug up (everything else is reproducible)
-
 - **Updates:** Pull new \`/Memu/system\` from Git, restart containers (data untouched)
-
 - **Recovery:** If OS corrupts, flash new SD card, mount NVMe at \`/Memu/data\`, data intact
 
-
 ---
-
- 
-
-### 3.3 NetworMemug Architecture
+### 4.3 Networking Architecture
 
 **Local Network (Primary):**
 
-\`\`\`
-
+```
 Device → WiFi/Ethernet → Router → Pi (192.168.1.x)
-
 Access via: http:*//Memu.local:8080*
-
-\`\`\`
+```
 
 
 **Remote Access (Optional):**
 
-\`\`\`
+```
 
 Device → Internet → Cloudflare Tunnel → Pi
 
@@ -480,7 +249,8 @@ Access via: https:*//smithfamily.relay.Memu.app*
 
 * Local: All ports open on 192.168.x.x  
 * Remote: Only Cloudflare tunnel ingress (no open ports on router)
-
+  
+```
 ---
 
 **3.4 Update Mechanism**
@@ -492,19 +262,14 @@ Access via: https:*//smithfamily.relay.Memu.app*
 1. User taps "Update Hub" in mobile app  
 2. App sends API call: POST /api/system/update  
 3. Memu Supervisor runs:
-
+```
 bash
-
    cd /Memu/system
-
    git fetch origin
-
    git reset --hard origin/main
-
    docker-compose pull
-
    docker-compose up -d --build
-
+```
 4. Services restart with new code  
 5. App notifies: "Update complete\!" (or shows error log if failed)
 
@@ -525,7 +290,7 @@ bash
 **3.5 Container Architecture**
 
 **Docker Compose Services:**
-
+```
 yaml
 
 services:
@@ -581,35 +346,22 @@ services:
 
 	*\# Reverse proxy, serves Element Web*
 
-\`\`\`
+```
 
 **Why containers:**
 
 - Isolation (services don't conflict)
-
 - Updates (pull new image, restart)
-
 - Portability (same setup on any Pi)
-
 - Rollback (keep old images for 30 days)
 
 ---
-
- 
-
-## 4. The "No-Terminal" Guarantee*
-
- 
+## 5. The "No-Terminal" Guarantee*
 
 **The Golden Rule:** If a user has to open a terminal, we have failed.
-
- 
-
-### 4.1 Initial Setup*
-
+### 5.1 Initial Setup*
 
 **Method:** Web-based wizard at \`http://Memu.local:8080/setup\`
-
 
 **Steps:**
 
@@ -636,7 +388,7 @@ services:
 
 ---
 
-### 4.2 Updates*
+### 5.2 Updates*
 
 **Via mobile app:**
 
@@ -652,7 +404,7 @@ services:
 
 ---
 
-### 4.3 Troubleshooting*
+### 5.3 Troubleshooting*
 
 **LED Status Indicators:**
 
@@ -690,101 +442,90 @@ services:
 
 - App can diagnose even without network connection
 ---
+## 6. Data & Privacy
 
- 
-
-## 5. Data & Privacy*
-
-### 5.1 Trust Model
+### 6.1 Trust Model: "Safety without Surveillance"
 
 **Open Core:**
 
-- All source code: AGPLv3 (on GitHub)
+- **Source Code:** AGPLv3 (Repository on GitHub).
+    
+- **Transparency:** Users can audit the `docker-compose.yml` and startup scripts to verify exactly what code is running.
+    
+- **No Blobs:** No proprietary logic aside from hardware firmware (Raspberry Pi / Hailo).
+    
 
-- Users can audit every line of code
+**The "Edge-Based" Safety Promise:**
 
-- Community contributions welcome
-
-- No proprietary blobs (except Pi firmware)
-
+- **Scanning:** Safety scanning (CSAM/Nudity) occurs **locally** on the Hailo-8L NPU.
+    
+- **Data Flow:** Image $\to$ RAM $\to$ NPU Check $\to$ Storage.
+    
+- **Privacy:** The image never leaves the device for scanning. No "hashes" are sent to a central Memu server for verification.
+    
 
 **No Telemetry:**
 
-- Hub does NOT phone home (except update checks)
+- **The Hub:** Does NOT phone home.
+    
+- **Update Checks:** Anonymous pull request (GitOps) to public repositories. No User ID is tracked.
+    
+- **Crash Reports:** Opt-in only.
+    
+- **Analytics:** Zero. We track nothing.
+    
 
-- Update checks: Anonymous (no user ID sent)
+### 6.2 Data Ownership & Portability
 
-- Crash reports: Opt-in only (user explicitly enables)
+**User Ownership:**
 
-- Analytics: Zero. We track nothing.
+- **Photos/Videos:** Stored as standard files (JPEG/HEIC/MP4) on the NVMe drive. Not locked in a proprietary database format.
+    
+- **Messages:** Stored in a local PostgreSQL database (exportable).
+    
+- **AI Models:** Downloaded once and run locally. No API calls to OpenAI/Anthropic.
+    
 
----
+**Data Portability (The "Exit Strategy"):** We believe you should stay because you want to, not because you are trapped.
 
-### 5.2 Data Ownership*
+- **Photos:** Since files are stored in a standard directory structure (`/mnt/memu_storage/photos/YYYY/MM`), users can simply plug the drive into a PC to retrieve them. No "Export" tool needed for raw files.
+    
+- **Chat:** Matrix offers GDPR-compliant export tools. We provide an Admin Script to dump the database to JSON.
+    
+- **Migration:** The entire `data` volume can be copied to a new Hub to migrate instantly.
+    
 
-**User owns:**
+### 6.3 Encryption & Security Architecture
 
-- All photos, videos, messages
+**At Rest:**
 
-- All ML models (downloaded, not cloud-based)
+- **NVMe Storage:** LUKS Full-Disk Encryption (Phase 2 Implementation).
+    
+- **Database:** Standard PostgreSQL security (User/Pass protected within Docker Network).
+    
 
-- All metadata (who, when, where)
+**In Transit:**
 
-**User controls:**
+- **Remote Access:** Fully encrypted via **Cloudflare Tunnel** (TLS 1.3). No open ports on the home router.
+    
+- **Chat:** Matrix End-to-End Encryption (E2EE) via Olm/Megolm protocols.
+    
+    - _Note:_ Memu Hub stores encrypted message blobs. Only user devices (phones/laptops) hold the decryption keys.
+        
+- **Internal Network:** Docker containers communicate via an isolated internal bridge network.
+    
 
-- Who has access (family members only)
+**Intelligence Privacy (The "Air Gap"):**
 
-- Where data lives (their home)
-
-- When to delete (no retention policies)
-
-**Data portability:**
-
-- "Export All Data" button in web UI
-
-- Downloads ZIP file:
-
-  - \`/photos\` → All original photos/videos
-
-  - \`/messages.json\` → Matrix chat export
-
-  - \`/tasks.json\` → Tasks database export
-
-- User can move data to another Memu Hub or different system
-
----
-
-### 5.3 Encryption*
-
-**At rest:**
-
-- NVMe SSD: LUKS full-disk encryption (optional, Phase 2\)
-
-- Database: PostgreSQL with encryption extensions (optional)
-
-**In transit:**
-
-- Local network: HTTP (low risk, trusted network)
-
-- Remote access: HTTPS via Cloudflare tunnel (TLS 1.3)
-
-- Matrix: E2EE for message content (Olm/Megolm)
-
-- Photo sync: HTTPS (TLS 1.3)
-
-**Keys:**
-
-- Matrix E2EE keys: Stored on user devices (Secure Storage)
-
-- Disk encryption keys: User-set passphrase (not recoverable if lost)
-
-- TLS certificates: Auto-renewed by Cloudflare or Let's Encrypt
+- The **Memu Intelligence** container (Ollama) is configured with **no outbound internet access** (except for initial model download).
+    
+- It cannot leak prompts or family context to the web, even if it wanted to.
 
 ---
 
-## 6. Hardware Specifications*
+## 7. Hardware Specifications*
 
-### 6.1 Memu Hub (Raspberry Pi 5 Configuration)*
+### 7.1 Memu Hub (Raspberry Pi 5 Configuration)*
 
 **Minimum spec (for up to 4 users, 10K photos):**
 
@@ -819,7 +560,7 @@ services:
 
 - Annual electricity cost: \~$15-25/year (US average)
 ---
-### 6.2 Performance Targets*
+### 7.2 Performance Targets*
 
 **Matrix Chat:**
 
@@ -852,94 +593,92 @@ services:
 
 - Concurrent queries: 1 (queued if multiple)
 ---
+## 8. Development Roadmap
 
- 
+### Phase 1: The Foundation (Months 1-3) ✅ IN PROGRESS
 
-## 7. Development Roadmap*
+**Goal:** A stable, "self-driving" appliance for one family (The Founder).
 
-### Phase 1: MVP (Months 1-3) ✅ IN PROGRESS*
+**Hardware:** Raspberry Pi 5 (8GB) + NVMe SSD + **Hailo-8L AI Kit**.
 
-**Goal:** Prove core product works for one family.
+**Core Deliverables:**
 
-**Features:**
+- [x] **Infrastructure:** Unified Docker Compose (Immich, Synapse, Redis, Postgres, Cloudflared).
+    
+- [x] **Memu Chat:** Matrix Synapse backend + Element Web (Self-Hosted).
+    
+- [ ] **Memu Memories:** Immich backend + Hardware Accelerated ML (Hailo NPU).
+    
+- [ ] **Memu Intelligence:** Ollama service running Llama 3.2 (Backend only).
+    
+- [ ] **Branding:**
+    
+    - [ ] Skinned Element Web (`config.json` + Assets).
+        
+    - [ ] "Magic Link" QR Code generator for mobile onboarding.
+        
+- [ ] **Networking:** Automated Cloudflare Tunnel token injection via Setup Wizard.
+    
 
-- ✅ Memu Chat (Matrix \+ E2EE)
-- [ ] Remote access (Cloudflare tunnel integration)
+**Success Metric:** Wife uses it for a week without asking "How do I log in?"
 
-- [ ] Memu Memories (Immich photo backup \+ search)
+### Phase 2: The Experience (Months 4-6)
 
-- [ ] Memu Intelligence (basic task extraction only)
+**Goal:** 20 Beta Families using it daily.
 
-- [ ] Setup wizard (web-based)
+**Hardware:** Same (Pi 5 + NVMe + Hailo).
 
-- [ ] Mobile app (chat \+ photos)
+**Core Deliverables:**
 
-**Hardware:** Raspberry Pi 5 \+ NVMe
-**Users:** Me \+ wife (validation test)
+- [ ] **The "Memu Bot":** A Matrix bot that interfaces with the local Ollama instance (Task extraction & Q/A).
+    
+- [ ] **Edge Safety Layer:** Middleware to pass new photo uploads through Nudity Classification model on the NPU _before_ storage.
+    
+- [ ] **Federation Pilot:** Connect your Hub with one external family member (e.g., Sister) to validate the "Constellation" architecture.
+    
+- [ ] **Notifications:** Configure UnifiedPush (Android) and APNs Relay (iOS) for reliable alerts.
+    
+- [ ] **Backup:** One-click script to backup "Golden Copy" to an external USB drive.
+    
 
----
- 
-### Phase 2: Beta (Months 4-6)*
+**Success Metric:** 20 families active, <5 support tickets per week.
 
-**Goal:** 20 families using it daily.
+### Phase 3: The Product (Months 7-12)
 
-**Features:**
+**Goal:** 100 Paying Customers (Launch).
 
-- ✅ All Phase 1 features (hardened)
+**Hardware:** "Productized" Bundle (Custom Case + Branded Packaging).
 
-- Tasks app (shared to-dos, shopping lists)
+**Core Deliverables:**
 
-- Push notifications (UnifiedPush \+ APNS)
+- [ ] **Auto-Update System:** Robust GitOps (Pull-based) updates that can rollback on failure.
+    
+- [ ] **Service Dashboard:** A simple Web Admin UI to restart containers and view disk usage/temperatures.
+    
+- [ ] **Data Migration Tool:** "Import from Google Takeout" script.
+    
+- [ ] **Billing Integration:** Stripe integration for the optional "Memu Relay" subscription.
+    
 
-- Shared albums
+**Business Model:** $149 Hardware + Optional $6/mo Relay (High Bandwidth).
 
+### Phase 4: The Ecosystem (Year 2+)
 
-**Hardware:** Same (Pi 5 \+ NVMe)
-**Users:** 20 beta families
----
+**Goal:** 1,000 Customers & Profitability.
 
-### Phase 3: Launch (Months 7-12)*
+**Core Deliverables:**
 
-**Goal:** 100 paying customers.
-
-**Features:**
-
-- Auto-updates (GitOps)
-
-- Backup to external USB drive
-
-- Family calendar (shared events)
-
-- Bluetooth diagnostics (LED status)
-
-- Web admin panel (service management)
-
-**Hardware:** Productized (custom case, logo, packaging)
-**Users:** 100 paying customers
-
-**Business model:** $149 hardware \+ $6/mo relay (optional)
-
----
-
-### Phase 4: Scale (Year 2\)*
-
-**Goal:** 1,000 customers, profitable.
-
-**Features:**
-
-- Document storage (Nextcloud integration)
-
-- Home automation (MQTT bridge to smart devices)
-
-- Media server (Jellyfin for movies/music)
-
-- Multi-hub federation (families connect across hubs)
-
-**Hardware:** Pi 5 or Pi 6 (when available)
+- [ ] **Home Automation:** MQTT Bridge (Home Assistant integration) for the "Smart Home" aspect.
+    
+- [ ] **Documents:** Nextcloud or Paperless-ngx integration for scanning/storing family docs.
+    
+- [ ] **Multi-Hub HA:** High Availability (Secondary Hub takes over if Primary fails).
+    
+- [ ] **Custom Mobile App:** _Only now_ do we consider building a custom React Native wrapper to unify the experience.
 
 ---
 
-## 8. Non-Goals (Out of Scope)*
+## 9. Non-Goals (Out of Scope)*
 
 **What Memu OS will NEVER be:**
 
@@ -962,7 +701,7 @@ services:
 
 ---
 
-## 9. Success Metrics*
+## 10. Success Metrics*
 
 ### Product Metrics:*
 
@@ -1023,7 +762,7 @@ services:
 
  
 
-## 10. Open Questions & Decisions Needed*
+## 11. Open Questions & Decisions Needed*
 
 
 **Technical:**
@@ -1068,9 +807,9 @@ services:
 
  
 
-## 11. Appendix: Technical Specifications*
+## 12. Appendix: Technical Specifications*
 
-### 11.1 API Endpoints (Internal)*
+### 12.1 API Endpoints (Internal)*
 
 **Memu Supervisor API (for mobile app):**
 
@@ -1136,7 +875,7 @@ POST /api/pull                → Download model
 
  
 
-### 11.2 Database Schema (Simplified)*
+### 12.2 Database Schema (Simplified)*
 
  
 
@@ -1180,7 +919,7 @@ POST /api/pull                → Download model
 
  
 
-### 11.3 Mobile App Architecture*
+### 12.3 Mobile App Architecture*
 
 **Technology:**
 
@@ -1242,7 +981,7 @@ POST /api/pull                → Download model
 
 ---
 
-**12. The One-Page Summary (For Investors/Partners)**
+**13. The One-Page Summary (For Investors/Partners)**
 
 **Memu OS: The Private Cloud Appliance**
 

@@ -1,15 +1,32 @@
 ﻿{
     "default_server_config": {
         "m.homeserver": {
-            "base_url": "http://localhost:8008",
-            "server_name": "memu.local"
+            "base_url": "https://memu.local",
+            "server_name": "Memu Sanctuary"
+        },
+        "m.identity_server": {
+            "base_url": "https://vector.im"
         }
     },
-    "brand": "Memu - Your Private Family Space",
+    "brand": "Memu Sanctuary",
+    "branding": {
+        "authHeaderLogoUrl": "/assets/logo.png",
+        "welcomeBackgroundUrl": "/assets/background.jpg"
+    },
+    "default_theme": "light",
+    "disable_custom_urls": true,
     "disable_guests": true,
+    "disable_login_language_selector": false,
     "disable_3pid_login": true,
     "show_labs_settings": false,
-    "default_theme": "light",
-    "default_country_code": "GB",
-    "permalink_prefix": "http://localhost:8080"
+    "features": {
+        "feature_spotlight": true
+    },
+    "bug_report_endpoint_url": "",
+    "integrations_ui_url": "",
+    "integrations_rest_url": "",
+    "integrations_widgets_urls": [],
+    "setting_defaults": {
+        "breadcrumbs": true
+    }
 }
