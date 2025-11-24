@@ -1,4 +1,4 @@
-# **Technical & Solution Design: The Hearth Hub**
+﻿# **Technical & Solution Design: The Memu Hub**
 
 Version: 1.0 (Household MVP)  
 Date: 15 September 2025  
@@ -27,9 +27,9 @@ The hardware plan is phased to accelerate development while ensuring a productio
   * **Case:** Custom-designed (or premium third-party like Argon ONE V3) fanless, metal enclosure.  
   * **Purpose:** This is the final, commercial-grade product. It offers the reliability, speed, and capacity required for long-term use as a family's primary digital archive.
 
-### **3\. Software Stack (The Hearth OS)**
+### **3\. Software Stack (The Memu OS)**
 
-The Hearth Hub runs a custom "Hearth OS," which is a hardened Raspberry Pi OS Lite (64-bit) with a LUKS-encrypted filesystem. All services run as isolated containers via Docker Compose for security and manageability.
+The Memu Hub runs a custom "Memu OS," which is a hardened Raspberry Pi OS Lite (64-bit) with a LUKS-encrypted filesystem. All services run as isolated containers via Docker Compose for security and manageability.
 
 * **Container 1: Synapse (Matrix Server)**  
   * **Role:** The core communication server.  
@@ -69,6 +69,6 @@ To mitigate the risk of intra-household abuse, the system is designed with a str
 
 ### **5\. Data Flow & Security**
 
-* **Messaging:** The Hearth app on a user's phone establishes an E2EE connection via the Cloudflare Tunnel to the Synapse server on their Hub.  
-* **AI Processing (Hearth Intelligence):** The Intelligence Service has read-only access to the message tables in the PostgreSQL database. It processes this data locally and makes API calls to http://ollama:11434. No data ever leaves the Hub for AI analysis.  
-* **Backup (Hearth Bridge):** A nightly cron job on the Hub performs a pg\_dump of the database. The resulting file is encrypted locally using an encryption key stored only on the Hub. The encrypted blob is then uploaded to the user's connected cloud storage account via their API.
+* **Messaging:** The Memu app on a user's phone establishes an E2EE connection via the Cloudflare Tunnel to the Synapse server on their Hub.  
+* **AI Processing (Memu Intelligence):** The Intelligence Service has read-only access to the message tables in the PostgreSQL database. It processes this data locally and makes API calls to http://ollama:11434. No data ever leaves the Hub for AI analysis.  
+* **Backup (Memu Bridge):** A nightly cron job on the Hub performs a pg\_dump of the database. The resulting file is encrypted locally using an encryption key stored only on the Hub. The encrypted blob is then uploaded to the user's connected cloud storage account via their API.

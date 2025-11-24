@@ -1,4 +1,4 @@
-# services/intelligence/src/main.py
+﻿# services/intelligence/src/main.py
 """
 Memu Intelligence Service
 Processes messages locally using AI without sending data to external services.
@@ -96,7 +96,7 @@ class MemuIntelligence:
             return {
                 'action': 'send_message',
                 'room_id': message['room_id'],
-                'content': '❌ Usage: /remember [fact to remember]'
+                'content': 'âŒ Usage: /remember [fact to remember]'
             }
         
         conn = self.get_db_connection()
@@ -118,7 +118,7 @@ class MemuIntelligence:
             return {
                 'action': 'send_message',
                 'room_id': message['room_id'],
-                'content': f'✓ Remembered: {fact}'
+                'content': f'âœ“ Remembered: {fact}'
             }
         except Exception as e:
             logger.error(f"Error storing memory: {e}")
@@ -126,7 +126,7 @@ class MemuIntelligence:
             return {
                 'action': 'send_message',
                 'room_id': message['room_id'],
-                'content': '❌ Failed to store memory'
+                'content': 'âŒ Failed to store memory'
             }
         finally:
             cursor.close()
@@ -144,7 +144,7 @@ class MemuIntelligence:
             return {
                 'action': 'send_message',
                 'room_id': message['room_id'],
-                'content': '❌ Usage: /recall [what to search for]'
+                'content': 'âŒ Usage: /recall [what to search for]'
             }
         
         conn = self.get_db_connection()
@@ -166,14 +166,14 @@ class MemuIntelligence:
                 return {
                     'action': 'send_message',
                     'room_id': message['room_id'],
-                    'content': f"🤔 I don't remember anything about '{query}'"
+                    'content': f"ðŸ¤” I don't remember anything about '{query}'"
                 }
             
             # Format results
-            response = f"💡 Here's what I remember about '{query}':\n\n"
+            response = f"ðŸ’¡ Here's what I remember about '{query}':\n\n"
             for row in results:
                 created = row['created_at'].strftime('%Y-%m-%d')
-                response += f"• {row['fact']} (saved {created})\n"
+                response += f"â€¢ {row['fact']} (saved {created})\n"
             
             return {
                 'action': 'send_message',
@@ -185,7 +185,7 @@ class MemuIntelligence:
             return {
                 'action': 'send_message',
                 'room_id': message['room_id'],
-                'content': '❌ Failed to recall memory'
+                'content': 'âŒ Failed to recall memory'
             }
         finally:
             cursor.close()
@@ -203,7 +203,7 @@ class MemuIntelligence:
             return {
                 'action': 'send_message',
                 'room_id': message['room_id'],
-                'content': '❌ Usage: /addtolist [item1, item2, ...]'
+                'content': 'âŒ Usage: /addtolist [item1, item2, ...]'
             }
         
         items = [item.strip() for item in content.split(',')]
@@ -231,7 +231,7 @@ class MemuIntelligence:
             return {
                 'action': 'send_message',
                 'room_id': message['room_id'],
-                'content': f'✓ Added {len(items)} item(s) to the shopping list'
+                'content': f'âœ“ Added {len(items)} item(s) to the shopping list'
             }
         except Exception as e:
             logger.error(f"Error adding to list: {e}")
@@ -239,7 +239,7 @@ class MemuIntelligence:
             return {
                 'action': 'send_message',
                 'room_id': message['room_id'],
-                'content': '❌ Failed to add items'
+                'content': 'âŒ Failed to add items'
             }
         finally:
             cursor.close()
@@ -264,24 +264,24 @@ class MemuIntelligence:
                 return {
                     'action': 'send_message',
                     'room_id': message['room_id'],
-                    'content': '📝 Shopping list is empty'
+                    'content': 'ðŸ“ Shopping list is empty'
                 }
             
             # Format list
             active_items = [r for r in results if not r['completed']]
             completed_items = [r for r in results if r['completed']]
             
-            response = "📝 Shopping List:\n\n"
+            response = "ðŸ“ Shopping List:\n\n"
             
             if active_items:
                 response += "To Buy:\n"
                 for item in active_items:
-                    response += f"☐ {item['item']}\n"
+                    response += f"â˜ {item['item']}\n"
             
             if completed_items:
                 response += "\nCompleted:\n"
                 for item in completed_items[:5]:  # Show last 5 completed
-                    response += f"☑ {item['item']}\n"
+                    response += f"â˜‘ {item['item']}\n"
             
             response += f"\nTotal items: {len(active_items)} active"
             
@@ -295,7 +295,7 @@ class MemuIntelligence:
             return {
                 'action': 'send_message',
                 'room_id': message['room_id'],
-                'content': '❌ Failed to retrieve list'
+                'content': 'âŒ Failed to retrieve list'
             }
         finally:
             cursor.close()
@@ -309,7 +309,7 @@ class MemuIntelligence:
             return {
                 'action': 'send_message',
                 'room_id': message['room_id'],
-                'content': '❌ Usage: /done [item name]'
+                'content': 'âŒ Usage: /done [item name]'
             }
         
         conn = self.get_db_connection()
@@ -332,21 +332,21 @@ class MemuIntelligence:
                 return {
                     'action': 'send_message',
                     'room_id': message['room_id'],
-                    'content': f'✓ Marked as done: {result[0]}'
+                    'content': f'âœ“ Marked as done: {result[0]}'
                 }
             else:
                 return {
                     'action': 'send_message',
                     'room_id': message['room_id'],
-                    'content': f"❌ Item '{item_name}' not found in list"
+                    'content': f"âŒ Item '{item_name}' not found in list"
                 }
         except Exception as e:
-            logger.error(f"Error marking done: {e}")
+            logger.error(f"Error marMemug done: {e}")
             conn.rollback()
             return {
                 'action': 'send_message',
                 'room_id': message['room_id'],
-                'content': '❌ Failed to mark item as done'
+                'content': 'âŒ Failed to mark item as done'
             }
         finally:
             cursor.close()
@@ -455,7 +455,7 @@ Your JSON response:""",
                     return {
                         'action': 'send_message',
                         'room_id': message['room_id'],
-                        'content': f'✓ Added {len(items)} item(s) to shopping list: {", ".join(items)}'
+                        'content': f'âœ“ Added {len(items)} item(s) to shopping list: {", ".join(items)}'
                     }
                 
         except json.JSONDecodeError:

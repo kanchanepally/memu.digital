@@ -1,16 +1,16 @@
-import asyncio
+﻿import asyncio
 import unittest
 from unittest.mock import AsyncMock, patch
 
-from main import HearthIntelligence
+from main import MemuIntelligence
 
 
-class TestHearthIntelligence(unittest.TestCase):
+class TestMemuIntelligence(unittest.TestCase):
     @patch('main.psycopg2')
     @patch('main.httpx')
     async def test_handle_summarize(self, mock_httpx, mock_psycopg2):
-        # Create an instance of the HearthIntelligence class
-        intelligence = HearthIntelligence()
+        # Create an instance of the MemuIntelligence class
+        intelligence = MemuIntelligence()
 
         # Create a mock message
         message = {

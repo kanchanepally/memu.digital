@@ -1,4 +1,4 @@
-Memu OS: 90-Day Execution Plan
+﻿Memu OS: 90-Day Execution Plan
 
 Current Phase: Productization & Mobile MVP
 Status: Foundation Secure (Memu OS v0.1)
@@ -85,7 +85,7 @@ Open orders for "Memu Hub Kit".
 
 "Kill List" (What we are NOT doing yet)
 
-Element Branding: We are not skinning Element anymore. We are building native.
+Element Branding: We are not sMemuning Element anymore. We are building native.
 
 Federation: We are not trying to talk to other Matrix servers yet. Isolation is a feature.
 

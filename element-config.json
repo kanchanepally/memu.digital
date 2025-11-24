@@ -1,11 +1,11 @@
-{
+﻿{
     "default_server_config": {
         "m.homeserver": {
             "base_url": "http://localhost:8008",
-            "server_name": "hearth.local"
+            "server_name": "memu.local"
         }
     },
-    "brand": "Hearth - Your Private Family Space",
+    "brand": "Memu - Your Private Family Space",
     "disable_guests": true,
     "disable_3pid_login": true,
     "show_labs_settings": false,

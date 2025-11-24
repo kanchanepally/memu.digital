@@ -1,12 +1,12 @@
-services:
+﻿services:
   intelligence:
     build:
       context: ./services/intelligence
       dockerfile: dockerfile
-    container_name: hearth_intelligence
+    container_name: Memu_intelligence
     restart: unless-stopped
     networks:
-      - hearth
+      - Memu
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432

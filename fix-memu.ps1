@@ -1,7 +1,7 @@
-# Hearth Fix Script for Windows
-# Run this from: C:\Users\Lenovo\Code\hearth\hearth-os
+﻿# Memu Fix Script for Windows
+# Run this from: C:\Users\Lenovo\Code\Memu\Memu-os
 
-Write-Host "Fixing Hearth Setup..." -ForegroundColor Cyan
+Write-Host "Fixing Memu Setup..." -ForegroundColor Cyan
 
 # Step 1: Copy schema
 Write-Host "`nStep 1: Copying database schema..." -ForegroundColor Yellow
@@ -17,7 +17,7 @@ Write-Host "Containers stopped" -ForegroundColor Green
 Write-Host "`nStep 3: Generating Synapse configuration..." -ForegroundColor Yellow
 docker run -it --rm `
   -v ${PWD}/synapse_data:/data `
-  -e SYNAPSE_SERVER_NAME=hearth.local `
+  -e SYNAPSE_SERVER_NAME=memu.local `
   -e SYNAPSE_REPORT_STATS=no `
   matrixdotorg/synapse:latest generate
 
@@ -35,9 +35,9 @@ $dbConfig = @"
 database:
   name: psycopg2
   args:
-    user: hearth
+    user: Memu
     password: dummy_password
-    database: hearth
+    database: Memu
     host: postgres
     port: 5432
     cp_min: 5
@@ -75,7 +75,7 @@ Write-Host "`nService Status:" -ForegroundColor Cyan
 docker compose ps
 
 Write-Host "`n========================================" -ForegroundColor Cyan
-Write-Host "Hearth Setup Complete!" -ForegroundColor Green
+Write-Host "Memu Setup Complete!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
 
 Write-Host "`nNext Steps:" -ForegroundColor Yellow

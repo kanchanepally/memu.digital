@@ -1,4 +1,4 @@
-# services/intelligence/Dockerfile
+﻿# services/intelligence/Dockerfile
 
 FROM python:3.11-slim
 
@@ -24,8 +24,8 @@ COPY src/ /app/src/
 RUN mkdir -p /logs
 
 # Run as non-root user
-RUN useradd -m -u 1000 hearth && \
-    chown -R hearth:hearth /app /logs
-USER hearth
+RUN useradd -m -u 1000 Memu && \
+    chown -R Memu:Memu /app /logs
+USER Memu
 
 CMD ["python", "/app/src/main.py"]

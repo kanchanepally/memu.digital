@@ -1,4 +1,4 @@
-﻿-- Hearth Family Database
+﻿-- Memu Family Database
 -- Simple schema for: Messages (Matrix), Photos, Tasks
 
 -- Family Members
@@ -67,4 +67,4 @@ CREATE INDEX idx_plans_date ON plans(plan_date) WHERE completed = false;
 
 -- Sample data
 INSERT INTO family_members (matrix_user_id, name) 
-VALUES ('@demo:family.hearth.local', 'Demo User');
+VALUES ('@demo:family.memu.local', 'Demo User');

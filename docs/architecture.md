@@ -1,4 +1,4 @@
-Memu OS Architecture
+﻿Memu OS Architecture
 
 System Overview
 
@@ -34,7 +34,7 @@ Client Layer (The Interface):
 
 Memu Mobile: React Native (Expo) app. Uses Matrix SDK + Custom APIs.
 
-Memu Web: (Legacy/Desktop) Skinned Element Web instance.
+Memu Web: (Legacy/Desktop) SMemuned Element Web instance.
 
 Network Flow
 

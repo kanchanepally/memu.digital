@@ -1,4 +1,4 @@
-# Configuration file for Synapse.
+﻿# Configuration file for Synapse.
 #
 # This is a YAML file: see [1] for a quick introduction. Note in particular
 # that *indentation is important*: all the elements of a list or dictionary
@@ -9,7 +9,7 @@
 # For more information on how to configure Synapse, including a complete accounting of
 # each option, go to docs/usage/configuration/config_documentation.md or
 # https://element-hq.github.io/synapse/latest/usage/configuration/config_documentation.html
-server_name: "hearth.local"
+server_name: "memu.local"
 pid_file: /data/homeserver.pid
 listeners:
   - port: 8008
@@ -23,13 +23,13 @@ database:
   name: sqlite3
   args:
     database: /data/homeserver.db
-log_config: "/data/hearth.local.log.config"
+log_config: "/data/memu.local.log.config"
 media_store_path: /data/media_store
 registration_shared_secret: "cP~gfLBr5eFweSjUh.f&xGzAerOj=_L#dS.bxxZ.c@ng:-vEW0"
 report_stats: false
 macaroon_secret_key: "J4x9y@FwXW,rBPEI*KV#gCDOBJYyEdgVEpgOa;wiiwBAG4heW3"
 form_secret: "@9KLQ~*h7i5E8z-jG9QOu~AZ_d~IW25lwAIf:t4zv*.Vn4&Jp2"
-signing_key_path: "/data/hearth.local.signing.key"
+signing_key_path: "/data/memu.local.signing.key"
 trusted_key_servers:
   - server_name: "matrix.org"
 
@@ -39,9 +39,9 @@ trusted_key_servers:
 database:
   name: psycopg2
   args:
-    user: hearth
+    user: Memu
     password: dummy_password
-    database: hearth
+    database: Memu
     host: postgres
     port: 5432
     cp_min: 5
