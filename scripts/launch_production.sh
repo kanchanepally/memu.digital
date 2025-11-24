@@ -2,7 +2,9 @@
 # Switches from Bootstrap Mode to Production Mode
 
 FAMILY_SLUG=$1
-PROJECT_ROOT="/home/hareesh/memu-os"
+# Get the directory where the script is located, then go up one level to root
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 # 1. Generate Nginx Config
 # We reuse the logic from the install script, but purely for the config generation

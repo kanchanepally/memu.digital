@@ -1,81 +1,68 @@
-﻿Memu OS Architecture
+﻿# Memu OS Architecture
 
-System Overview
+## System Overview
 
-Memu OS is a microservices architecture wrapped in a single appliance experience. It is designed to be Tenant-Isolated (one family per device) and Network Agnostic (works behind any router).
+Memu OS is a **vertically integrated Private Cloud Appliance** designed to provide a "Digital Sanctuary" for families. It combines the convenience of modern cloud services with the sovereignty of local hosting.
 
-The Stack
+**Key Philosophies:**
+- **Tenant-Isolated:** One family, one physical device.
+- **Edge-Based Safety:** Safety scanning occurs locally on the NPU, not in the cloud.
+- **Network Agnostic:** Works behind any router via encrypted tunnels.
 
-Hardware Layer:
+## The Stack
 
-Raspberry Pi 5 (4GB or 8GB RAM)
+### Hardware Layer
+- **Compute:** Raspberry Pi 5 (8GB RAM recommended).
+- **Storage:** NVMe SSD (PCIe Gen 2) - Holds OS and User Data.
+- **AI Accelerator:** Raspberry Pi AI Kit (Hailo-8L NPU) - Offloads computer vision tasks.
+- **Boot:** SD Card (Bootloader only).
 
-NVMe SSD (PCIe Gen 2) - Data Storage & OS
+### Routing Layer (The "Front Door")
+- **Ingress:** Cloudflare Tunnel (`cloudflared`). Zero-configuration remote access without open ports.
+- **Internal Proxy:** Nginx. Terminates SSL (internally), handles `/.well-known` discovery, and routes traffic to containers.
 
-SD Card - Bootloader only
+### Application Layer (Docker Compose)
 
-Routing Layer (The "Front Door"):
+The system runs as a cohesive suite of Docker containers:
 
-Cloudflare Tunnel (cloudflared): Ingress from the internet. No open ports on router.
+#### Core Infrastructure
+- **Database:** `immich-postgres` (PostgreSQL 15 + `pgvecto.rs` extension). Unified database for Chat, Photos, and AI embeddings.
+- **Cache:** `redis` (Redis 6.2). Shared cache for Immich and other services.
 
-Nginx Proxy: Internal traffic director. Terminates SSL, handles /.well-known discovery, routes to containers.
+#### Modules
+1.  **Memu Chat:**
+    -   **Backend:** `synapse` (Matrix Homeserver).
+    -   **Frontend:** `element` (Element Web, skinned for Memu).
+2.  **Memu Memories:**
+    -   **Server:** `immich-server`.
+    -   **Workers:** `immich-microservices`.
+    -   **ML Engine:** `immich-machine-learning` (Hardware accelerated via Hailo NPU).
+3.  **Memu Intelligence:**
+    -   **LLM Server:** `ollama` (Running Llama 3.2 3B).
+    -   **Safety:** Local Nudity/CSAM scanning at the edge.
 
-Application Layer (Docker):
+#### Setup & Management
+-   **Bootstrap:** Python/Flask application for initial "Day 0" configuration.
 
-Synapse: The Matrix Homeserver (Chat Backend).
+## Network Flow
 
-PostgreSQL: The source of truth (Database).
+### 1. Setup Mode (Day 0)
+-   **Discovery:** mDNS broadcasts `memu.local`.
+-   **Flow:** User Phone -> `http://memu.local:80` -> Nginx -> Bootstrap App.
+-   **Action:** User enters Family Name -> System generates `.env` & secrets -> Launches Production Stack.
 
-Immich: The Photo Server (Coming Phase 2).
+### 2. Production Mode (Day 1+)
+-   **Remote Access:** `https://smiths.memu.digital` -> Cloudflare Edge -> Tunnel -> `cloudflared` container -> Nginx -> Service (Synapse/Element/Immich).
+-   **Local Access:** `http://memu.local` -> Nginx -> Element Web.
+-   **Matrix Federation:** Incoming federation traffic -> Tunnel -> Synapse (Port 8008).
 
-Memu Bootstrap: (Python/Flask) Temporary service for initial setup.
+## Data Sovereignty Strategy
 
-Client Layer (The Interface):
+### Storage
+-   **Location:** `/var/lib/docker/volumes/` (Mapped to NVMe).
+-   **Format:** Standard Linux filesystems (ext4). Photos stored as standard files, not blobs.
 
-Memu Mobile: React Native (Expo) app. Uses Matrix SDK + Custom APIs.
-
-Memu Web: (Legacy/Desktop) SMemuned Element Web instance.
-
-Network Flow
-
-1. Setup Mode (Day 0)
-
-User: Connects to WiFi.
-
-Discovery: mDNS broadcasts memu.local.
-
-Traffic: Phone -> http://memu.local -> Nginx -> Bootstrap App (Port 5000).
-
-Action: User inputs "Smiths". System writes .env, generates Nginx config, and restarts.
-
-2. Production Mode (Day 1+)
-
-External Traffic:
-smiths.memu.digital -> Cloudflare Edge -> Tunnel -> Localhost:80 -> Nginx.
-
-/ -> Memu Web (Optional Desktop Access).
-
-/_matrix -> Synapse (API for Mobile App).
-
-Mobile App Connectivity:
-The App attempts to resolve smiths.memu.digital.
-
-Remote: Connects via Cloudflare Tunnel.
-
-Local (Future): Will connect via Split DNS for max speed.
-
-Data Sovereignty Strategy
-
-Storage
-
-Location: /var/lib/docker/volumes/memu_*
-
-Medium: NVMe SSD (ext4).
-
-Backup Protocol (3-2-1)
-
-Live: PostgreSQL WAL (Write Ahead Log).
-
-Nightly: pg_dump to local compressed archive.
-
-Offsite: Encrypted .tar.gz.enc pushed to User's Cloud Storage (Rclone) or Local USB.
+### Backup Protocol (3-2-1)
+-   **Live:** PostgreSQL WAL (Write Ahead Log).
+-   **Nightly:** `pg_dump` to local compressed archive.
+-   **Offsite:** Encrypted backup to User's Cloud Storage (Rclone) or Physical USB (Future).

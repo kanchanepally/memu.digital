@@ -87,5 +87,29 @@ cat > element-config.json << ELEMENTEOF
 ELEMENTEOF
 
 echo ""
+# 5. Systemd Service Setup
+echo "Configuring system services..."
+
+# Get absolute path to project root
+PROJECT_ROOT=$(pwd)
+USER_NAME=$(whoami)
+
+# Update service files with correct paths
+sed -i "s|WorkingDirectory=.*|WorkingDirectory=${PROJECT_ROOT}/bootstrap|g" systemd/memu-setup.service
+sed -i "s|User=.*|User=${USER_NAME}|g" systemd/memu-setup.service
+
+sed -i "s|WorkingDirectory=.*|WorkingDirectory=${PROJECT_ROOT}|g" systemd/memu-production.service
+sed -i "s|User=.*|User=${USER_NAME}|g" systemd/memu-production.service
+
+# Copy to systemd directory
+echo "Installing services (requires sudo)..."
+sudo cp systemd/memu-setup.service /etc/systemd/system/
+sudo cp systemd/memu-production.service /etc/systemd/system/
+
+sudo systemctl daemon-reload
+sudo systemctl enable memu-setup.service
+
+echo ""
 echo -e "${GREEN}Configuration complete!${NC}"
-echo "To start Memu OS, run: docker compose up -d"
+echo "To start the Setup Wizard, run: sudo systemctl start memu-setup.service"
+echo "Then visit: http://$(hostname).local"

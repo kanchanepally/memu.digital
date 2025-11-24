@@ -154,7 +154,44 @@ services:
     environment:
       - TUNNEL_TOKEN=${CLOUDFLARED_TOKEN}
 
+  # ---------------------------------------------------------------------------
+  # REVERSE PROXY (Nginx)
+  # ---------------------------------------------------------------------------
+
+  nginx:
+    container_name: memu_proxy
+    image: nginx:alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      - synapse
+      - element
+
+  # ---------------------------------------------------------------------------
+  # INTELLIGENCE WORKER (The Memu Bot)
+  # ---------------------------------------------------------------------------
+
+  intelligence:
+    container_name: memu_intelligence
+    build: ./services/intelligence
+    restart: always
+    environment:
+      - DB_HOST=database
+      - DB_NAME=immich # Using the shared Postgres
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - OLLAMA_HOST=http://ollama:11434
+      - AI_ENABLED=true
+    depends_on:
+      - database
+      - ollama
+
 volumes:
   pgdata:
   redisdata:
   model-cache:
+  ollama_data:

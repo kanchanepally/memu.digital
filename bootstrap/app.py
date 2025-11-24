@@ -1,18 +1,4 @@
 import os
-import subprocess
-from flask import Flask, render_template, request
-import secrets
-
-app = Flask(__name__)
-
-# Path to your project root
-PROJECT_ROOT = "/home/hareesh/memu-os"
-
-@app.route('/')
-def welcome():
-    return render_template('setup.html')
-
-@app.route('/configure', methods=['POST'])
 def configure():
     family_name = request.form.get('family_name')
     password = request.form.get('password')
