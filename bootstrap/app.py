@@ -1,9 +1,24 @@
 import os
+import subprocess
+from flask import Flask, render_template, request
+import secrets
+
+app = Flask(__name__)
+
+# Path to your project root (Dynamic detection)
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+@app.route('/')
+def welcome():
+    return render_template('setup.html')
+
+@app.route('/configure', methods=['POST'])
 def configure():
     family_name = request.form.get('family_name')
     password = request.form.get('password')
+    cloudflare_token = request.form.get('cloudflare_token')
     
-    if not family_name or not password:
+    if not family_name or not password or not cloudflare_token:
         return "Missing information", 400
 
     # Clean the family name to be safe for URLs
@@ -23,6 +38,11 @@ DB_PASSWORD={db_pass}
 SYNAPSE_ADMIN_TOKEN={synapse_token}
 ENABLE_REGISTRATION=true
 TZ=Europe/London
+CLOUDFLARED_TOKEN={cloudflare_token}
+UPLOAD_LOCATION=/mnt/immich-data
+SERVER_NAME={domain}
+AI_ENABLED=true
+LOG_LEVEL=info
 """
     
     # Write .env

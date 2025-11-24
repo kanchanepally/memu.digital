@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 User=root
-WorMemugDirectory=/home/hareesh/memu-os/bootstrap
+WorkingDirectory=/home/hareesh/memu-os/bootstrap
 ExecStart=/usr/bin/python3 app.py
 Restart=always
 
