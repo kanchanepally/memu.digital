@@ -32,20 +32,6 @@ class MemuIntelligence:
             'database': os.getenv('DB_NAME', 'memu_core'),
             'user': os.getenv('DB_USER', 'memu_user'),
             'password': os.getenv('DB_PASSWORD'),
-        }
-        self.ollama_url = os.getenv('OLLAMA_HOST', 'http://ollama:11434')
-        self.model = os.getenv('OLLAMA_MODEL', 'phi3:mini')
-        self.ai_enabled = os.getenv('AI_ENABLED', 'false').lower() == 'true'
-        self.ai_timeout = int(os.getenv('AI_TIMEOUT', 30))
-        
-        logger.info(f"Intelligence Service initialized")
-        logger.info(f"AI Enabled: {self.ai_enabled}")
-        logger.info(f"Model: {self.model}")
-    
-    def get_db_connection(self):
-        """Create a new database connection."""
-        return psycopg2.connect(**self.db_config)
-    
     async def process_message(self, message: Dict) -> Optional[Dict]:
         """
         Process a message and determine if it contains a command.
@@ -565,34 +551,6 @@ async def main():
             """)
             
             messages = cursor.fetchall()
-            cursor.close()
-            conn.close()
-            
-            for msg in messages:
-                message = dict(msg)
-                
-                # Process message
-                action = await intelligence.process_message(message)
-                
-                # Execute action if needed
-                if action:
-                    logger.info(f"Command detected in room {message['room_id']}: {action['action']}")
-                    # Here you would send the action result back to Matrix
-                    # For now, we just log it
-                
-                # Mark as processed
-                conn = intelligence.get_db_connection()
-                cursor = conn.cursor()
-                cursor.execute("""
-                    UPDATE messages 
-                    SET processed_by_ai = true 
-                    WHERE id = %s
-                """, (message['id'],))
-                conn.commit()
-                cursor.close()
-                conn.close()
-            
-            # Sleep briefly before next poll
             await asyncio.sleep(2)
             
         except KeyboardInterrupt:
