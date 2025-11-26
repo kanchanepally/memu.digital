@@ -15,14 +15,22 @@ server {
     listen 80;
     server_name localhost;
 
+    # 1. Use Docker's internal DNS resolver to prevent startup crashes
+    resolver 127.0.0.11 valid=30s;
+
     location / {
-        proxy_pass http://memu_element:80;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Forwarded-For \$remote_addr;
+        # 2. Use a variable to force runtime resolution
+        set $upstream_element http://memu_chat_ui:80;
+        proxy_pass $upstream_element;
+        
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $remote_addr;
     }
 
     location ~ ^/(_matrix|_synapse/client) {
-        proxy_pass http://memu_synapse:8008;
+        set $upstream_synapse http://memu_chat_core:8008;
+        proxy_pass $upstream_synapse;
+        
         proxy_set_header X-Forwarded-For \$remote_addr;
         proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_set_header Host \$host;

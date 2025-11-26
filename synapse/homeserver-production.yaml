@@ -1,0 +1,35 @@
+server_name: "rachandhari.memu.digital"
+pid_file: /data/homeserver.pid
+listeners:
+  - port: 8008
+    tls: false
+    type: http
+    x_forwarded: true
+    resources:
+      - names: [client, federation]
+        compress: false
+
+database:
+  name: psycopg2
+  allow_unsafe_locale: true
+  args:
+    user: memu_user
+    password: "nJdVTJeLkUUh14ty9xW1hw"
+    database: immich
+    host: postgres
+    port: 5432
+    cp_min: 5
+    cp_max: 10
+
+log_config: "/data/memu.local.log.config"
+media_store_path: /data/media_store
+registration_shared_secret: "cUzOf;GELqBfK#mvG*Zb=~K+UsPzE2*qKWc3Yk,#vut=Sc;2*S"
+report_stats: false
+macaroon_secret_key: "z2WX7TNKJzKJey1la=Nu,QhuW0MgvC6uR2TJQKj=kqKpM0iPH-"
+form_secret: ".aMIe4trRB5QuVu-y2icbISGy&I7bc,~3.QRCevYg26nE2Z5KL"
+signing_key_path: "/data/memu.local.signing.key"
+trusted_key_servers:
+  - server_name: "matrix.org"
+
+enable_registration: true
+enable_registration_without_verification: true
