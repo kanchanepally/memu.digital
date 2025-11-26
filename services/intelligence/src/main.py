@@ -25,18 +25,6 @@ logger = logging.getLogger("memu.intelligence")
 class MemuIntelligence:
     """Main intelligence service that processes messages and executes AI commands."""
     
-    def __init__(self):
-        self.db_config = {
-            'host': os.getenv('DB_HOST', 'postgres'),
-            'port': int(os.getenv('DB_PORT', 5432)),
-            'database': os.getenv('DB_NAME', 'memu_core'),
-            'user': os.getenv('DB_USER', 'memu_user'),
-            'password': os.getenv('DB_PASSWORD'),
-    async def process_message(self, message: Dict) -> Optional[Dict]:
-        """
-        Process a message and determine if it contains a command.
-        
-        Args:
             message: Dict with keys: id, room_id, sender, content, timestamp
             
         Returns:
