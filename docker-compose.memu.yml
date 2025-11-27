@@ -1,0 +1,196 @@
+name: memu-suite
+services:
+  memu_postgres:
+    container_name: memu_postgres
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: immich
+      POSTGRES_USER: memu_user
+      POSTGRES_PASSWORD: memupass123
+      POSTGRES_INITDB_ARGS: --encoding=UTF8 --lc-collate=C --lc-ctype=C
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U memu_user -d immich" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - memu-suite_pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      default:
+        aliases:
+          - postgres
+
+  memu_synapse:
+    container_name: memu_synapse
+    image: matrixdotorg/synapse:latest
+    ports:
+      - "8008:8008"
+    volumes:
+      - ./synapse:/data
+    environment:
+      - SYNAPSE_SERVER_NAME=rachandhari.memu.digital
+      - SYNAPSE_REPORT_STATS=no
+    depends_on:
+      memu_postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - default
+
+  memu_element:
+    container_name: memu_element
+    image: vectorim/element-web:latest
+    ports:
+      - "8080:80"
+    volumes:
+      - ./element-config.json:/app/config.json
+    restart: unless-stopped
+    networks:
+      - default
+
+  memu_tunnel:
+    container_name: memu_tunnel
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARED_TOKEN}
+    networks:
+      - default
+
+  memu_intelligence:
+    container_name: memu_intelligence
+    build:
+      context: ./services/intelligence
+      dockerfile: dockerfile
+    environment:
+      - DB_HOST=memu_postgres
+      - DB_NAME=immich
+      - DB_USER=memu_user
+      - DB_PASSWORD=memupass123
+      - OLLAMA_HOST=http://memu_brain:11434
+      - AI_ENABLED=true
+      - MATRIX_HOMESERVER_URL=http://memu_synapse:8008
+      - MATRIX_BOT_TOKEN=syt_bWVtdV9ib3Q_TqFgGtXDYzShLxsVQaIS_0scDoR
+    volumes:
+      - ./services/intelligence:/app
+    depends_on:
+      memu_postgres:
+        condition: service_healthy
+      memu_synapse:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - default
+
+  memu_proxy:
+    container_name: memu_proxy
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      - memu_element
+      - memu_synapse
+    restart: unless-stopped
+    networks:
+      default:
+        aliases:
+          - nginx
+
+  # ---------------------------------------------------------------------------
+  # PHOTOS MODULE (Immich)
+  # ---------------------------------------------------------------------------
+
+  memu_photos_server:
+    container_name: memu_photos_server
+    image: ghcr.io/immich-app/immich-server:release
+    command: [ "start.sh", "immich" ]
+    restart: unless-stopped
+    volumes:
+      - ${UPLOAD_LOCATION}:/usr/src/app/upload
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - DB_HOSTNAME=memu_postgres
+      - DB_USERNAME=memu_user
+      - DB_PASSWORD=memupass123
+      - DB_DATABASE_NAME=immich
+      - REDIS_HOSTNAME=memu_redis
+    depends_on:
+      - memu_redis
+      - memu_postgres
+    ports:
+      - "2283:3001"
+    networks:
+      - default
+
+  memu_photos_workers:
+    container_name: memu_photos_workers
+    image: ghcr.io/immich-app/immich-server:release
+    command: [ "start.sh", "microservices" ]
+    restart: unless-stopped
+    volumes:
+      - ${UPLOAD_LOCATION}:/usr/src/app/upload
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - DB_HOSTNAME=memu_postgres
+      - DB_USERNAME=memu_user
+      - DB_PASSWORD=memupass123
+      - DB_DATABASE_NAME=immich
+      - REDIS_HOSTNAME=memu_redis
+    depends_on:
+      - memu_redis
+      - memu_postgres
+    networks:
+      - default
+
+  memu_photos_ml:
+    container_name: memu_photos_ml
+    image: ghcr.io/immich-app/immich-machine-learning:release
+    volumes:
+      - model-cache:/cache
+    environment:
+      - MACHINE_LEARNING_WORKERS=1
+      - MACHINE_LEARNING_WORKER_TIMEOUT=120
+    restart: unless-stopped
+    networks:
+      - default
+
+  memu_redis:
+    container_name: memu_redis
+    image: redis:6.2-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli ping || exit 1" ]
+    volumes:
+      - redisdata:/data
+    networks:
+      - default
+
+  memu_brain:
+    container_name: memu_brain
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes:
+      - memu-suite_ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+    networks:
+      - default
+
+networks:
+  default:
+    name: memu-suite_default
+    driver: bridge
+
+volumes:
+  memu-suite_pgdata:
+    external: true
+  memu-suite_ollama_data:
+    external: true
+  redisdata:
+  model-cache:

@@ -3,3 +3,6 @@ psycopg2-binary==2.9.9
 
 # HTTP client for Ollama
 httpx==0.25.2
+
+# Date parsing for reminders
+dateparser==1.2.0

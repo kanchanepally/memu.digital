@@ -1,0 +1,23 @@
+services:
+  intelligence:
+    build:
+      context: ./services/intelligence
+      dockerfile: dockerfile
+    container_name: Memu_intelligence
+    restart: unless-stopped
+    networks:
+      - hearth
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - OLLAMA_HOST=http://ollama:11434
+      - OLLAMA_MODEL=phi3:mini
+      - AI_ENABLED=${AI_ENABLED}
+      - AI_TIMEOUT=30
+      - LOG_LEVEL=${LOG_LEVEL}
+    depends_on:
+      postgres:
+        condition: service_healthy

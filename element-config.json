@@ -1,32 +1,25 @@
 ﻿{
     "default_server_config": {
         "m.homeserver": {
-            "base_url": "https://memu.local",
-            "server_name": "Memu Sanctuary"
+            "base_url": "https://rachandhari.memu.digital",
+            "server_name": "rachandhari.memu.digital"
         },
         "m.identity_server": {
             "base_url": "https://vector.im"
         }
     },
-    "brand": "Memu Sanctuary",
-    "branding": {
-        "authHeaderLogoUrl": "/assets/logo.png",
-        "welcomeBackgroundUrl": "/assets/background.jpg"
-    },
-    "default_theme": "light",
-    "disable_custom_urls": true,
-    "disable_guests": true,
-    "disable_login_language_selector": false,
-    "disable_3pid_login": true,
-    "show_labs_settings": false,
-    "features": {
-        "feature_spotlight": true
-    },
-    "bug_report_endpoint_url": "",
-    "integrations_ui_url": "",
-    "integrations_rest_url": "",
-    "integrations_widgets_urls": [],
-    "setting_defaults": {
-        "breadcrumbs": true
-    }
+    "brand": "Memu",
+    "integrations_ui_url": "https://scalar.vector.im/",
+    "integrations_rest_url": "https://scalar.vector.im/api",
+    "integrations_widgets_urls": [
+        "https://scalar.vector.im/_matrix/integrations/v1",
+        "https://scalar.vector.im/api",
+        "https://scalar-staging.vector.im/_matrix/integrations/v1",
+        "https://scalar-staging.vector.im/api",
+        "https://scalar-staging.riot.im/scalar/api"
+    ],
+    "hosting_signup_link": "https://element.io/matrix-services?utm_source=element-web&utm_medium=web",
+    "bug_report_endpoint_url": "https://element.io/bugreports/submit",
+    "uisi_autorullu_url": "https://element.io/bugreports/submit",
+    "show_labs_settings": true
 }

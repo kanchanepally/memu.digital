@@ -13,10 +13,15 @@ from datetime import datetime, timedelta
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import httpx
+import dateparser
 
 # Configure logging
+log_level = os.getenv("LOG_LEVEL", "INFO")
+if not log_level:
+    log_level = "INFO"
+
 logging.basicConfig(
-    level=os.getenv("LOG_LEVEL", "INFO"),
+    level=log_level,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger("memu.intelligence")
@@ -24,7 +29,101 @@ logger = logging.getLogger("memu.intelligence")
 
 class MemuIntelligence:
     """Main intelligence service that processes messages and executes AI commands."""
-    
+
+    def __init__(self):
+        self.db_host = os.getenv("DB_HOST", "database")
+        self.db_name = os.getenv("DB_NAME", "immich")
+        self.db_user = os.getenv("DB_USER", "postgres")
+        self.db_password = os.getenv("DB_PASSWORD", "postgres")
+        self.ollama_url = os.getenv("OLLAMA_HOST", "http://ollama:11434")
+        self.model = os.getenv("OLLAMA_MODEL", "llama3.2")
+        self.ai_enabled = os.getenv("AI_ENABLED", "true").lower() == "true"
+        self.ai_timeout = int(os.getenv("AI_TIMEOUT", "30"))
+        
+        self.hs_url = os.getenv("MATRIX_HOMESERVER_URL", "http://synapse:8008")
+        self.bot_token = os.getenv("MATRIX_BOT_TOKEN", "")
+
+    def get_db_connection(self):
+        return psycopg2.connect(
+            host=self.db_host,
+            database=self.db_name,
+            user=self.db_user,
+            password=self.db_password
+        )
+
+    async def execute_action(self, action: Dict):
+        """Execute the action returned by process_message."""
+        if action['action'] == 'send_message':
+            await self.send_matrix_message(action['room_id'], action['content'])
+
+    async def check_invites(self):
+        """Check for room invitations and join them."""
+        if not self.hs_url or not self.bot_token:
+            return
+
+        url = f"{self.hs_url}/_matrix/client/r0/sync"
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    url,
+                    headers={"Authorization": f"Bearer {self.bot_token}"},
+                    params={"timeout": 0, "filter": '{"room":{"include_leave":false,"timeline":{"limit":1}}}'}
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    invites = data.get("rooms", {}).get("invite", {})
+                    for room_id in invites:
+                        logger.info(f"Found invite for room {room_id}. Joining...")
+                        await self.join_room(room_id)
+        except Exception as e:
+            logger.error(f"Error checking invites: {e}")
+
+    async def join_room(self, room_id: str):
+        url = f"{self.hs_url}/_matrix/client/r0/rooms/{room_id}/join"
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    url,
+                    headers={"Authorization": f"Bearer {self.bot_token}"},
+                    json={}
+                )
+                if response.status_code == 200:
+                    logger.info(f"Successfully joined room {room_id}")
+                else:
+                    logger.error(f"Failed to join room {room_id}: {response.text}")
+        except Exception as e:
+            logger.error(f"Error joining room {room_id}: {e}")
+
+    async def send_matrix_message(self, room_id: str, content: str):
+        """Send a message to a Matrix room."""
+        if not self.hs_url or not self.bot_token:
+            logger.error("Cannot send message: Matrix configuration missing")
+            return
+
+        url = f"{self.hs_url}/_matrix/client/r0/rooms/{room_id}/send/m.room.message"
+        
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    url,
+                    headers={
+                        "Authorization": f"Bearer {self.bot_token}"
+                    },
+                    json={
+                        "msgtype": "m.text",
+                        "body": content
+                    }
+                )
+                response.raise_for_status()
+                logger.info(f"Sent message to {room_id}")
+        except Exception as e:
+            logger.error(f"Failed to send Matrix message: {e}")
+
+    async def process_message(self, message: Dict) -> Optional[Dict]:
+        """
+        Process a single message and determine action.
+        
+        Args:
             message: Dict with keys: id, room_id, sender, content, timestamp
             
         Returns:
@@ -41,6 +140,8 @@ class MemuIntelligence:
             return await self.handle_add_to_list(message)
         elif content.startswith('/showlist'):
             return await self.handle_show_list(message)
+        elif content.startswith('/remind'):
+            return await self.handle_remind(message)
         elif content.startswith('/done'):
             return await self.handle_mark_done(message)
         elif content.startswith('/summarize'):
@@ -57,6 +158,152 @@ class MemuIntelligence:
         
         return None
     
+    async def handle_remind(self, message: Dict) -> Dict:
+        """
+        Set a reminder using AI to extract time and task.
+        
+        Example: "/remind me to call Mom tomorrow at 5pm"
+        """
+        content = message['content'].replace('/remind', '').strip()
+        
+        task = content
+        dt = None
+        
+        # 1. Try to use AI to extract task and time
+        if self.ai_enabled:
+            try:
+                async with httpx.AsyncClient(timeout=self.ai_timeout) as client:
+                    response = await client.post(
+                        f"{self.ollama_url}/api/generate",
+                        json={
+                            'model': self.model,
+                            'prompt': f"""Extract the task and the time from this reminder request.
+
+Request: "{content}"
+
+Respond ONLY with valid JSON in this format:
+{{
+    "task": "what to do",
+    "time": "when to do it"
+}}
+
+Example:
+Request: "remind me to check the oven in 1 minute"
+Response: {{"task": "check the oven", "time": "in 1 minute"}}
+
+Your JSON response:""",
+                            'stream': False,
+                            'options': {'temperature': 0.1}
+                        }
+                    )
+                    
+                    result = response.json()
+                    ai_text = result.get('response', '{}').strip()
+                    # Clean up markdown if present
+                    if ai_text.startswith('```json'):
+                        ai_text = ai_text[7:]
+                    if ai_text.endswith('```'):
+                        ai_text = ai_text[:-3]
+                        
+                    extracted = json.loads(ai_text)
+                    
+                    if extracted.get('time'):
+                        task = extracted.get('task', content)
+                        time_str = extracted.get('time')
+                        dt = dateparser.parse(time_str, settings={'PREFER_DATES_FROM': 'future'})
+            except Exception as e:
+                logger.error(f"AI extraction failed: {e}")
+
+        # 2. Fallback: If AI failed or disabled, try parsing the whole string
+        if not dt:
+            # Remove "me to" for cleaner parsing
+            clean_content = content
+            if clean_content.lower().startswith('me to '):
+                clean_content = clean_content[6:]
+            dt = dateparser.parse(clean_content, settings={'PREFER_DATES_FROM': 'future'})
+
+        if not dt:
+            return {
+                'action': 'send_message',
+                'room_id': message['room_id'],
+                'content': '❌ I could not understand the time. Try: "/remind call Mom tomorrow at 5pm"'
+            }
+            
+        # If date is in past, maybe they meant tomorrow?
+        if dt < datetime.now():
+            dt = dateparser.parse(content, settings={'PREFER_DATES_FROM': 'future', 'PREFER_DAY_OF_MONTH': 'first'})
+            
+        if not dt or dt < datetime.now():
+             return {
+                'action': 'send_message',
+                'room_id': message['room_id'],
+                'content': '❌ That time is in the past!'
+            }
+
+        conn = self.get_db_connection()
+        cursor = conn.cursor()
+        
+        try:
+            cursor.execute("""
+                INSERT INTO reminders (room_id, user_id, content, due_at)
+                VALUES (%s, %s, %s, %s)
+            """, (
+                message['room_id'],
+                message['sender'],
+                task,
+                dt
+            ))
+            conn.commit()
+            
+            return {
+                'action': 'send_message',
+                'room_id': message['room_id'],
+                'content': f'⏰ Reminder set for {dt.strftime("%Y-%m-%d %H:%M")}: "{task}"'
+            }
+        except Exception as e:
+            logger.error(f"Error setting reminder: {e}")
+            return {
+                'action': 'send_message',
+                'room_id': message['room_id'],
+                'content': '❌ Failed to set reminder'
+            }
+        finally:
+            cursor.close()
+            conn.close()
+
+    async def check_reminders(self):
+        """Check for due reminders and send notifications."""
+        conn = self.get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        try:
+            cursor.execute("""
+                SELECT id, room_id, user_id, content
+                FROM reminders
+                WHERE due_at <= NOW() AND processed = FALSE
+            """)
+            
+            reminders = cursor.fetchall()
+            
+            for rem in reminders:
+                logger.info(f"Sending reminder {rem['id']} to {rem['room_id']}")
+                
+                # Send message
+                await self.send_matrix_message(
+                    rem['room_id'], 
+                    f"🔔 REMINDER: {rem['content']}"
+                )
+                
+                # Mark processed
+                cursor.execute("UPDATE reminders SET processed = TRUE WHERE id = %s", (rem['id'],))
+                conn.commit()
+                
+        except Exception as e:
+            logger.error(f"Error checking reminders: {e}")
+        finally:
+            cursor.close()
+            conn.close()
+
     async def handle_remember(self, message: Dict) -> Dict:
         """
         Store a fact in the household memory.
@@ -70,7 +317,7 @@ class MemuIntelligence:
             return {
                 'action': 'send_message',
                 'room_id': message['room_id'],
-                'content': 'âŒ Usage: /remember [fact to remember]'
+                'content': '❌ Usage: /remember [fact to remember]'
             }
         
         conn = self.get_db_connection()
@@ -92,7 +339,7 @@ class MemuIntelligence:
             return {
                 'action': 'send_message',
                 'room_id': message['room_id'],
-                'content': f'âœ“ Remembered: {fact}'
+                'content': f'✓ Remembered: {fact}'
             }
         except Exception as e:
             logger.error(f"Error storing memory: {e}")
@@ -100,7 +347,7 @@ class MemuIntelligence:
             return {
                 'action': 'send_message',
                 'room_id': message['room_id'],
-                'content': 'âŒ Failed to store memory'
+                'content': '❌ Failed to store memory'
             }
         finally:
             cursor.close()
@@ -118,7 +365,7 @@ class MemuIntelligence:
             return {
                 'action': 'send_message',
                 'room_id': message['room_id'],
-                'content': 'âŒ Usage: /recall [what to search for]'
+                'content': '❌ Usage: /recall [what to search for]'
             }
         
         conn = self.get_db_connection()
@@ -140,14 +387,14 @@ class MemuIntelligence:
                 return {
                     'action': 'send_message',
                     'room_id': message['room_id'],
-                    'content': f"ðŸ¤” I don't remember anything about '{query}'"
+                    'content': f"🤔 I don't remember anything about '{query}'"
                 }
             
             # Format results
-            response = f"ðŸ’¡ Here's what I remember about '{query}':\n\n"
+            response = f"💡 Here's what I remember about '{query}':\n\n"
             for row in results:
                 created = row['created_at'].strftime('%Y-%m-%d')
-                response += f"â€¢ {row['fact']} (saved {created})\n"
+                response += f"• {row['fact']} (saved {created})\n"
             
             return {
                 'action': 'send_message',
@@ -159,7 +406,7 @@ class MemuIntelligence:
             return {
                 'action': 'send_message',
                 'room_id': message['room_id'],
-                'content': 'âŒ Failed to recall memory'
+                'content': '❌ Failed to recall memory'
             }
         finally:
             cursor.close()
@@ -177,7 +424,7 @@ class MemuIntelligence:
             return {
                 'action': 'send_message',
                 'room_id': message['room_id'],
-                'content': 'âŒ Usage: /addtolist [item1, item2, ...]'
+                'content': '❌ Usage: /addtolist [item1, item2, ...]'
             }
         
         items = [item.strip() for item in content.split(',')]
@@ -205,7 +452,7 @@ class MemuIntelligence:
             return {
                 'action': 'send_message',
                 'room_id': message['room_id'],
-                'content': f'âœ“ Added {len(items)} item(s) to the shopping list'
+                'content': f'✓ Added {len(items)} item(s) to the shopping list'
             }
         except Exception as e:
             logger.error(f"Error adding to list: {e}")
@@ -213,7 +460,7 @@ class MemuIntelligence:
             return {
                 'action': 'send_message',
                 'room_id': message['room_id'],
-                'content': 'âŒ Failed to add items'
+                'content': '❌ Failed to add items'
             }
         finally:
             cursor.close()
@@ -238,24 +485,24 @@ class MemuIntelligence:
                 return {
                     'action': 'send_message',
                     'room_id': message['room_id'],
-                    'content': 'ðŸ“ Shopping list is empty'
+                    'content': '📝 Shopping list is empty'
                 }
             
             # Format list
             active_items = [r for r in results if not r['completed']]
             completed_items = [r for r in results if r['completed']]
             
-            response = "ðŸ“ Shopping List:\n\n"
+            response = "📝 Shopping List:\n\n"
             
             if active_items:
                 response += "To Buy:\n"
                 for item in active_items:
-                    response += f"â˜ {item['item']}\n"
+                    response += f"⬜ {item['item']}\n"
             
             if completed_items:
                 response += "\nCompleted:\n"
                 for item in completed_items[:5]:  # Show last 5 completed
-                    response += f"â˜‘ {item['item']}\n"
+                    response += f"☑ {item['item']}\n"
             
             response += f"\nTotal items: {len(active_items)} active"
             
@@ -269,7 +516,7 @@ class MemuIntelligence:
             return {
                 'action': 'send_message',
                 'room_id': message['room_id'],
-                'content': 'âŒ Failed to retrieve list'
+                'content': '❌ Failed to retrieve list'
             }
         finally:
             cursor.close()
@@ -283,7 +530,7 @@ class MemuIntelligence:
             return {
                 'action': 'send_message',
                 'room_id': message['room_id'],
-                'content': 'âŒ Usage: /done [item name]'
+                'content': '❌ Usage: /done [item name]'
             }
         
         conn = self.get_db_connection()
@@ -306,13 +553,13 @@ class MemuIntelligence:
                 return {
                     'action': 'send_message',
                     'room_id': message['room_id'],
-                    'content': f'âœ“ Marked as done: {result[0]}'
+                    'content': f'✓ Marked as done: {result[0]}'
                 }
             else:
                 return {
                     'action': 'send_message',
                     'room_id': message['room_id'],
-                    'content': f"âŒ Item '{item_name}' not found in list"
+                    'content': f"❌ Item '{item_name}' not found in list"
                 }
         except Exception as e:
             logger.error(f"Error marMemug done: {e}")
@@ -320,7 +567,7 @@ class MemuIntelligence:
             return {
                 'action': 'send_message',
                 'room_id': message['room_id'],
-                'content': 'âŒ Failed to mark item as done'
+                'content': '❌ Failed to mark item as done'
             }
         finally:
             cursor.close()
@@ -429,7 +676,7 @@ Your JSON response:""",
                     return {
                         'action': 'send_message',
                         'room_id': message['room_id'],
-                        'content': f'âœ“ Added {len(items)} item(s) to shopping list: {", ".join(items)}'
+                        'content': f'✓ Added {len(items)} item(s) to shopping list: {", ".join(items)}'
                     }
                 
         except json.JSONDecodeError:
@@ -526,6 +773,12 @@ async def main():
     
     while True:
         try:
+            # Check for invites first
+            await intelligence.check_invites()
+            
+            # Check for reminders
+            await intelligence.check_reminders()
+
             conn = intelligence.get_db_connection()
             cursor = conn.cursor(cursor_factory=RealDictCursor)
             
@@ -539,6 +792,28 @@ async def main():
             """)
             
             messages = cursor.fetchall()
+            cursor.close()
+            conn.close()
+
+            for msg in messages:
+                try:
+                    logger.info(f"Processing message from {msg['sender']}: {msg['content']}")
+                    action = await intelligence.process_message(msg)
+                    
+                    if action:
+                        await intelligence.execute_action(action)
+                    
+                    # Mark as processed
+                    conn = intelligence.get_db_connection()
+                    cursor = conn.cursor()
+                    cursor.execute("UPDATE messages SET processed_by_ai = true WHERE id = %s", (msg['id'],))
+                    conn.commit()
+                    cursor.close()
+                    conn.close()
+                    
+                except Exception as e:
+                    logger.error(f"Error processing message {msg['id']}: {e}")
+
             await asyncio.sleep(2)
             
         except KeyboardInterrupt:

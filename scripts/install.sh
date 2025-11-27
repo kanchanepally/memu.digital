@@ -25,7 +25,7 @@ SYNAPSE_TOKEN=$(openssl rand -hex 32)
 
 cat > .env << ENVEOF
 MEMU_DOMAIN=${DOMAIN}
-DB_NAME=memu_core
+DB_NAME=immich
 DB_USER=memu_user
 DB_PASSWORD=${DB_PASS}
 SYNAPSE_ADMIN_TOKEN=${SYNAPSE_TOKEN}
