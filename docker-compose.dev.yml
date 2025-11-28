@@ -1,0 +1,87 @@
+name: memu-suite-dev
+
+services:
+  # ---------------------------------------------------------------------------
+  # CORE INFRASTRUCTURE (Lightweight for Dev)
+  # ---------------------------------------------------------------------------
+
+  database:
+    container_name: memu_postgres
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_DB: immich
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Auto-init the memory tables for the bot
+      - ./scripts/init_memory.sql:/docker-entrypoint-initdb.d/init_memory.sql:ro
+    ports:
+      - "5432:5432"
+
+  redis:
+    container_name: memu_redis
+    image: redis:6.2-alpine
+    restart: always
+    ports:
+      - "6379:6379"
+
+  # ---------------------------------------------------------------------------
+  # CHAT MODULE (Matrix/Synapse + Element)
+  # ---------------------------------------------------------------------------
+
+  synapse:
+    container_name: memu_chat_core
+    image: matrixdotorg/synapse:latest
+    restart: always
+    environment:
+      - SYNAPSE_CONFIG_PATH=/data/homeserver.yaml
+      - SYNAPSE_SERVER_NAME=${SERVER_NAME}
+      - SYNAPSE_REPORT_STATS=no
+    volumes:
+      - ./synapse:/data
+    depends_on:
+      - database
+    ports:
+      - "8008:8008"
+
+  # ---------------------------------------------------------------------------
+  # INTELLIGENCE WORKER (The Memu Bot)
+  # ---------------------------------------------------------------------------
+
+  intelligence:
+    container_name: memu_intelligence
+    build: ./services/intelligence
+    # Mount source for hot reloading in dev
+    volumes:
+      - ./services/intelligence/src:/app/src
+    restart: always
+    environment:
+      - DB_HOST=database
+      - DB_NAME=immich
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - OLLAMA_HOST=http://host.docker.internal:11434 # Point to host Ollama for dev
+      - AI_ENABLED=true
+      - MATRIX_HOMESERVER_URL=http://synapse:8008
+      - MATRIX_BOT_USERNAME=${MATRIX_BOT_USERNAME}
+      - MATRIX_BOT_TOKEN=${MATRIX_BOT_TOKEN}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - database
+      - synapse
+
+  # ---------------------------------------------------------------------------
+  # EXCLUDED SERVICES (Too heavy for dev/test)
+  # ---------------------------------------------------------------------------
+  # - immich-server
+  # - immich-microservices
+  # - immich-machine-learning
+  # - ollama (Use host install or mock)
+  # - cloudflared (Not needed for local dev)
+  # - nginx (Direct access to ports is fine for dev)
+
+volumes:
+  pgdata:

@@ -1,8 +1,14 @@
-# Database
-psycopg2-binary==2.9.9
+# Matrix Client
+matrix-nio[e2e]==0.24.0
 
-# HTTP client for Ollama
+# Database (Async)
+asyncpg==0.29.0
+
+# HTTP client for Ollama (Async support)
 httpx==0.25.2
 
-# Date parsing for reminders
+# Date parsing
 dateparser==1.2.0
+
+# Environment variables
+python-dotenv==1.0.0
