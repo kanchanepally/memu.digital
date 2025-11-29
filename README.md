@@ -89,23 +89,6 @@ Optimized for silence, power efficiency, and the "appliance" feel.
 #### **Option B: The Pro Spec (x86 / Mini PC)**
 
 For power users needing hardware video transcoding.
-
-* **Hardware:** Intel N100 Mini PC (e.g., Beelink S12 Pro).  
-* **OS:** Debian 12 (Bookworm).
-
-### **Installation**
-
-1\. Flash the OS  
-Install Raspberry Pi OS Lite (64-bit) to your SD card.  
-2\. Run the Installer  
-SSH into your device and run the universal installer. It will bootstrap the Memu Supervisor, format your NVMe drive, and deploy the container stack.  
-curl \-sSL \[https://install.memu.digital\](https://install.memu.digital) | bash
-
-3\. Activate  
-Visit http://memu.local on your phone or laptop to create your Admin account and claim your family domain.
-
-## **Architecture**
-
 For the technical stewards (the "Chief Technology Officers" of the household), Memu is built on a transparent, audit-friendly stack.
 
 * **Orchestration:** Docker Compose (memu-suite).  

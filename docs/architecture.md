@@ -40,22 +40,6 @@ The system runs as a cohesive suite of Docker containers:
 3.  **Memu Intelligence:**
     -   **LLM Server:** `ollama` (Running Llama 3.2 3B).
     -   **Safety:** Local Nudity/CSAM scanning at the edge.
-
-#### Setup & Management
--   **Bootstrap:** Python/Flask application for initial "Day 0" configuration.
-
-## Network Flow
-
-### 1. Setup Mode (Day 0)
--   **Discovery:** mDNS broadcasts `memu.local`.
--   **Flow:** User Phone -> `http://memu.local:80` -> Nginx -> Bootstrap App.
--   **Action:** User enters Family Name -> System generates `.env` & secrets -> Launches Production Stack.
-
-### 2. Production Mode (Day 1+)
--   **Remote Access:** `https://smiths.memu.digital` -> Cloudflare Edge -> Tunnel -> `cloudflared` container -> Nginx -> Service (Synapse/Element/Immich).
--   **Local Access:** `http://memu.local` -> Nginx -> Element Web.
--   **Matrix Federation:** Incoming federation traffic -> Tunnel -> Synapse (Port 8008).
-
 ## Data Sovereignty Strategy
 
 ### Storage
