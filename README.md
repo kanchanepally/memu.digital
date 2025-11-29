@@ -1,5 +1,4 @@
-\<div align="center"\>
-
+<centre>
 # **Memu**
 
 ### **Your Family. Your Network. Your Data.**
@@ -8,7 +7,7 @@
 
 [Getting Started](https://www.google.com/search?q=%23getting-started) • [The Manifesto](https://www.google.com/search?q=%23the-manifesto) • [The Memu Suite](https://www.google.com/search?q=%23the-memu-suite) • [Architecture](https://www.google.com/search?q=%23architecture)
 
-\</div\>
+</center>
 
 ## **The Manifesto: From Privacy to Sanctuary**
 
@@ -139,6 +138,6 @@ We believe that code used to store private family lives must be open to audit. Y
 * **Trademark:** "Memu" and the Memu logo are trademarks of Memu Digital.  
 * **Telemetry:** Memu contains **zero** tracking. We do not know who you are, and we don't want to.
 
-\<div align="center"\>  
+<center>
 Built with ❤️ for families everywhere.  
-\</div\>
+</center>
