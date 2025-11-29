@@ -1,19 +1,20 @@
-<centre>
+<div align="center">
+
 # **Memu**
 
 ### **Your Family. Your Network. Your Data.**
 
 **The convenience of iCloud, with the sovereignty of a hard drive.**
 
-[Getting Started](https://www.google.com/search?q=%23getting-started) • [The Manifesto](https://www.google.com/search?q=%23the-manifesto) • [The Memu Suite](https://www.google.com/search?q=%23the-memu-suite) • [Architecture](https://www.google.com/search?q=%23architecture)
+[Getting Started](#getting-started) • [The Manifesto](#the-manifesto-from-privacy-to-sanctuary) • [The Memu Suite](#the-memu-suite) • [Architecture](#architecture)
 
-</center>
+</div\>
 
 ## **The Manifesto: From Privacy to Sanctuary**
 
 We do not sell "Privacy Tech" (which implies hiding). We sell **Digital Real Estate** (which implies ownership).
 
-Memu (Telugu: *We*) is a **Digital Sanctuary**: A physical vault in your home where your data lives, protected from Big Tech surveillance and commercial exploitation. It is the server for *us*, not for *them*.
+**Memu** (Telugu: *We*) is a **Digital Sanctuary**: A physical vault in your home where your data lives, protected from Big Tech surveillance and commercial exploitation. It is the server for *us*, not just *me*.
 
 We reject the false choice between Safety and Privacy. We enforce safety at the **Edge** (The Device), not the Cloud.
 
@@ -138,6 +139,6 @@ We believe that code used to store private family lives must be open to audit. Y
 * **Trademark:** "Memu" and the Memu logo are trademarks of Memu Digital.  
 * **Telemetry:** Memu contains **zero** tracking. We do not know who you are, and we don't want to.
 
-<center>
+<div align="center"\>  
 Built with ❤️ for families everywhere.  
-</center>
+</div\>
