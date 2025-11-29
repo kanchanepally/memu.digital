@@ -168,8 +168,10 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    environment:
+      - SERVER_NAME=${SERVER_NAME}
     volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/templates:/etc/nginx/templates:ro
     depends_on:
       - synapse
       - element
