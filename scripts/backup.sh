@@ -1,32 +1,35 @@
 #!/bin/bash
-# Memu OS - Nightly Backup Script
+set -e
 
-TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-BACKUP_DIR="/home/hareesh/backups"
+BACKUP_DIR="./backups"
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+BACKUP_FILE="$BACKUP_DIR/memu_backup_$TIMESTAMP.tar.gz"
+
+echo "=== Memu System Backup ==="
+echo "This will backup all your data (Chat, Photos, AI Models) to a single file."
+
 mkdir -p $BACKUP_DIR
 
-# Load Secrets
-source /home/hareesh/memu-os/.env
+# 1. Stop Services
+echo "Stopping services to ensure data consistency..."
+docker compose down
 
-# 1. Stop Synapse (ensure consistency)
-docker stop memu_synapse
+# 2. Create Backup
+echo "Creating backup archive..."
+# We use a temporary container to mount the volumes and tar them
+docker run --rm \
+  -v memu-suite_pgdata:/data/pgdata \
+  -v memu-suite_ollama_data:/data/ollama \
+  -v $(pwd):/backup \
+  alpine tar czf /backup/$BACKUP_FILE -C /data .
 
-# 2. Dump Database
-echo "Dumping database..."
-docker exec memu_db pg_dump -U memu_user memu_core > "$BACKUP_DIR/memu_backup_$TIMESTAMP.sql"
+# 3. Restart Services
+echo "Restarting services..."
+docker compose up -d
 
-# 3. Restart Synapse
-docker start memu_synapse
-
-# 4. Encrypt & Compress
-# We use the DB_PASSWORD as the encryption key for simplicity in V1
-echo "Encrypting backup..."
-tar -czf - "$BACKUP_DIR/memu_backup_$TIMESTAMP.sql" | openssl enc -e -aes-256-cbc -salt -k "$DB_PASSWORD" -out "$BACKUP_DIR/memu_backup_$TIMESTAMP.sql.tar.gz.enc"
-
-# 5. Cleanup Raw File
-rm "$BACKUP_DIR/memu_backup_$TIMESTAMP.sql"
-
-# 6. Retention (Delete backups older than 7 days)
-find $BACKUP_DIR -name "*.enc" -mtime +7 -delete
-
-echo "Backup Complete: $BACKUP_DIR/memu_backup_$TIMESTAMP.sql.tar.gz.enc"
+echo "=== Backup Complete ==="
+echo "File: $BACKUP_FILE"
+echo ""
+echo "To Restore on new SSD:"
+echo "1. Copy this file to the new machine."
+echo "2. Run: docker run --rm -v memu-suite_pgdata:/data/pgdata -v memu-suite_ollama_data:/data/ollama -v $(pwd):/backup alpine tar xzf /backup/$(basename $BACKUP_FILE) -C /data"
