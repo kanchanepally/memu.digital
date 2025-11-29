@@ -190,7 +190,8 @@ services:
       - OLLAMA_HOST=http://ollama:11434
       - AI_ENABLED=true
       - MATRIX_HOMESERVER_URL=http://synapse:8008
-      - MATRIX_BOT_TOKEN=syt_bWVtdV9ib3Q_LNACvTYNtEHsphZcrctE_4FSBHH
+      - MATRIX_BOT_USERNAME=${MATRIX_BOT_USERNAME}
+      - MATRIX_BOT_TOKEN=${MATRIX_BOT_TOKEN}
     depends_on:
       - database
       - ollama
