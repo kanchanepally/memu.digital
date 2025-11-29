@@ -8,7 +8,7 @@
 
 [Getting Started](#getting-started) • [The Manifesto](#the-manifesto-from-privacy-to-sanctuary) • [The Memu Suite](#the-memu-suite) • [Architecture](#architecture)
 
-</div\>
+</div>
 
 ## **The Manifesto: From Privacy to Sanctuary**
 
