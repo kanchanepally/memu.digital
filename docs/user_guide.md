@@ -1,0 +1,75 @@
+# Memu OS - User Guide
+
+Welcome to your new **Digital Sanctuary**. This guide will help you set up your Memu device and reclaim your family's data sovereignty.
+
+## 📦 1. Unboxing & Connections
+
+Your Memu device is designed to be a "Headless Appliance" (no monitor or keyboard required).
+
+1.  **Ethernet (Required for Setup):** Connect the Memu device to your home router using the provided Ethernet cable.
+    *   *Note: WiFi can be configured later, but a wired connection is recommended for speed and stability.*
+2.  **Power:** Connect the USB-C power supply.
+3.  **Wait:** Allow 2-3 minutes for the system to boot up and initialize.
+
+## 🛠️ 2. Prerequisites
+
+Before you start the software setup, you need two things:
+
+1.  **A Domain Name:** You need a web address for your family (e.g., `thesmiths.com` or `smith-family.net`). You can buy one from Namecheap, GoDaddy, or Cloudflare.
+2.  **A Cloudflare Account (Free):** We use Cloudflare to securely tunnel your device to the internet without opening dangerous ports on your router.
+    *   Create a free account at [cloudflare.com](https://www.cloudflare.com).
+    *   Add your domain to Cloudflare.
+    *   Go to **Zero Trust > Networks > Tunnels**.
+    *   Create a new Tunnel named "memu".
+    *   **Copy the Tunnel Token** (it looks like a long string of random characters). You will need this in the next step.
+
+## 🚀 3. The Setup Wizard
+
+1.  Open a web browser on your phone or laptop (must be on the same WiFi as the Memu device).
+2.  Visit: **http://memu.local**
+3.  You will see the **Memu Setup Wizard**.
+4.  Enter the following details:
+    *   **Family Name:** (e.g., "Smiths"). This will create your local address.
+    *   **Admin Password:** Create a strong password. This will be used for the "admin" account.
+    *   **Cloudflare Token:** Paste the token you copied in Step 2.
+5.  Click **"Install Memu OS"**.
+
+The system will now configure itself. This takes about **5-10 minutes**. Do not unplug the device.
+
+## 📱 4. Connecting Your Apps
+
+Once the installation is complete, your system is live at `https://<your-family>.memu.digital` (or your custom domain).
+
+### **Chat (Element)**
+1.  Download **Element X** (iOS/Android).
+2.  Select **"Change Server"**.
+3.  Enter your domain: `https://<your-family>.memu.digital`
+4.  Login with:
+    *   **Username:** `@admin:<your-family>.memu.digital`
+    *   **Password:** (The one you created in the Wizard).
+
+### **Photos (Immich)**
+1.  Download **Immich** (iOS/Android).
+2.  Enter Server URL: `https://<your-family>.memu.digital`
+3.  Login with the same Admin credentials.
+4.  Enable **Background Backup** to start saving your photos.
+
+### **AI Assistant**
+1.  Open the **Element** app.
+2.  Start a new chat.
+3.  Search for `@memu_bot:<your-family>.memu.digital`.
+4.  Say "Hello!" to test your local AI.
+
+---
+
+## ❓ Troubleshooting
+
+*   **Can't reach http://memu.local?**
+    *   Ensure your phone/laptop is on the same network as the Memu device.
+    *   Try accessing it via the IP address (check your router's device list for "memu" or "raspberrypi").
+*   **Cloudflare Tunnel not connecting?**
+    *   Verify you copied the correct token.
+    *   Ensure your domain DNS in Cloudflare points to the Tunnel (CNAME record).
+
+---
+*Welcome home.*
