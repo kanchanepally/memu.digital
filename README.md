@@ -14,7 +14,7 @@
 
 We do not sell "Privacy Tech" (which implies hiding). We sell **Digital Real Estate** (which implies ownership).
 
-**Memu** (Telugu: *We*) is a **Digital Sanctuary**: A physical vault in your home where your data lives, protected from Big Tech surveillance and commercial exploitation. It is the server for *us*, not just *me*.
+**Memu** (Telugu: *We*) is a **Digital Sanctuary**: A physical vault in your home where your data lives, protected from Big Tech surveillance and commercial exploitation. It is the server for *us*, not *them*.
 
 We reject the false choice between Safety and Privacy. We enforce safety at the **Edge** (The Device), not the Cloud.
 
@@ -24,7 +24,7 @@ We reject the false choice between Safety and Privacy. We enforce safety at the 
 
 ### **Why I Built This**
 
-"I am a parent who got tired of my family's private moments being mined to sell us things. I wanted the convenience of the cloud, but with the safety of a photo album on a shelf. Memu is that shelf." — *Founder, Memu Digital*
+"I am a parent who got tired of my family's private moments being mined to sell us things. I wanted the convenience of the cloud, but with the safety of a photo album on a shelf. Memu is that shelf." — *Hareesh - Founder, Memu Digital*
 
 ### **Inspired by Giants**
 
