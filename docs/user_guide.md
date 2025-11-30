@@ -60,6 +60,28 @@ Once the installation is complete, your system is live at `https://<your-family>
 3.  Search for `@memu_bot:<your-family>.memu.digital`.
 4.  Say "Hello!" to test your local AI.
 
+## 📶 5. Switching to WiFi (Optional)
+
+Memu works best on Ethernet. However, if you need to move the device to a location without a cable, you can configure WiFi.
+
+**Note:** This step currently requires a keyboard and monitor attached to the Pi, or SSH access.
+
+1.  **Access the Terminal:**
+    *   Plug a keyboard and monitor into the Raspberry Pi.
+    *   Login with username: `hareesh` (or your default user) and password.
+2.  **Open Network Manager:**
+    Run the following command:
+    ```bash
+    sudo nmtui
+    ```
+3.  **Connect:**
+    *   Select **"Activate a connection"**.
+    *   Choose your WiFi network from the list.
+    *   Enter your WiFi password.
+4.  **Finish:**
+    *   Once connected (you see a `*` next to the network), select **<Back>** and then **<Quit>**.
+    *   You can now unplug the Ethernet cable.
+
 ---
 
 ## ❓ Troubleshooting

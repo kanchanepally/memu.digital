@@ -25,6 +25,8 @@ Verify backup.sh (Encrypted nightly dumps).
 
 Test "Disaster Recovery" (Flash new drive -> Restore data).
 
+Decide Domain Strategy: "Bring Your Own Domain" vs. "Managed Subdomains" (Registry).
+
 PHASE 2: The "Memu Mobile" Build (Weeks 5-8)
 
 Goal: Build the Super-App. No more generic clients.
