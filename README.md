@@ -39,26 +39,6 @@ Memu is a vertically integrated **Private Cloud Appliance**. It transforms commo
 
 It is designed not for system administrators, but for families. It provides three core services, pre-configured and integrated instantly:
 
-### **1\. Memu Chat (Communication)**
-
-A private living room for your digital conversations.
-
-* **User Story:** "I want to text my family privately, with no data mining."  
-* **Engine:** Matrix Synapse (End-to-End Encrypted).  
-* **Interface:** Uses the native **Element X** app on your phone.
-
-### **2\. Memu Photos (The Vault)**
-
-Stop paying monthly rent for your own life history.
-
-* **User Story:** "I want my camera roll backed up automatically to my own drive."  
-* **Engine:** Immich (High-performance Go/Node).  
-* **Interface:** Uses the native **Immich** app for full mobile backup.
-
-### **3\. Memu Intelligence (The Brain)**
-
-A local AI utility that helps, but never spies.
-
 * **User Story:** "I want a smart assistant that knows my family context but is private."  
 * **Engine:** Ollama (Llama 3.2 3B) \+ Python Logic Bridge.  
 * **Interface:** Chat with **@memu\_bot** to summarize days, set reminders, or manage lists.
