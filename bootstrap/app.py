@@ -393,27 +393,27 @@ def update_env_var(key, value):
 def launch_production(family_slug):
     """Launch all production services"""
     # Launch the script that handles production startup
-    # Enable production service (but don't start/stop anything yet)
-    try:
-        subprocess.run(["sudo", "systemctl", "enable", "memu-production.service"], check=False)
-    except Exception as e:
-        print(f"Warning: Could not enable production service: {e}")
-
-    # Start all services (Nginx might fail to bind port 80 momentarily, but will retry)
-    subprocess.run(
-        ["docker", "compose", "up", "-d"],
-        cwd=PROJECT_ROOT,
-        check=True
-    )
+    # HANDOFF LOGIC:
+    # We must switch from Setup (Port 80) to Production (Port 80).
+    # We CANNOT run 'docker compose up' while we are still listening on 80.
+    # So we use a detached shell transaction to:
+    # 1. Wait 3s (to let this HTTP request finish and return "Success" to browser)
+    # 2. Stop this wizard service (releasing Port 80)
+    # 3. Disable this wizard service (so it doesn't auto-start next boot)
+    # 4. Enable production service
+    # 5. Start production service (which runs 'docker compose up')
     
-    # Schedule the wizard to die in 10 seconds, giving enough time to return the success page
-    import threading
-    def self_destruct():
-        time.sleep(10)
-        print("Stopping setup wizard and handing over to production...")
-        subprocess.run(["sudo", "systemctl", "stop", "memu-setup.service"], check=False)
-        
-    threading.Thread(target=self_destruct).start()
+    handoff_cmd = (
+        "sleep 3 && "
+        "sudo systemctl stop memu-setup.service && "
+        "sudo systemctl disable memu-setup.service && "
+        "sudo systemctl enable memu-production.service && "
+        "sudo systemctl start memu-production.service"
+    )
+
+    # Fire and forget (detached process)
+    # start_new_session=True ensures it survives when parent (flask) dies
+    subprocess.Popen(handoff_cmd, shell=True, start_new_session=True)
 
 if __name__ == '__main__':
     print("=" * 50)
