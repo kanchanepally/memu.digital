@@ -4,129 +4,334 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome Home | Memu</title>
+    <title>Welcome to Memu</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f5f5f7;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
-            color: #1d1d1f;
+            padding: 20px;
         }
 
-        .card {
+        .container {
             background: white;
             padding: 40px;
             border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             width: 100%;
-            max-width: 400px;
+            max-width: 500px;
+        }
+
+        .logo {
             text-align: center;
-        }
-
-        h1 {
-            font-size: 24px;
-            margin-bottom: 10px;
-            letter-spacing: -0.5px;
-        }
-
-        p {
-            color: #86868b;
-            font-size: 15px;
             margin-bottom: 30px;
         }
 
+        .logo h1 {
+            font-size: 36px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .logo p {
+            color: #666;
+            font-size: 14px;
+        }
+
         .input-group {
-            text-align: left;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
         }
 
         label {
             display: block;
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 600;
-            margin-bottom: 5px;
-            color: #86868b;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        label .required {
+            color: #e74c3c;
         }
 
         input {
             width: 100%;
-            padding: 12px;
-            border: 1px solid #d2d2d7;
+            padding: 14px;
+            border: 2px solid #e1e8ed;
             border-radius: 10px;
-            font-size: 16px;
-            box-sizing: border-box;
+            font-size: 15px;
+            transition: all 0.3s;
             outline: none;
-            transition: border-color 0.2s;
         }
 
         input:focus {
-            border-color: #0071e3;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        input:invalid:not(:placeholder-shown) {
+            border-color: #e74c3c;
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 6px;
+            line-height: 1.4;
+        }
+
+        .help-text a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .help-text a:hover {
+            text-decoration: underline;
         }
 
         .domain-preview {
             font-size: 13px;
-            color: #86868b;
-            margin-top: 5px;
+            color: #667eea;
+            margin-top: 6px;
+            font-weight: 500;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #856404;
+        }
+
+        .warning-box strong {
+            display: block;
+            margin-bottom: 4px;
         }
 
         button {
-            background: #000000;
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            width: 100%;
-            padding: 15px;
             border-radius: 12px;
-            font-size: 17px;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.1s;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
-        button:active {
-            transform: scale(0.98);
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .password-strength {
+            margin-top: 8px;
+            height: 4px;
+            background: #e1e8ed;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .password-strength-bar {
+            height: 100%;
+            width: 0;
+            transition: all 0.3s;
+        }
+
+        .strength-weak {
+            width: 33%;
+            background: #e74c3c;
+        }
+
+        .strength-medium {
+            width: 66%;
+            background: #f39c12;
+        }
+
+        .strength-strong {
+            width: 100%;
+            background: #27ae60;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            .logo h1 {
+                font-size: 28px;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="card">
-        <h1>Welcome to Memu.</h1>
-        <p>Let's set up your private family cloud.</p>
+    <div class="container">
+        <div class="logo">
+            <h1>Memu</h1>
+            <p>Your family's digital sanctuary</p>
+        </div>
 
-        <form action="/configure" method="POST">
+        <form id="setupForm" action="/configure" method="POST">
             <div class="input-group">
-                <label>Family Name</label>
-                <input type="text" name="family_name" id="fname" placeholder="e.g. smiths" required
-                    oninput="updatePreview()">
-                <div class="domain-preview">Your address: <span id="preview">...</span>.memu.digital</div>
+                <label>
+                    Family Name <span class="required">*</span>
+                </label>
+                <input type="text" name="family_name" id="familyName" placeholder="e.g., smiths" required
+                    pattern="[a-zA-Z0-9]+" minlength="2" maxlength="30">
+                <div class="domain-preview">
+                    Your address: <span id="preview">...</span>.memu.digital
+                </div>
+                <div class="help-text">
+                    Letters and numbers only, no spaces
+                </div>
             </div>
 
             <div class="input-group">
-                <label>Admin Password</label>
-                <input type="password" name="password" placeholder="Create a secure password" required>
+                <label>
+                    Admin Password <span class="required">*</span>
+                </label>
+                <input type="password" name="password" id="password" placeholder="Create a strong password" required
+                    minlength="8">
+                <div class="password-strength">
+                    <div class="password-strength-bar" id="strengthBar"></div>
+                </div>
+                <div class="help-text">
+                    At least 8 characters. This protects your entire server.
+                </div>
             </div>
 
             <div class="input-group">
-                <label>Cloudflare Tunnel Token</label>
-                <input type="text" name="cloudflare_token" placeholder="Paste your tunnel token (starts with ey...)"
-                    required>
+                <label>
+                    Confirm Password <span class="required">*</span>
+                </label>
+                <input type="password" id="confirmPassword" placeholder="Enter password again" required minlength="8">
+                <div class="help-text" id="passwordMatch" style="color: #e74c3c; display: none;">
+                    Passwords don't match
+                </div>
             </div>
 
-            <button type="submit">Create My Home</button>
+            <div class="warning-box">
+                <strong>⚠️ Network Setup (Temporary)</strong>
+                Memu currently uses Cloudflare Tunnel for remote access, but this violates their ToS for video
+                streaming. We're switching to a better solution soon. You can skip this for now and set it up later.
+            </div>
+
+            <div class="input-group">
+                <label>
+                    Cloudflare Tunnel Token <span style="color: #666;">(Optional)</span>
+                </label>
+                <input type="text" name="cloudflare_token" placeholder="Paste your tunnel token (starts with ey...)">
+                <div class="help-text">
+                    Get token: <a href="https://dash.cloudflare.com" target="_blank">Cloudflare Dashboard</a> → Zero
+                    Trust → Tunnels
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn">
+                Create My Memu Server
+            </button>
         </form>
     </div>
 
     <script>
-        function updatePreview() {
-            const val = document.getElementById('fname').value.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-            document.getElementById('preview').innerText = val || '...';
+        const familyInput = document.getElementById('familyName');
+        const preview = document.getElementById('preview');
+        const passwordInput = document.getElementById('password');
+        const confirmInput = document.getElementById('confirmPassword');
+        const strengthBar = document.getElementById('strengthBar');
+        const passwordMatch = document.getElementById('passwordMatch');
+        const submitBtn = document.getElementById('submitBtn');
+        const form = document.getElementById('setupForm');
+
+        // Update domain preview
+        familyInput.addEventListener('input', function () {
+            const val = this.value.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+            preview.textContent = val || '...';
+        });
+
+        // Password strength indicator
+        passwordInput.addEventListener('input', function () {
+            const password = this.value;
+            const strength = calculateStrength(password);
+
+            strengthBar.className = 'password-strength-bar';
+            if (strength > 0) strengthBar.classList.add('strength-weak');
+            if (strength > 40) strengthBar.classList.add('strength-medium');
+            if (strength > 70) strengthBar.classList.add('strength-strong');
+
+            checkPasswordMatch();
+        });
+
+        // Password match validation
+        confirmInput.addEventListener('input', checkPasswordMatch);
+
+        function checkPasswordMatch() {
+            const match = passwordInput.value === confirmInput.value;
+            const bothFilled = passwordInput.value && confirmInput.value;
+
+            if (bothFilled && !match) {
+                passwordMatch.style.display = 'block';
+                confirmInput.style.borderColor = '#e74c3c';
+            } else {
+                passwordMatch.style.display = 'none';
+                confirmInput.style.borderColor = '#e1e8ed';
+            }
         }
+
+        function calculateStrength(password) {
+            let strength = 0;
+            if (password.length >= 8) strength += 20;
+            if (password.length >= 12) strength += 20;
+            if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength += 20;
+            if (/\d/.test(password)) strength += 20;
+            if (/[^a-zA-Z0-9]/.test(password)) strength += 20;
+            return strength;
+        }
+
+        // Form submission
+        form.addEventListener('submit', function (e) {
+            // Check password match
+            if (passwordInput.value !== confirmInput.value) {
+                e.preventDefault();
+                alert('Passwords do not match');
+                return;
+            }
+
+            // Disable button to prevent double-submit
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating your server...';
+        });
+
+        // Auto-focus first input
+        familyInput.focus();
     </script>
 </body>
 

@@ -1,29 +1,49 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <title>Configuring...</title>
-    <meta http-equiv="refresh" content="30;url=http://{{ domain }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setting Up Memu...</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: -apple-system, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
-            height: 100vh;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 50px 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 500px;
             text-align: center;
-            background: #f5f5f7;
+        }
+
+        .spinner-container {
+            margin-bottom: 30px;
         }
 
         .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid #e1e1e1;
-            border-top-color: #000;
+            width: 60px;
+            height: 60px;
+            border: 4px solid #e1e8ed;
+            border-top-color: #667eea;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin-bottom: 20px;
+            margin: 0 auto;
         }
 
         @keyframes spin {
@@ -31,14 +51,320 @@
                 transform: rotate(360deg);
             }
         }
+
+        h2 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .status-message {
+            font-size: 15px;
+            color: #666;
+            margin-bottom: 30px;
+            min-height: 40px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e1e8ed;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .steps {
+            text-align: left;
+            margin-bottom: 30px;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            font-size: 14px;
+            color: #999;
+        }
+
+        .step-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid #e1e8ed;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .step.active {
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .step.active .step-icon {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .step.complete {
+            color: #27ae60;
+        }
+
+        .step.complete .step-icon {
+            border-color: #27ae60;
+            background: #27ae60;
+            color: white;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            font-size: 13px;
+            color: #666;
+            text-align: left;
+        }
+
+        .info-box strong {
+            display: block;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .info-box code {
+            background: #e1e8ed;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .success {
+            color: #27ae60;
+            margin-top: 20px;
+            font-weight: 500;
+        }
+
+        .error {
+            color: #e74c3c;
+            margin-top: 20px;
+            font-weight: 500;
+        }
+
+        a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 40px 30px;
+            }
+        }
     </style>
 </head>
 
 <body>
-    <div class="spinner"></div>
-    <h2>Configuring Memu OS...</h2>
-    <p>Please wait 30 seconds.</p>
-    <p>We are securing your connection to <strong>{{ domain }}</strong></p>
+    <div class="container">
+        <div class="spinner-container">
+            <div class="spinner" id="spinner"></div>
+        </div>
+
+        <h2 id="title">Setting Up Your Memu Server</h2>
+
+        <div class="status-message" id="statusMessage">
+            Initializing...
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="steps">
+            <div class="step" id="step-secrets">
+                <div class="step-icon">1</div>
+                <span>Generating secure secrets</span>
+            </div>
+            <div class="step" id="step-config">
+                <div class="step-icon">2</div>
+                <span>Creating configuration files</span>
+            </div>
+            <div class="step" id="step-services">
+                <div class="step-icon">3</div>
+                <span>Starting core services</span>
+            </div>
+            <div class="step" id="step-users">
+                <div class="step-icon">4</div>
+                <span>Creating user accounts</span>
+            </div>
+            <div class="step" id="step-production">
+                <div class="step-icon">5</div>
+                <span>Launching production</span>
+            </div>
+        </div>
+
+        <div class="info-box" id="infoBox">
+            <strong>What's happening?</strong>
+            We're configuring your private family server with:
+            <ul style="margin: 10px 0 0 20px; line-height: 1.8;">
+                <li>Encrypted chat (Matrix)</li>
+                <li>Photo backup (Immich)</li>
+                <li>AI assistant (Ollama)</li>
+            </ul>
+            This usually takes 2-3 minutes.
+        </div>
+
+        <div id="finalMessage"></div>
+    </div>
+
+    <script>
+        const domain = "{{ domain }}";
+
+        const stages = {
+            'secrets': { step: 0, progress: 20, text: 'Generating secure passwords...' },
+            'config': { step: 1, progress: 40, text: 'Creating configuration files...' },
+            'services': { step: 2, progress: 60, text: 'Starting chat server and database...' },
+            'users': { step: 3, progress: 80, text: 'Creating admin and bot accounts...' },
+            'production': { step: 4, progress: 95, text: 'Launching all services...' },
+            'complete': { step: 5, progress: 100, text: 'Setup complete!' }
+        };
+
+        let currentStage = 'idle';
+        let pollInterval;
+
+        function updateUI(stage, message, error = null) {
+            const stageData = stages[stage];
+
+            if (stageData) {
+                // Update progress bar
+                document.getElementById('progressFill').style.width = stageData.progress + '%';
+
+                // Update status message
+                document.getElementById('statusMessage').textContent =
+                    message || stageData.text;
+
+                // Update steps
+                for (let i = 0; i < 5; i++) {
+                    const stepEl = document.querySelector(`#step-${Object.keys(stages)[i]}`);
+                    if (!stepEl) continue;
+
+                    stepEl.classList.remove('active', 'complete');
+
+                    if (i < stageData.step) {
+                        stepEl.classList.add('complete');
+                        stepEl.querySelector('.step-icon').textContent = '✓';
+                    } else if (i === stageData.step) {
+                        stepEl.classList.add('active');
+                    }
+                }
+            }
+
+            if (error) {
+                showError(error);
+            }
+
+            if (stage === 'complete') {
+                showSuccess();
+            }
+        }
+
+        function showSuccess() {
+            document.getElementById('spinner').style.display = 'none';
+            document.getElementById('title').textContent = 'Your Memu is Ready! 🎉';
+            document.getElementById('infoBox').innerHTML = `
+                <strong>Access Your Server:</strong>
+                <div style="margin-top: 10px;">
+                    <div style="margin-bottom: 8px;">
+                        🌐 Web: <a href="https://${domain}" target="_blank">${domain}</a>
+                    </div>
+                    <div style="margin-bottom: 8px;">
+                        📱 Local: <code>http://${window.location.hostname}</code>
+                    </div>
+                </div>
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e1e8ed;">
+                    <strong>Next Steps:</strong>
+                    <ol style="margin: 10px 0 0 20px; line-height: 1.8;">
+                        <li>Install <strong>Element X</strong> app on your phone</li>
+                        <li>Install <strong>Immich</strong> app for photo backup</li>
+                        <li>Connect both to: <code>${domain}</code></li>
+                    </ol>
+                </div>
+            `;
+
+            document.getElementById('finalMessage').innerHTML = `
+                <p class="success">
+                    <a href="https://${domain}" target="_blank">Open Your Memu →</a>
+                </p>
+            `;
+
+            clearInterval(pollInterval);
+        }
+
+        function showError(error) {
+            document.getElementById('spinner').style.display = 'none';
+            document.getElementById('title').textContent = 'Setup Error';
+            document.getElementById('statusMessage').textContent = '';
+
+            document.getElementById('infoBox').innerHTML = `
+                <strong style="color: #e74c3c;">Something went wrong:</strong>
+                <div style="margin-top: 10px; padding: 10px; background: #fff; border-radius: 5px;">
+                    ${error}
+                </div>
+                <div style="margin-top: 15px; font-size: 12px;">
+                    <strong>What to do:</strong><br>
+                    1. Check Docker is running: <code>docker ps</code><br>
+                    2. View logs: <code>docker compose logs</code><br>
+                    3. Try again or <a href="https://github.com/yourusername/memu/issues" target="_blank">open an issue</a>
+                </div>
+            `;
+
+            clearInterval(pollInterval);
+        }
+
+        // Poll for status updates
+        function pollStatus() {
+            fetch('/status')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.stage !== currentStage) {
+                        currentStage = data.stage;
+                        updateUI(data.stage, data.message, data.error);
+                    }
+                })
+                .catch(err => {
+                    console.error('Status check failed:', err);
+                });
+        }
+
+        // Start polling
+        pollInterval = setInterval(pollStatus, 1000);
+
+        // Initial poll
+        pollStatus();
+
+        // Also try auto-redirect after 3 minutes (fallback)
+        setTimeout(() => {
+            if (currentStage === 'complete' || currentStage === 'production') {
+                window.location.href = `https://${domain}`;
+            }
+        }, 180000);
+    </script>
 </body>
 
 </html>

@@ -6,7 +6,7 @@ services:
     container_name: Memu_intelligence
     restart: unless-stopped
     networks:
-      - hearth
+      - default
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432

@@ -5,7 +5,7 @@
 I'm a dad/husband who got spooked when Meta announced they'd train AI on WhatsApp photos. 
 So I built a home server for my family.
 
-**Memu (మేము)** = "we" in Telugu. Your data belongs to "we", not "they".
+**Memu (మేము)** = "we" in Telugu. Your data belongs to "us", not "they".
 
 ---
 
@@ -17,7 +17,7 @@ Replaces the cloud with a box in your living room:
 - **Photos** (Immich): Like Google Photos, but your drive  
 - **AI** (Ollama): Like ChatGPT, but stays in your house
 
-My family's been using it for [X months]. It works. Mostly.
+My family's been using it for 3 months. It works. Mostly.
 
 ---
 
@@ -37,7 +37,7 @@ I tried existing solutions:
 - Nextcloud: Just files, complicated setup
 - FreedomBox: Too technical, abandoned
 
-So I built Memu. It's rough, but it's mine.
+So I built *Memu*. It's rough, but it's mine.
 
 ---
 
@@ -62,27 +62,39 @@ So I built Memu. It's rough, but it's mine.
 ---
 
 ## Installation
-
-⚠️ **Warning:** This is alpha. You WILL hit issues.
-
-**You'll need:**
-- Raspberry Pi 5 (8GB) OR cheap mini PC
-- External SSD (500GB+)
-- Patience
-
-**Steps:**
+  
+  **Total time: 3-5 minutes**
+  
+  ### Requirements
+  - Raspberry Pi 5 (8GB recommended) OR x86 mini PC
+  - 500GB+ SSD (1TB recommended)
+  - Ethernet connection
+  
+  ### Setup
+  
+  **Step 1: System Installation** (30 seconds)
 ```bash
-git clone https://github.com/kanchanepally/memu.digital
-cd memu.digital
-cp .env.example .env
-nano .env  # Edit your settings
-./scripts/setup.sh
+  git clone https://github.com/yourusername/memu
+  cd memu
+  sudo ./scripts/install.sh
 ```
-
-If it breaks, open an issue. I'll help.
-
-**Detailed guide:** [docs/INSTALL.md](docs/INSTALL.md)
-
+  
+  **Step 2: Configure Your Family** (2-3 minutes)
+  1. Visit `http://[your-pi-hostname].local` in browser
+  2. Fill in 4 fields:
+     - Family name (e.g., "smiths")
+     - Admin password
+     - Cloudflare token (optional - will be replaced soon)
+  3. Click "Create My Memu Server"
+  4. Wait 2-3 minutes
+  5. Done!
+  
+  ### What Gets Installed
+  - Chat server (Matrix/Synapse)
+  - Photo backup (Immich)
+  - AI assistant (Ollama)
+  - All dependencies and configs
+  
 ---
 
 ## The "Vibecoding" Disclosure

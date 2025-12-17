@@ -92,9 +92,9 @@ Instead of a monolithic custom app, we deploy pre-configured, "skinned" versions
 
 ## 4. System Architecture
 
-### 4.1 Container Stack (`docker-compose.memu.yml`)
+### 4.1 Container Stack (`docker-compose.yml`)
 
-The system runs as a unified Docker Compose stack on the `hearth` network.
+The system runs as a unified Docker Compose stack on the `memu` network.
 
 *   **Core Services:**
     *   `memu_postgres`: Unified DB for all services.
@@ -121,7 +121,7 @@ The system runs as a unified Docker Compose stack on the `hearth` network.
 *   **DNS:** `rachandhari.memu.digital` resolves to the Tunnel edge.
 
 ### 4.3 Data Hierarchy
-*   **Root:** `~/hearth-os` (Codebase & Configs).
+*   **Root:** `~/memu-os` (Codebase & Configs).
 *   **Data Volumes:**
     *   `memu-suite_pgdata`: Database files.
     *   `memu-suite_ollama_data`: AI Models.
