@@ -303,7 +303,7 @@ def start_core_services():
         check=True
     )
 
-def wait_for_synapse(max_wait=60):
+def wait_for_synapse(max_wait=180):
     """Wait for Synapse to be ready"""
     start = time.time()
     
