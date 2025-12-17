@@ -393,20 +393,27 @@ def update_env_var(key, value):
 def launch_production(family_slug):
     """Launch all production services"""
     # Launch the script that handles production startup
-    # Stop setup wizard and enable production service
+    # Enable production service (but don't start/stop anything yet)
     try:
-        subprocess.run(["sudo", "systemctl", "stop", "memu-setup.service"], check=False)
-        subprocess.run(["sudo", "systemctl", "disable", "memu-setup.service"], check=False)
         subprocess.run(["sudo", "systemctl", "enable", "memu-production.service"], check=False)
     except Exception as e:
-        print(f"Warning: Could not switch systemd services: {e}")
+        print(f"Warning: Could not enable production service: {e}")
 
-    # Start all services
+    # Start all services (Nginx might fail to bind port 80 momentarily, but will retry)
     subprocess.run(
         ["docker", "compose", "up", "-d"],
         cwd=PROJECT_ROOT,
         check=True
     )
+    
+    # Schedule the wizard to die in 10 seconds, giving enough time to return the success page
+    import threading
+    def self_destruct():
+        time.sleep(10)
+        print("Stopping setup wizard and handing over to production...")
+        subprocess.run(["sudo", "systemctl", "stop", "memu-setup.service"], check=False)
+        
+    threading.Thread(target=self_destruct).start()
 
 if __name__ == '__main__':
     print("=" * 50)
