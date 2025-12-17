@@ -335,6 +335,7 @@ def create_matrix_user(username, password, is_admin=False):
     # Ignore error if user already exists
     subprocess.run(cmd, cwd=PROJECT_ROOT)
 
+def get_user_token(username, password):
     """Get access token for a user via login with retries"""
     max_retries = 10
     retry_delay = 3
