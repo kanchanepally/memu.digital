@@ -393,16 +393,20 @@ def update_env_var(key, value):
 def launch_production(family_slug):
     """Launch all production services"""
     # Launch the script that handles production startup
-    script_path = PROJECT_ROOT / 'scripts' / 'launch_production.sh'
-    
-    if script_path.exists():
-        subprocess.Popen([str(script_path), family_slug])
-    else:
-        # Fallback: just start all services
-        subprocess.run(
-            ["docker", "compose", "up", "-d"],
-            cwd=PROJECT_ROOT
-        )
+    # Stop setup wizard and enable production service
+    try:
+        subprocess.run(["sudo", "systemctl", "stop", "memu-setup.service"], check=False)
+        subprocess.run(["sudo", "systemctl", "disable", "memu-setup.service"], check=False)
+        subprocess.run(["sudo", "systemctl", "enable", "memu-production.service"], check=False)
+    except Exception as e:
+        print(f"Warning: Could not switch systemd services: {e}")
+
+    # Start all services
+    subprocess.run(
+        ["docker", "compose", "up", "-d"],
+        cwd=PROJECT_ROOT,
+        check=True
+    )
 
 if __name__ == '__main__':
     print("=" * 50)
