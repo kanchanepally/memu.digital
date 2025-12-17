@@ -11,6 +11,15 @@ So I built a home server for my family.
 
 ## What It Does
 
+- **Alpha quality:** Might break, limited testing
+- **Hardware Requirements:** Minimum 2GB RAM required (1GB works for core only, AI features will crash).
+
+### 🐳 Docker Compose Files
+- **docker-compose.yml:** Main production configuration. Use this.
+- **docker-compose.dev.yml:** Development only (stripped down).
+- **docker-compose.pi-patch.yml:** Raspberry Pi specific overrides.
+*(Note: docker-compose.override.yml has been removed to prevent conflicts)*
+
 Replaces the cloud with a box in your living room:
 
 - **Chat** (Matrix): Like WhatsApp, but your server
@@ -51,7 +60,7 @@ So I built *Memu*. It's rough, but it's mine.
 
 **What's janky:**
 - ⚠️ Remote access uses Cloudflare Tunnel (just found out it violates ToS for video streaming)
-- ⚠️ Setup takes 1-2 hours (not "plug and play" yet)
+- ⚠️ Setup takes a few minutes (not "plug and play" yet)
 - ⚠️ Using Element/Immich apps directly (haven't white-labeled yet)
 
 **What I'm working on:**
@@ -63,23 +72,25 @@ So I built *Memu*. It's rough, but it's mine.
 
 ## Installation
   
-  **Total time: 3-5 minutes**
+  **Total time: 10-15 minutes**
   
   ### Requirements
-  - Raspberry Pi 5 (8GB recommended) OR x86 mini PC
-  - 500GB+ SSD (1TB recommended)
+  - Raspberry Pi 4 (4GB recommended) OR x86 mini PC
+  - 1TB+ SSD (2TB recommended)
   - Ethernet connection
   
   ### Setup
   
-  **Step 1: System Installation** (30 seconds)
+- **2-step setup:** `./scripts/install.sh` → Web wizard → Done (10-15 minutes)
+  
+  **Initial System Setup**
 ```bash
   git clone https://github.com/yourusername/memu
   cd memu
   sudo ./scripts/install.sh
 ```
   
-  **Step 2: Configure Your Family** (2-3 minutes)
+  **Web Wizard Configuration**
   1. Visit `http://[your-pi-hostname].local` in browser
   2. Fill in 4 fields:
      - Family name (e.g., "smiths")
@@ -102,7 +113,7 @@ So I built *Memu*. It's rough, but it's mine.
 **Full transparency:** I used Claude (AI) to help write code and docs.
 
 Before you judge:
-- I'm a portfolio director, not a full-time developer
+- I'm a technology portfolio director (Staff TPM), not a full-time developer
 - The architecture is mine (I designed it, I debugged it)
 - It actually works (my family uses it every day)
 - I can answer any technical question about how it works

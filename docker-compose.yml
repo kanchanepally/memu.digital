@@ -9,7 +9,7 @@ services:
 
   database:
     container_name: memu_postgres
-    image: postgres:15-alpine
+    image: tensorchord/pgvecto-rs:pg15-v0.2.0
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}

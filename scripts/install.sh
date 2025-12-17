@@ -25,6 +25,23 @@ if ! command -v docker &> /dev/null; then
 fi
 echo -e "${GREEN}✓ Docker is ready${NC}"
 
+# 1.5. Python Dependencies (for Bootstrap Wizard)
+echo -e "\n${BLUE}[1.5/2] Installing Python dependencies...${NC}"
+echo "This may take 1-2 minutes..."
+
+# Install pip and flask
+# We suppress output to keep things clean, but show errors
+sudo apt-get update -qq
+sudo apt-get install -y python3-pip > /dev/null 2>&1
+sudo pip3 install flask --quiet --break-system-packages 2>/dev/null || sudo pip3 install flask --quiet
+
+echo -e "${GREEN}✓ Python dependencies installed${NC}"
+
+# 1.6. Prepare Directories & Permissions
+# Fixes "Permission denied" errors for Synapse container
+mkdir -p ./synapse
+chmod 777 ./synapse
+
 # 2. Systemd Service Setup
 echo -e "\n${BLUE}[2/2] Configuring system services...${NC}"
 
