@@ -342,8 +342,29 @@ def create_matrix_user(username, password, is_admin=False):
     if is_admin:
         cmd.insert(-1, "--admin")
     
-    # Ignore error if user already exists
-    subprocess.run(cmd, cwd=PROJECT_ROOT)
+    # Run command and capture output to detect errors
+    try:
+        result = subprocess.run(
+            cmd, 
+            cwd=PROJECT_ROOT,
+            capture_output=True,
+            text=True
+        )
+        
+        if result.returncode != 0:
+            # Check if failure is just "User taken"
+            if "already taken" in result.stderr or "already in use" in result.stderr:
+                print(f"User {username} already exists (skipping).")
+            else:
+                # Real error - surface it!
+                print(f"Error creating user {username}: {result.stderr}")
+                raise Exception(f"Failed to create user {username}: {result.stderr}")
+        else:
+            print(f"User {username} created successfully.")
+            
+    except Exception as e:
+        print(f"Critical error in user creation: {e}")
+        raise
 
 def get_user_token(username, password):
     """Get access token for a user via login with retries"""
