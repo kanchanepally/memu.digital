@@ -194,9 +194,14 @@ def generate_nginx_config(domain):
     listen 80;
     server_name localhost;
 
+    # Use Docker's internal DNS resolver to prevent startup crashes
+    resolver 127.0.0.11 valid=30s;
+
     # Matrix API
     location ~ ^/(_matrix|_synapse/client) {{
-        proxy_pass http://synapse:8008;
+        set $upstream_synapse http://synapse:8008;
+        proxy_pass $upstream_synapse;
+        
         proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header Host $host;
@@ -205,7 +210,9 @@ def generate_nginx_config(domain):
 
     # Element Web
     location / {{
-        proxy_pass http://element:80;
+        set $upstream_element http://element:80;
+        proxy_pass $upstream_element;
+        
         proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header Host $host;
     }}
