@@ -2,8 +2,9 @@
 
 > **Status:** Alpha. Works on my Pi. Probably has bugs.
 
-I'm a dad/husband who got spooked when Meta announced they'd train AI on WhatsApp photos. 
-So I built a home server for my family.
+I'm a dad/husband who got spooked when Big tech announced they'd train AI on our photos and scour metadata from our supposedly E2EE messages.
+
+So I built a home server for my family - "we" own that data.
 
 **Memu (మేము)** = "we" in Telugu. Your data belongs to "us", not "they".
 
