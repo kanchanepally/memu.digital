@@ -288,30 +288,61 @@
             document.getElementById('spinner').style.display = 'none';
             document.getElementById('title').textContent = 'Your Memu is Ready! 🎉';
             document.getElementById('infoBox').innerHTML = `
-                <strong>Access Your Server:</strong>
-                <div style="margin-top: 10px;">
-                    <div style="margin-bottom: 8px;">
-                        🌐 Web: <a href="https://${domain}" target="_blank">${domain}</a>
-                    </div>
-                    <div style="margin-bottom: 8px;">
-                        📱 Local: <code>http://${window.location.hostname}</code>
-                    </div>
-                </div>
-                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e1e8ed;">
-                    <strong>Next Steps:</strong>
-                    <ol style="margin: 10px 0 0 20px; line-height: 1.8;">
-                        <li>Install <strong>Element X</strong> app on your phone</li>
-                        <li>Install <strong>Immich</strong> app for photo backup</li>
-                        <li>Connect both to: <code>${domain}</code></li>
-                    </ol>
-                </div>
-            `;
+        <strong>✅ Setup Complete! Here's What You Got:</strong>
+        
+        <div style="margin: 16px 0; padding: 12px; background: #f0f7ff; border-radius: 8px;">
+            <strong>Your Chat Account (Matrix):</strong><br>
+            <div style="margin-top: 6px; font-family: monospace; font-size: 13px;">
+                Username: <code>admin</code><br>
+                Password: <code>[the password you created]</code><br>
+                Server: <code>${domain}</code>
+            </div>
+        </div>
+
+        <div style="margin: 16px 0; padding: 12px; background: #fff9e6; border-radius: 8px;">
+            <strong>⚠️ Important:</strong><br>
+            <ul style="margin: 8px 0 0 16px; font-size: 13px; line-height: 1.6;">
+                <li>Photos (Immich) creates a SEPARATE account on first login</li>
+                <li>You can use any email/username for photos</li>
+                <li>Both services are independent</li>
+            </ul>
+        </div>
+
+        <hr style="margin: 20px 0; border: none; border-top: 1px solid #e1e8ed;">
+
+        <strong>📱 Connect Your Apps</strong>
+
+        <div style="margin: 12px 0; padding: 10px; border: 1px solid #e1e8ed; border-radius: 6px;">
+            <strong>Step 1: Chat</strong>
+            <ol style="margin: 8px 0 0 20px; font-size: 13px; line-height: 1.6;">
+                <li>Install <strong>Element X</strong> app</li>
+                <li>Tap "Change homeserver"</li>
+                <li>Enter: <code>http://${window.location.hostname}</code></li>
+                <li>Login with username: <code>admin</code></li>
+            </ol>
+        </div>
+
+        <div style="margin: 12px 0; padding: 10px; border: 1px solid #e1e8ed; border-radius: 6px;">
+            <strong>Step 2: Photos</strong>
+            <ol style="margin: 8px 0 0 20px; font-size: 13px; line-height: 1.6;">
+                <li>Install <strong>Immich</strong> app</li>
+                <li>Enter server: <code>http://${window.location.hostname}</code></li>
+                <li>Create your photo account (any email/password)</li>
+                <li>Enable "Automatic Backup" in settings</li>
+            </ol>
+        </div>
+
+        <div style="margin-top: 16px; padding: 12px; background: #ffe6e6; border-radius: 6px; font-size: 12px;">
+            <strong>💾 SAVE THIS INFORMATION!</strong><br>
+            Write down your admin password. There's no "forgot password" by design—this is YOUR server, not ours.
+        </div>
+    `;
 
             document.getElementById('finalMessage').innerHTML = `
-                <p class="success">
-                    <a href="https://${domain}" target="_blank">Open Your Memu →</a>
-                </p>
-            `;
+        <p class="success">
+            <a href="http://${window.location.hostname}" target="_blank">Open Your Memu →</a>
+        </p>
+    `;
 
             clearInterval(pollInterval);
         }

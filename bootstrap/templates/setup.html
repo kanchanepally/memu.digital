@@ -82,24 +82,11 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
-        input:invalid:not(:placeholder-shown) {
-            border-color: #e74c3c;
-        }
-
         .help-text {
             font-size: 12px;
             color: #666;
             margin-top: 6px;
             line-height: 1.4;
-        }
-
-        .help-text a {
-            color: #667eea;
-            text-decoration: none;
-        }
-
-        .help-text a:hover {
-            text-decoration: underline;
         }
 
         .domain-preview {
@@ -109,22 +96,72 @@
             font-weight: 500;
         }
 
-        .warning-box {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
+        .info-box {
+            background: #f0f7ff;
+            border: 2px solid #667eea;
             border-radius: 10px;
-            padding: 12px;
+            padding: 16px;
             margin-bottom: 20px;
             font-size: 13px;
-            color: #856404;
+            line-height: 1.6;
         }
 
-        .warning-box strong {
+        .info-box-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .info-box-header .icon {
+            font-size: 20px;
+            margin-right: 8px;
+        }
+
+        .info-box ul {
+            margin: 8px 0 0 20px;
+            padding: 0;
+        }
+
+        .info-box li {
+            margin: 4px 0;
+        }
+
+        .toggle-section {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #e1e8ed;
+        }
+
+        .toggle-button {
+            background: none;
+            border: none;
+            color: #667eea;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 0;
+            text-decoration: underline;
+        }
+
+        .toggle-button:hover {
+            color: #5568d3;
+        }
+
+        .collapsible-content {
+            margin-top: 12px;
+            display: none;
+            font-size: 12px;
+            line-height: 1.6;
+            color: #666;
+        }
+
+        .collapsible-content.show {
             display: block;
-            margin-bottom: 4px;
         }
 
-        button {
+        button[type="submit"] {
             width: 100%;
             padding: 16px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -140,10 +177,6 @@
         button:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-
-        button:active:not(:disabled) {
-            transform: translateY(0);
         }
 
         button:disabled {
@@ -179,16 +212,6 @@
             width: 100%;
             background: #27ae60;
         }
-
-        @media (max-width: 600px) {
-            .container {
-                padding: 30px 20px;
-            }
-
-            .logo h1 {
-                font-size: 28px;
-            }
-        }
     </style>
 </head>
 
@@ -199,6 +222,22 @@
             <p>Your family's digital sanctuary</p>
         </div>
 
+        <!-- Explanation Box -->
+        <div class="info-box">
+            <div class="info-box-header">
+                <span class="icon">🏠</span>
+                <span>What you're setting up:</span>
+            </div>
+            <ul>
+                <li>Your own private chat (like WhatsApp)</li>
+                <li>Your own photo backup (like Google Photos)</li>
+                <li>An AI assistant that works offline</li>
+            </ul>
+            <div style="margin-top: 10px; font-weight: 500; color: #667eea;">
+                All running on YOUR device. No company can see your data.
+            </div>
+        </div>
+
         <form id="setupForm" action="/configure" method="POST">
             <div class="input-group">
                 <label>
@@ -207,10 +246,10 @@
                 <input type="text" name="family_name" id="familyName" placeholder="e.g., smiths" required
                     pattern="[a-zA-Z0-9]+" minlength="2" maxlength="30">
                 <div class="domain-preview">
-                    Your address: <span id="preview">...</span>.memu.digital
+                    Your web address: <span id="preview">...</span>.memu.digital
                 </div>
                 <div class="help-text">
-                    Letters and numbers only, no spaces
+                    This is like your family's last name for the internet. Letters and numbers only.
                 </div>
             </div>
 
@@ -224,7 +263,7 @@
                     <div class="password-strength-bar" id="strengthBar"></div>
                 </div>
                 <div class="help-text">
-                    At least 8 characters. This protects your entire server.
+                    This password protects your entire server. Make it strong and write it down somewhere safe!
                 </div>
             </div>
 
@@ -238,25 +277,55 @@
                 </div>
             </div>
 
-            <div class="warning-box">
-                <strong>⚠️ Network Setup (Temporary)</strong>
-                Memu currently uses Cloudflare Tunnel for remote access, but this violates their ToS for video
-                streaming. We're switching to a better solution soon. You can skip this for now and set it up later.
+            <!-- Internet Access Section -->
+            <div class="info-box" style="background: #fff9e6; border-color: #ffc107;">
+                <div class="info-box-header">
+                    <span class="icon">🌍</span>
+                    <span>Access from anywhere (optional)</span>
+                </div>
+                <div style="color: #666;">
+                    Right now, you can only use Memu when you're home. To access it from anywhere (like at work or
+                    traveling), we need to create a secure tunnel to the internet.
+                </div>
+                <div class="toggle-section">
+                    <button type="button" class="toggle-button" onclick="toggleDetails()">
+                        Why do I need Cloudflare? What's changing?
+                    </button>
+                    <div id="detailsSection" class="collapsible-content">
+                        <p style="margin-bottom: 8px;">
+                            <strong>The Simple Answer:</strong> Cloudflare creates a secure path to your home without
+                            making your address public or opening dangerous "ports" on your router.
+                        </p>
+                        <p style="margin-bottom: 8px;">
+                            <strong>The Problem:</strong> Cloudflare doesn't allow video streaming through their tunnel
+                            (it's in their rules). Since your photos and videos go through this tunnel, we're breaking
+                            their rules.
+                        </p>
+                        <p>
+                            <strong>What We're Doing:</strong> We're switching to a better system (Headscale/Tailscale)
+                            that's designed for exactly this use case. But it's not ready yet.
+                        </p>
+                        <p style="margin-top: 8px; font-weight: 500;">
+                            <strong>What Should You Do?</strong> Skip this for now. You can set it up later when the new
+                            system is ready.
+                        </p>
+                    </div>
+                </div>
             </div>
 
             <div class="input-group">
                 <label>
-                    Cloudflare Tunnel Token <span style="color: #666;">(Optional)</span>
+                    Cloudflare Tunnel Token <span style="color: #999; font-weight: 400;">(Skip this for now)</span>
                 </label>
-                <input type="text" name="cloudflare_token" placeholder="Paste your tunnel token (starts with ey...)">
+                <input type="text" name="cloudflare_token" placeholder="Leave blank - we'll add this later">
                 <div class="help-text">
-                    Get token: <a href="https://dash.cloudflare.com" target="_blank">Cloudflare Dashboard</a> → Zero
-                    Trust → Tunnels
+                    You can add remote access later through Settings. For now, Memu will work perfectly on your home
+                    network.
                 </div>
             </div>
 
             <button type="submit" id="submitBtn">
-                Create My Memu Server
+                Create My Family Server
             </button>
         </form>
     </div>
@@ -270,6 +339,11 @@
         const passwordMatch = document.getElementById('passwordMatch');
         const submitBtn = document.getElementById('submitBtn');
         const form = document.getElementById('setupForm');
+
+        function toggleDetails() {
+            const details = document.getElementById('detailsSection');
+            details.classList.toggle('show');
+        }
 
         // Update domain preview
         familyInput.addEventListener('input', function () {
@@ -318,19 +392,16 @@
 
         // Form submission
         form.addEventListener('submit', function (e) {
-            // Check password match
             if (passwordInput.value !== confirmInput.value) {
                 e.preventDefault();
                 alert('Passwords do not match');
                 return;
             }
 
-            // Disable button to prevent double-submit
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Creating your server...';
+            submitBtn.textContent = 'Setting up your server...';
         });
 
-        // Auto-focus first input
         familyInput.focus();
     </script>
 </body>
