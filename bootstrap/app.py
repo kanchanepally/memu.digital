@@ -331,16 +331,17 @@ def wait_for_synapse(max_wait=180):
 
 def create_matrix_user(username, password, is_admin=False):
     """Create a Matrix user account"""
+    admin_flag = "--admin" if is_admin else "--no-admin"
+    
     cmd = [
         "docker", "compose", "exec", "-T", "synapse",
         "register_new_matrix_user",
         "-u", username,
         "-p", password,
-        "-c", "/data/homeserver.yaml"
+        admin_flag,
+        "-c", "/data/homeserver.yaml",
+        "http://localhost:8008"
     ]
-    
-    if is_admin:
-        cmd.insert(-1, "--admin")
     
     # Run command and capture output to detect errors
     try:
