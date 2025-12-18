@@ -290,6 +290,9 @@ report_stats: false
 # Media storage
 media_store_path: /data/media_store
 
+# Shared secret for admin tools (REQUIRED for user creation)
+registration_shared_secret: "{secrets.token_urlsafe(32)}"
+
 # Signing keys will be generated automatically by Synapse on first run
 # because we cleaned the directory and set permissions in install.sh
 """
