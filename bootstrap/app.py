@@ -402,25 +402,26 @@ def launch_production(family_slug):
     # Launch the script that handles production startup
     # HANDOFF LOGIC:
     # We must switch from Setup (Port 80) to Production (Port 80).
-    # We CANNOT run 'docker compose up' while we are still listening on 80.
-    # So we use a detached shell transaction to:
-    # 1. Wait 3s (to let this HTTP request finish and return "Success" to browser)
-    # 2. Stop this wizard service (releasing Port 80)
-    # 3. Disable this wizard service (so it doesn't auto-start next boot)
-    # 4. Enable production service
-    # 5. Start production service (which runs 'docker compose up')
+    # Standard subprocesses are killed when the parent service stops (cgroup).
+    # We use 'systemd-run' to spawn a transient independent unit that survives our death.
     
-    handoff_cmd = (
-        "sleep 3 && "
-        "sudo systemctl stop memu-setup.service && "
-        "sudo systemctl disable memu-setup.service && "
-        "sudo systemctl enable memu-production.service && "
-        "sudo systemctl start memu-production.service"
+    handoff_script = (
+        "sleep 3; "
+        "systemctl stop memu-setup.service; "
+        "systemctl disable memu-setup.service; "
+        "systemctl enable memu-production.service; "
+        "systemctl start memu-production.service"
     )
 
-    # Fire and forget (detached process)
-    # start_new_session=True ensures it survives when parent (flask) dies
-    subprocess.Popen(handoff_cmd, shell=True, start_new_session=True)
+    # Note: check=False because if systemd-run fails, we can't do much else.
+    # We use --no-block to return immediately.
+    subprocess.run([
+        "sudo", "systemd-run", 
+        "--unit=memu-handoff", 
+        "--description=Memu Setup Handoff",
+        "--no-block",
+        "/bin/bash", "-c", handoff_script
+    ], check=False)
 
 if __name__ == '__main__':
     print("=" * 50)
