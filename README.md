@@ -1,162 +1,182 @@
-# Memu (మేము): The Family Server I Built Because I Got Paranoid
+# Memu (మేము): Own Your Family's Digital Life
 
-> **Status:** Alpha. Works on my Pi. Probably has bugs.
+> **Status:** Alpha. My family uses it daily (been since Oct/25). Ready for adventurous testers.
 
-I'm a dad/husband who got spooked when Big tech announced they'd train AI on our photos and scour metadata from our supposedly E2EE messages.
-
-So I built a home server for my family - "we" own that data.
-
-**Memu (మేము)** = "we" in Telugu. Your data belongs to "us", not "they".
+**Memu (మేము)** = "we" in Telugu. Your family's data belongs to *you*, not *them*.
 
 ---
 
-## What It Does
+## What Is This?
 
-- **Alpha quality:** Might break, limited testing
-- **Hardware Requirements:** Minimum 2GB RAM required (1GB works for core only, AI features will crash).
+Every app wants to be "AI-powered" — and as a technology portfolio director, i see that they all need your data to work.
 
-### 🐳 Docker Compose Files
-- **docker-compose.yml:** Main production configuration. Use this.
-- **docker-compose.dev.yml:** Development only (stripped down).
-- **docker-compose.pi-patch.yml:** Raspberry Pi specific overrides.
-*(Note: docker-compose.override.yml has been removed to prevent conflicts)*
+Here's the thing: your family's data is incredibly valuable **context**. Your photos know who you are and where you've been. Your chats know your inside jokes and plans. Your calendar knows your schedule. 
 
-Replaces the cloud with a box in your living room:
+But that context is scattered across Google, Apple, Meta, and Amazon. Each has a slice. None let you use it in a unified way. And you can't take it with you.
 
-- **Chat** (Matrix): Like WhatsApp, but your server
-- **Photos** (Immich): Like Google Photos, but your drive  
-- **AI** (Ollama): Like ChatGPT, but stays in your house
+**Memu consolidates your family's digital life onto hardware you own:**
 
-My family's been using it for 3 months. It works. Mostly.
+- **Chat** (Matrix): Like WhatsApp, but on your server
+- **Photos** (Immich): Like Google Photos, but on your drive  
+- **AI Assistant** (Ollama): Like ChatGPT, but it never leaves your house
+
+The magic is the **Context Engine** — an AI that knows your family because it has access to your photos *and* your chats *and* your history. All running locally  - and in your control.
 
 ---
 
-## Why I Built This
+## Why Ownership Matters
 
-**The trigger:** I got paranoid about where my family's data goes.
+When you use Google Photos, Google can:
+- Train models on your images
+- Change the product whenever they want
+- Raise prices or discontinue it
+- Decide what features you get
 
-Even with E2EE, WhatsApp collects metadata (who you talk to, when, device info). 
-Google Photos' ToS allows ML training. iCloud is convenient but you're renting, 
-not owning.
+When you own the hardware:
+- Data never leaves your house
+- You control what AI can access
+- No subscription that can disappear
+- Your kids inherit actual files, not account credentials
 
-I wanted the convenience of the cloud, but with actual ownership. Like buying 
-a photo album instead of renting shelf space at someone else's house.
-
-I tried existing solutions:
-- Synology: No chat, no AI
-- Nextcloud: Just files, complicated setup
-- FreedomBox: Too technical, abandoned
-
-So I built *Memu*. It's rough, but it's mine.
+I'm not anti-cloud. I use cloud services for lots of things. But my family's photos and conversations? I want to **own** those, not rent them.
 
 ---
 
-## Current Reality Check
+## Current Status
 
-**What actually works:**
-- ✅ Family group chat (Matrix, E2EE if you want)
-- ✅ Photo backup from phones (face recognition, search)
-- ✅ AI bot for lists/reminders ("what's on the shopping list?")
-- ✅ Runs on a Pi 5 in my closet
+**What works:**
+- ✅ Family group chat (E2E encrypted)
+- ✅ Photo backup from phones (face recognition, search, albums)
+- ✅ AI bot for lists, reminders, and family memory
+- ✅ 2-step setup wizard (no YAML editing)
+- ✅ Runs on ~$200 hardware
 
-**What's janky:**
-- ⚠️ Remote access uses Cloudflare Tunnel (just found out it violates ToS for video streaming)
-- ⚠️ Setup takes a few minutes (not "plug and play" yet)
-- ⚠️ Using Element/Immich apps directly (haven't white-labeled yet)
+**What's in progress:**
+- ⚠️ Remote access migration (Cloudflare → Headscale) — [Help me decide](https://github.com/kanchanepally/memu.digital/issues)
+- ⚠️ Cross-silo AI queries ("show me photos from Christmas") — on roadmap
+- ⚠️ Alpha quality — tested on my family, probably has bugs
+- ⚠️ Voice-based interaction with AI — on roadmap
 
-**What I'm working on:**
-- Network layer redesign (Headscale? Tailscale? Both? [Help me decide](../../issues/1))
-- Actual "setup wizard" (web UI, no terminal)
-- Pre-configured hardware you can just buy
+---
+
+## Hardware
+
+### Recommended: Intel N100 Mini PC
+
+| Component | Spec | Why |
+|-----------|------|-----|
+| CPU | Intel N100 | QuickSync for 4K video transcoding |
+| RAM | **16GB (mandatory)** | Synapse + Immich ML + Ollama and associated context engineering layer need it |
+| Storage | 1TB+ NVMe | 2TB if you have large photo libraries like ours! |
+| Network | Gigabit Ethernet | Wi-Fi works, wired is more reliable |
+
+**Cost:** ~$250-300 total
+
+**Why N100?** I started on Raspberry Pi 5, which works great for chat and basic photos. But when my wife's better phone started shooting 4K video, the Pi struggled with transcoding and ran hot. The N100's QuickSync handles 4K smoothly at lower power.
+
+### Alternative: Raspberry Pi 5
+
+Still works for:
+- Families who mostly take photos (not much 4K video)
+- Lighter AI workloads
+- Tighter budgets
+
+**Minimum specs:** 8GB RAM (limited AI), 4GB RAM (no AI features)
 
 ---
 
 ## Installation
-  
-  **Total time: 10-15 minutes**
-  
-  ### Requirements
-  - Raspberry Pi 4 (4GB recommended) OR x86 mini PC
-  - 1TB+ SSD (2TB recommended)
-  - Ethernet connection
-  
-  ### Setup
-  
-- **2-step setup:** `./scripts/install.sh` → Web wizard → Done (10-15 minutes)
-  
-  **Initial System Setup**
+
+**Total time:** 10-15 minutes
+
+### Step 1: Run the installer
+
 ```bash
-  git clone https://github.com/yourusername/memu
-  cd memu
-  sudo ./scripts/install.sh
+git clone https://github.com/kanchanepally/memu.digital
+cd memu.digital
+sudo ./scripts/install.sh
 ```
-  
-  **Web Wizard Configuration**
-  1. Visit `http://[your-pi-hostname].local` in browser
-  2. Fill in 4 fields:
-     - Family name (e.g., "smiths")
-     - Admin password
-     - Cloudflare token (optional - will be replaced soon)
-  3. Click "Create My Memu Server"
-  4. Wait 2-3 minutes
-  5. Done!
-  
-  ### What Gets Installed
-  - Chat server (Matrix/Synapse)
-  - Photo backup (Immich)
-  - AI assistant (Ollama)
-  - All dependencies and configs
-  
----
 
-## The "Vibecoding" Disclosure
+### Step 2: Open the web wizard
 
-**Full transparency:** I used Claude (AI) to help write code and docs.
+1. Visit `http://[your-hostname].local` in your browser
+2. Fill in 4 fields:
+   - Family name (e.g., "smiths")
+   - Admin password
+   - Cloudflare token (optional — being replaced soon)
+3. Click "Create My Memu Server"
+4. Wait 2-3 minutes
+5. Done!
 
-Before you judge:
-- I'm a technology portfolio director (Staff TPM), not a full-time developer
-- The architecture is mine (I designed it, I debugged it)
-- It actually works (my family uses it every day)
-- I can answer any technical question about how it works
+**No YAML editing. No terminal after the initial script.**
 
-**Why I'm telling you:** Reddit hates "LLM slop." Fair. But I'd rather be 
-honest than pretend I hand-coded 10,000 lines of Python at 2am.
-
-If you think AI-assisted development disqualifies this project, that's okay. 
-This might not be for you.
-
-If you think "working product > purity of method," read on.
+### What Gets Installed
+- Chat server (Matrix/Synapse)
+- Photo backup (Immich)  
+- AI assistant (Ollama with Llama 3.2)
+- PostgreSQL database
+- All dependencies and configs
 
 ---
 
 ## The Tech Stack
 
-**Simple version:** Docker + Matrix + Immich + Ollama
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Your Hardware                            │
+├─────────────────────────────────────────────────────────────┤
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
+│  │  Matrix  │  │  Immich  │  │  Ollama  │  │ Context  │    │
+│  │  (Chat)  │  │ (Photos) │  │  (LLM)   │  │  Engine  │    │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘    │
+│       └─────────────┴─────────────┴─────────────┘          │
+│                         │                                   │
+│              ┌──────────▼──────────┐                       │
+│              │     PostgreSQL      │                       │
+│              │  (shared + pgvector)│                       │
+│              └─────────────────────┘                       │
+└─────────────────────────────────────────────────────────────┘
+```
 
-**Detailed:**
-- Orchestration: Docker Compose
-- Database: PostgreSQL 15 (one DB for everything)
-- Chat: Synapse (Matrix homeserver)
-- Photos: Immich (Google Photos clone)
-- AI: Ollama (Llama 3.2 3B, ~2GB model)
-- Network: Cloudflare Tunnel (for now, but changing this - see Issue #1)
-
-All open source. No proprietary parts.
+- **Orchestration:** Docker Compose
+- **Database:** PostgreSQL 15 with pgvector
+- **Chat:** Matrix Synapse + Element
+- **Photos:** Immich
+- **AI:** Ollama (Llama 3.2 3B)
+- **License:** AGPLv3 (open source, prevents cloud cloning)
 
 ---
 
-## The Vision (If This Works)
+## The AI Assistant
 
-**Phase 1** (now): DIY for technical people  
-**Phase 2** (Q2 2025): Pre-configured boxes (~$400-500)  
-**Phase 3** (Q4 2025): My mom can use it
+The bot lives in your family chat and handles:
+
+| Command | What it does |
+|---------|--------------|
+| `/remember [fact]` | Stores info → "WiFi at grandma's is ABC123" |
+| `/recall [query]` | Retrieves info → "What's grandma's WiFi?" |
+| `/addtolist [items]` | Shared shopping list → "Add milk, eggs" |
+| `/showlist` | Display current list |
+| `/done [item]` | Mark item complete |
+| `/remind [task] [time]` | Natural language → "Call mom tomorrow" |
+| `/summarize` | AI summary of today's chat |
+
+**Coming soon:** Cross-silo queries like "What photos do we have from Dad's birthday?" that search both chat mentions and photo metadata.
+
+---
+
+## Roadmap
+
+| Phase | Timeline | Goal |
+|-------|----------|------|
+| **Alpha** (now) | Q1 2025 | DIY for technical families |
+| **Beta** | Q2 2025 | Pre-configured hardware (~$350) |
+| **v1.0** | Q4 2025 | Simple enough for my mom |
 
 **Business model:**
 - Software: Free forever (AGPLv3)
-- Hardware: Buy once, no subscriptions
-- Optional relay: $5/mo (if you want remote access, funds development)
-
-I want to sell toasters, not rent them.
+- Hardware: Buy once, own forever
+- Optional relay service: ~$10/mo for easy remote access
 
 ---
 
@@ -164,58 +184,65 @@ I want to sell toasters, not rent them.
 
 **What I need help with:**
 
-1. **Network architecture** - Should I use Headscale? Tailscale? Both? [Issue #1](../../issues/1)
-2. **Testing** - Does this work on Pi 4? On Ubuntu laptops? On your weird NUC?
-3. **Docs** - Make the install guide less terrible
-4. **Security** - Audit for privacy leaks (seriously, please)
-
-See [CONTRIBUTING.md](CONTRIBUTING.md)
+1. **Network architecture** — Headscale vs Tailscale? [Join the discussion](https://github.com/kanchanepally/memu.digital/issues)
+2. **Testing** — Does this work on your hardware?
+3. **Security** — Audit for privacy leaks (please!)
+4. **Docs** — Make installation clearer
 
 ---
 
-## License & Philosophy
+## The "AI-Assisted Development" Disclosure
 
-**AGPLv3** (strongest copyleft)
+**Full transparency:** I used Claude to help write code and documentation.
 
-Translation:
-- Run it for your family? No obligations.
-- Modify and host it for others? Must share your code.
-- Prevents big companies from stealing this and closing it.
+- I'm a technology portfolio director, not a full-time developer
+- The architecture and decisions are mine
+- It works — my family uses it daily
+- I can explain any part of how it works
 
-**Zero telemetry.** I literally don't know who uses this. By design.
+If AI-assisted development bothers you, this might not be your project. If "working product > purity of method," welcome aboard.
 
 ---
 
 ## FAQ
 
 **Q: Why should I trust you?**  
-A: You shouldn't. That's why the code is open source. Audit it.
+A: You shouldn't trust me. Trust the code — it's open source. Audit it.
 
-**Q: This looks complicated.**  
-A: It is. For now. I'm working on making it simpler. Help me?
+**Q: Is this really private?**  
+A: Data never leaves your hardware. Zero telemetry. I literally don't know who uses this.
 
 **Q: What if it breaks?**  
-A: Open an issue. I'll help you fix it. Or you fix it and send a PR.
+A: Open an issue. I'll help, or you fix it and send a PR.
 
-**Q: Is this secure?**  
-A: I think so? But I'm not a security expert. If you are, please review it.
+**Q: Why not just use Nextcloud?**  
+A: Nextcloud is great for files but doesn't have native chat or local AI integration.
 
----
-
-## Inspiration
-
-Standing on the shoulders of:
-- Tim Berners-Lee (Solid project - data sovereignty)
-- The Matrix team (federated chat)
-- The Immich team (self-hosted photos)
-- Everyone who thinks families deserve to own their data
+**Q: Why not just use Synology?**  
+A: Synology is excellent but expensive, no chat, and no local AI assistant.
 
 ---
 
-**⭐ Star if you want updates. Or don't. Your choice.**
+## License
 
-Questions? [Open an issue](../../issues).
+**AGPLv3** — Run it for your family freely. Modify and host for others? Share your code.
 
 ---
 
-*Built by a paranoid dad for other paranoid parents.*
+## Acknowledgments
+
+Built on the shoulders of:
+- [Matrix](https://matrix.org) — Federated chat
+- [Immich](https://immich.app) — Self-hosted photos
+- [Ollama](https://ollama.ai) — Local LLMs
+- Everyone building for data sovereignty
+
+---
+
+**Questions?** [Open an issue](https://github.com/kanchanepally/memu.digital/issues)
+
+**Updates?** ⭐ Star the repo
+
+---
+
+*Built by a dad who wanted his family to own their digital life.*
