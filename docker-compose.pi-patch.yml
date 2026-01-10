@@ -2,8 +2,8 @@ services:
   intelligence:
     build:
       context: ./services/intelligence
-      dockerfile: dockerfile
-    container_name: Memu_intelligence
+      dockerfile: Dockerfile
+    container_name: memu_intelligence
     restart: unless-stopped
     networks:
       - default
@@ -19,5 +19,5 @@ services:
       - AI_TIMEOUT=30
       - LOG_LEVEL=${LOG_LEVEL}
     depends_on:
-      postgres:
+      database:
         condition: service_healthy

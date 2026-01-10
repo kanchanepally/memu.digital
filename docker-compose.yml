@@ -142,7 +142,7 @@ services:
     container_name: memu_intelligence
     build:
       context: ./services/intelligence
-      dockerfile: dockerfile
+      dockerfile: Dockerfile
     environment:
       - DB_HOST=database
       - DB_NAME=${DB_NAME}
