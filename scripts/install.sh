@@ -1,9 +1,10 @@
 #!/bin/bash
 # =============================================================================
-# Memu OS - System Installer v2.0
+# Memu OS - System Installer v2.1
 # =============================================================================
 # This script prepares the system for Memu installation:
 # - Checks prerequisites (Docker, RAM, disk space)
+# - Creates swap memory if needed (critical for AI)
 # - Installs dependencies
 # - Cleans up any previous installation (with user consent)
 # - Sets up systemd services for the Setup Wizard
@@ -22,9 +23,10 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Minimum requirements
-MIN_RAM_MB=3500      # 4GB minus some overhead
-MIN_DISK_GB=20       # Minimum free disk space
+MIN_RAM_MB=3500          # 4GB minus some overhead
+MIN_DISK_GB=20           # Minimum free disk space
 RECOMMENDED_RAM_MB=7500  # 8GB for full features
+SWAP_SIZE_GB=4           # Swap file size for low-RAM systems
 
 echo -e "${BLUE}"
 echo "╔═══════════════════════════════════════════════════════════════╗"
@@ -37,7 +39,7 @@ echo "║   ██║ ╚═╝ ██║███████╗██║ ╚�
 echo "║   ╚═╝     ╚═╝╚══════╝╚═╝     ╚═╝ ╚═════╝                     ║"
 echo "║                                                               ║"
 echo "║   Your Family's Digital Sanctuary                             ║"
-echo "║   Installer v2.0                                              ║"
+echo "║   Installer v2.1                                              ║"
 echo "║                                                               ║"
 echo "╚═══════════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
@@ -61,6 +63,52 @@ log_warning() {
 
 log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# =============================================================================
+# SWAP MEMORY SETUP (Critical for AI on low-RAM systems)
+# =============================================================================
+
+setup_swap() {
+    echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
+    echo -e "${CYAN}  Checking Swap Memory${NC}"
+    echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
+    echo ""
+    
+    # Check if swap exists
+    SWAP_TOTAL=$(free -m | awk '/^Swap:/ {print $2}')
+    
+    if [ "$SWAP_TOTAL" -lt 1000 ]; then
+        log_warning "Insufficient swap detected (${SWAP_TOTAL}MB)."
+        log_info "Creating ${SWAP_SIZE_GB}GB swap file for AI stability..."
+        echo ""
+        
+        # Remove old swapfile if it exists but isn't active
+        if [ -f /swapfile ]; then
+            swapoff /swapfile 2>/dev/null || true
+            rm -f /swapfile
+        fi
+        
+        # Create new swap file
+        fallocate -l ${SWAP_SIZE_GB}G /swapfile
+        chmod 600 /swapfile
+        mkswap /swapfile
+        swapon /swapfile
+        
+        # Make it permanent (if not already in fstab)
+        if ! grep -q "/swapfile" /etc/fstab; then
+            echo '/swapfile none swap sw 0 0' >> /etc/fstab
+        fi
+        
+        log_success "Created ${SWAP_SIZE_GB}GB swap file"
+        
+        # Verify
+        NEW_SWAP=$(free -m | awk '/^Swap:/ {print $2}')
+        log_info "Swap now: ${NEW_SWAP}MB"
+    else
+        log_success "Swap memory OK (${SWAP_TOTAL}MB)"
+    fi
+    echo ""
 }
 
 # =============================================================================
@@ -153,7 +201,7 @@ elif [ $TOTAL_RAM_MB -lt $RECOMMENDED_RAM_MB ]; then
     echo ""
     echo -e "  ${YELLOW}Your system has ${TOTAL_RAM_GB}GB RAM.${NC}"
     echo "  Memu will run, but with limitations:"
-    echo "  - AI model will use smaller/slower model"
+    echo "  - AI model will use smaller/slower model (llama3.2:1b)"
     echo "  - Photo ML features may be slower"
     echo "  - Recommend upgrading to 8GB for best experience"
     echo ""
@@ -162,6 +210,9 @@ else
     log_success "RAM is sufficient for full features"
     AI_MODE="full"
 fi
+
+# Setup swap memory (critical for AI stability)
+setup_swap
 
 # Check Disk Space
 DISK_FREE_KB=$(df -k "$PROJECT_ROOT" | tail -1 | awk '{print $4}')
@@ -186,7 +237,7 @@ echo -e "${CYAN}  Step 2: Checking for Existing Installation${NC}"
 echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
 echo ""
 
-EXISTING_VOLUMES=$(docker volume ls -q | grep -E "memu|pgdata|ollama" 2>/dev/null || true)
+EXISTING_VOLUMES=$(docker volume ls -q | grep -E "memu|pgdata|ollama|redis" 2>/dev/null || true)
 EXISTING_CONTAINERS=$(docker ps -a --format '{{.Names}}' | grep -E "memu_" 2>/dev/null || true)
 
 if [ -n "$EXISTING_VOLUMES" ] || [ -n "$EXISTING_CONTAINERS" ]; then
@@ -230,18 +281,23 @@ if [ -n "$EXISTING_VOLUMES" ] || [ -n "$EXISTING_CONTAINERS" ]; then
             if [ -n "$EXISTING_VOLUMES" ]; then
                 log_info "Removing data volumes..."
                 for vol in $EXISTING_VOLUMES; do
-                    docker volume rm "$vol" 2>/dev/null || true
+                    docker volume rm "$vol" -f 2>/dev/null || true
                 done
                 log_success "Volumes removed"
             fi
+            
+            # Prune any remaining
+            docker system prune -f > /dev/null 2>&1 || true
             
             # Clean up generated config files
             log_info "Cleaning up config files..."
             rm -f ./synapse/homeserver.yaml
             rm -f ./synapse/*.signing.key
+            rm -f ./synapse/*.log.config 2>/dev/null || true
             rm -f ./element-config.json
             rm -f ./.env
             rm -rf ./nginx/conf.d/*
+            rm -f ./.ai_config
             log_success "Config files cleaned"
             echo ""
             ;;
@@ -277,7 +333,7 @@ log_info "Updating package lists..."
 apt-get update -qq
 
 log_info "Installing Python and dependencies..."
-apt-get install -y python3-pip python3-requests > /dev/null 2>&1
+apt-get install -y python3-pip python3-requests curl > /dev/null 2>&1
 
 # Install Flask for the setup wizard
 pip3 install flask --quiet --break-system-packages 2>/dev/null || pip3 install flask --quiet
@@ -325,6 +381,8 @@ echo ""
 log_info "Creating systemd service files..."
 
 # Create Setup Wizard service
+# NOTE: Runs as root to bind to port 80
+# bootstrap/app.py MUST have: app.run(host='0.0.0.0', port=80)
 cat > /etc/systemd/system/memu-setup.service << EOF
 [Unit]
 Description=Memu OS Setup Wizard
@@ -373,7 +431,7 @@ log_success "Created memu-production.service"
 systemctl daemon-reload
 
 # Enable the setup service (but don't start it yet)
-systemctl enable memu-setup.service
+systemctl enable memu-setup.service > /dev/null 2>&1
 
 log_success "Systemd services configured"
 echo ""
@@ -390,12 +448,14 @@ echo ""
 if [ "$AI_MODE" = "limited" ]; then
     log_warning "Configuring for limited RAM (${TOTAL_RAM_GB}GB)"
     echo ""
-    echo "  AI will use smaller model (phi3:mini instead of llama3.2)"
+    echo "  AI will use smaller model (llama3.2:1b instead of llama3.2)"
+    echo "  This model is compatible with the bot code and uses less RAM."
     echo "  To upgrade AI capabilities, add more RAM to your system."
     echo ""
     
     # Create an AI config marker file
-    echo "AI_MODEL=phi3:mini" > ./.ai_config
+    # Using llama3.2:1b for compatibility with bot code (not phi3:mini)
+    echo "AI_MODEL=llama3.2:1b" > ./.ai_config
     echo "AI_MODE=limited" >> ./.ai_config
 else
     log_success "Configuring for full AI features (${TOTAL_RAM_GB}GB RAM)"
@@ -406,6 +466,46 @@ else
 fi
 
 chown $REAL_USER:$REAL_USER ./.ai_config
+
+echo ""
+
+# =============================================================================
+# STEP 7: VERIFY BOOTSTRAP APP CONFIGURATION
+# =============================================================================
+
+echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
+echo -e "${CYAN}  Step 7: Verifying Setup Wizard${NC}"
+echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
+echo ""
+
+# Check that bootstrap/app.py exists
+if [ ! -f "./bootstrap/app.py" ]; then
+    log_error "bootstrap/app.py not found!"
+    log_error "The Setup Wizard cannot run without this file."
+    exit 1
+fi
+
+# Check that app.py binds to 0.0.0.0 (not just localhost)
+if grep -q "host='0.0.0.0'" ./bootstrap/app.py || grep -q 'host="0.0.0.0"' ./bootstrap/app.py; then
+    log_success "Setup Wizard configured to accept external connections"
+else
+    log_warning "Setup Wizard may only listen on localhost!"
+    echo ""
+    echo "  Please verify bootstrap/app.py contains:"
+    echo -e "  ${CYAN}app.run(host='0.0.0.0', port=80)${NC}"
+    echo ""
+    echo "  If it only has app.run() or app.run(port=80), you won't be"
+    echo "  able to access the wizard from your browser."
+    echo ""
+fi
+
+# Check port 80 binding
+if grep -q "port=80" ./bootstrap/app.py; then
+    log_success "Setup Wizard configured for port 80"
+else
+    log_warning "Setup Wizard may not be on port 80"
+    echo "  Verify bootstrap/app.py has: app.run(host='0.0.0.0', port=80)"
+fi
 
 echo ""
 
@@ -440,6 +540,7 @@ echo "  3. Complete the setup wizard to configure your Memu server."
 echo ""
 echo -e "${CYAN}System Information:${NC}"
 echo "  - RAM: ${TOTAL_RAM_GB}GB (AI Mode: ${AI_MODE})"
+echo "  - Swap: $(free -m | awk '/^Swap:/ {print $2}')MB"
 echo "  - Disk: ${DISK_FREE_GB}GB free"
 echo "  - User: ${REAL_USER}"
 echo "  - Project: ${PROJECT_ROOT}"

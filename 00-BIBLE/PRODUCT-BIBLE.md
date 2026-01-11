@@ -1,194 +1,360 @@
-# Memu OS - Product Specification & Bible v5.0 (Live Beta)
+# Memu - Product Bible 
 
-**The Single Source of Truth.**  
-*If it is in this document, it is being built. If it is not here, it is out of scope.*
-
----
-
-## 1. The Manifesto: From Privacy to Sanctuary
-
-**The Philosophy:** We do not sell "Privacy Tech" (which implies hiding). We sell "Digital Real Estate" (which implies ownership). Memu is a **Digital Sanctuary**: A physical vault in the user's home where their data lives, protected from Big Tech surveillance and commercial exploitation.
-
-**The Trust & Safety Promise (Edge-Based Safety):** We reject the false choice between Safety and Privacy. We enforce safety at the **Edge (The Device)**, not the Cloud.
-- **Local Intelligence:** All AI processing (Photos, Chat, Summaries) happens on-device.
-- **Zero Telemetry:** We do not track user activity.
-- **Ownership:** The user owns the hardware and the data.
+**Your Family's Context Layer.**  
+*Own your conversations. Own your photos. Own your intelligence.*
 
 ---
 
-## 2. The Product: The Memu Suite
+## 1. The Vision
 
-Memu OS is a **vertically integrated Appliance** that hosts a suite of best-in-class applications:
+### The Problem
 
-### The Three Layers:
+Your family's digital life is scattered:
+- **Google Photos** knows your faces and locations
+- **WhatsApp** knows your conversations
+- **Google Calendar** knows your schedule
+- **Amazon** knows what you buy
 
-#### 1. The Hardware (Memu Hub)
-*   **Server:** Raspberry Pi 5 (8GB RAM)
-*   **Storage:** NVMe SSD (1TB recommended) via PCIe HAT
-*   **Network:** Gigabit Ethernet + Cloudflare Tunnel (Zero Trust)
-*   **AI Accelerator:** Raspberry Pi AI Kit (Hailo-8L NPU) - *Ready for future vision tasks*
+Each company has a slice of your family's context. None of them share it with you. None of them let you use it together. And you can't take it with you.
 
-#### 2. The Operating System (Memu OS)
-*   **Base:** Debian 12 (Bookworm)
-*   **Orchestration:** Docker Compose (`memu-suite`)
-*   **Database:** Unified PostgreSQL 15 (handling Synapse, Immich, and Intelligence data)
-*   **Cache:** Redis 6.2
-*   **Proxy:** Nginx + Cloudflared
+Meanwhile, AI is transforming everything. Every app wants to be "AI-powered" — using *your* data to be useful. But that data flows to corporations, not to you.
 
-#### 3. The Application Suite
-Instead of a monolithic custom app, we deploy pre-configured, "skinned" versions of industry-standard protocols.
+### The Solution
 
-| Capability | Backend Engine | Frontend App (User) | Branding Strategy |
-| :--- | :--- | :--- | :--- |
-| **Photos** | **Immich** | **Immich Mobile App** | "Memu Photos" |
-| **Chat** | **Matrix (Synapse)** | **Element X / Web** | "Memu Chat" |
-| **Intelligence** | **Ollama + Python** | **Memu Bot (@memu_bot)** | "Memu Assistant" |
+**Memu is your family's context layer.**
 
----
+It consolidates your family's digital life — conversations, photos, memories — onto hardware you own. The AI assistant knows your family because it has your *complete* context, not because it's selling your data to advertisers.
 
-## 3. Feature Specifications
+| What You Get | How It Works |
+|--------------|--------------|
+| **Ownership** | Data lives on your hardware. No landlord. |
+| **Unified Context** | Chat + Photos + Memory in one place |
+| **Private Intelligence** | AI that serves you, not surveils you |
+| **Inheritance** | Your kids get files, not account credentials |
 
-### Feature 1: Memu Chat (Communication)
-**User Story:** "I want to text my family privately, with no data mining."
+### The Name
 
-**Implementation:**
-*   **Backend:** Matrix Synapse (Homeserver).
-*   **Frontend:** Element Web (hosted locally) & Element X (Mobile).
-*   **Security:** End-to-End Encryption (E2EE) enabled by default.
-*   **Access:** `https://rachandhari.memu.digital`
+**Memu (మేము)** = "we" in Telugu.
 
-### Feature 2: Memu Photos (The Vault)
-**User Story:** "I want my camera roll backed up automatically to my own drive."
-
-**Implementation:**
-*   **Backend:** Immich Server (High-performance Go/Node).
-*   **AI:** Local Machine Learning for face recognition and object detection.
-*   **Storage:** Original files stored on NVMe SSD.
-*   **Access:** `https://rachandhari.memu.digital/api` (Mobile App)
-
-### Feature 3: Memu Intelligence (The Brain)
-**User Story:** "I want a smart assistant that knows my family context but is private."
-
-**Implementation:**
-*   **Engine:** Ollama (running Llama 3.2 3B).
-*   **Controller:** Custom Python Service (`memu_intelligence`).
-*   **Interface:** Matrix Bot (`@memu_bot`).
-
-**Capabilities (Live Now):**
-1.  **Memory:**
-    *   `/remember [fact]` - Stores info in Vector/SQL memory.
-    *   `/recall [query]` - Retrieves info using Semantic Search.
-2.  **Organization:**
-    *   `/addtolist [items]` - Adds to shared shopping list.
-    *   `/showlist` - Displays current list.
-    *   `/done [item]` - Marks items as complete.
-3.  **Time Management:**
-    *   `/remind [task] [time]` - Uses AI to parse natural language (e.g., "in 10 mins").
-    *   **Auto-Notification:** Bot pings the user when due.
-4.  **Summarization:**
-    *   `/summarize` - AI reads the day's chat logs and creates a bulleted summary.
+Your data belongs to "we" — not "they."
 
 ---
 
-## 4. System Architecture
+## 2. The Product
 
-### 4.1 Container Stack (`docker-compose.yml`)
+Memu is a **family appliance** — not a server to configure, but a product that works.
 
-The system runs as a unified Docker Compose stack on the `memu` network.
+### What It Replaces
 
-*   **Core Services:**
-    *   `memu_postgres`: Unified DB for all services.
-    *   `memu_redis`: Shared cache.
-    *   `memu_tunnel`: Cloudflare Tunnel (Ingress).
-    *   `memu_proxy`: Nginx (Local routing).
+| Big Tech Service | Memu Equivalent | Key Difference |
+|------------------|-----------------|----------------|
+| WhatsApp / iMessage | Memu Chat (Matrix) | You own the server |
+| Google Photos / iCloud | Memu Photos (Immich) | You own the storage |
+| Siri / Alexa / Google Assistant | Memu Assistant (Ollama) | AI never leaves your house |
 
-*   **Chat Services:**
-    *   `memu_synapse`: Matrix Homeserver.
-    *   `memu_element`: Web Chat UI.
+### The Magic: Unified Context
 
-*   **Photo Services:**
-    *   `memu_photos_server`: Immich Core.
-    *   `memu_photos_workers`: Background tasks.
-    *   `memu_photos_ml`: Machine Learning.
+Unlike Big Tech silos, Memu connects the dots:
 
-*   **Intelligence Services:**
-    *   `memu_brain`: Ollama API.
-    *   `memu_intelligence`: Python Logic Bridge.
+> **"What flowers does Mom like?"**
 
-### 4.2 Networking
-*   **Ingress:** Cloudflare Tunnel (No open ports on router).
-*   **Internal:** Docker Bridge Network (`memu-suite_default`).
-*   **DNS:** `rachandhari.memu.digital` resolves to the Tunnel edge.
+The AI searches your chat history where Mom mentioned tulips, AND your photos tagged with flowers, AND your shopping lists. One query, full family context.
 
-### 4.3 Data Hierarchy
-*   **Root:** `~/memu-os` (Codebase & Configs).
-*   **Data Volumes:**
-    *   `memu-suite_pgdata`: Database files.
-    *   `memu-suite_ollama_data`: AI Models.
-    *   `memu-suite_immich_upload`: Photo files (External SSD).
+This is impossible with scattered services. It's natural with Memu.
 
 ---
 
-## 5. Security & Privacy
+## 3. Architecture
 
-### 5.1 Encryption
-*   **Transmission:** TLS 1.3 via Cloudflare.
-*   **Message Content:** Matrix E2EE (Olm/Megolm). Keys held by user devices only.
-*   **Storage:** LUKS Full Disk Encryption (Recommended for SSD).
+### The Three Layers
 
-### 5.2 AI Privacy
-*   **Air-Gapped AI:** The Ollama container has no outbound internet access (except for initial model pull).
-*   **Local Processing:** All prompts and images stay on the Pi.
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     YOUR HARDWARE                           │
+│              (Mini PC / Intel N100 / Pi 5)                  │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
+│   │    CHAT     │  │   PHOTOS    │  │     AI      │        │
+│   │   Matrix    │  │   Immich    │  │   Ollama    │        │
+│   │  (Synapse)  │  │             │  │ (Llama 3.2) │        │
+│   └──────┬──────┘  └──────┬──────┘  └──────┬──────┘        │
+│          │                │                │                │
+│          └────────────────┼────────────────┘                │
+│                           │                                 │
+│                  ┌────────▼────────┐                        │
+│                  │  CONTEXT ENGINE │                        │
+│                  │   (The Magic)   │                        │
+│                  └────────┬────────┘                        │
+│                           │                                 │
+│                  ┌────────▼────────┐                        │
+│                  │   PostgreSQL    │                        │
+│                  │   + pgvector    │                        │
+│                  └─────────────────┘                        │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+                           │
+                    ┌──────▼──────┐
+                    │  Tailscale  │
+                    │ (Secure VPN)│
+                    └─────────────┘
+                           │
+                    ┌──────▼──────┐
+                    │ Your Phone  │
+                    │  Anywhere   │
+                    └─────────────┘
+```
+
+### Hardware Requirements
+
+| Spec | Minimum | Recommended |
+|------|---------|-------------|
+| **Device** | Raspberry Pi 5 | Intel N100 Mini PC |
+| **RAM** | 4GB (limited AI) | 8GB+ (full features) |
+| **Storage** | 256GB SSD | 1TB+ NVMe |
+| **Network** | Ethernet | Gigabit Ethernet |
+| **Cost** | ~$100 | ~$200-250 |
+
+**Why N100 over Pi 5?** QuickSync hardware encoding for 4K video transcoding. If your family shoots lots of video, N100 is significantly smoother.
+
+### Software Stack
+
+| Layer | Technology | Purpose |
+|-------|------------|---------|
+| **OS** | Debian 12 / Ubuntu 24 | Stable Linux base |
+| **Orchestration** | Docker Compose | Container management |
+| **Database** | PostgreSQL 15 + pgvector | Unified data + vector search |
+| **Cache** | Redis 6.2 | Performance |
+| **Chat** | Matrix Synapse | Federated messaging |
+| **Chat UI** | Element Web/Mobile | User interface |
+| **Photos** | Immich | Photo backup + ML |
+| **AI** | Ollama (Llama 3.2) | Local language model |
+| **Context** | Custom Python service | The glue that connects everything |
+| **Network** | Tailscale | Secure remote access |
 
 ---
 
-## 6. Development Roadmap
+## 4. Features
 
-### Phase 1: Foundation (Completed) ✅
-*   [x] Hardware Setup (Pi 5 + NVMe).
-*   [x] Docker Infrastructure (Unified Stack).
-*   [x] Matrix Chat (Synapse + Element).
-*   [x] Immich Photos (Full Suite).
-*   [x] Cloudflare Tunnel Access.
+### 4.1 Memu Chat
 
-### Phase 2: Intelligence (Completed) ✅
-*   [x] Ollama Integration (Llama 3.2).
-*   [x] Python Bot Framework.
-*   [x] Features: Memory, Lists, Summaries.
-*   [x] Features: Natural Language Reminders.
+**User Story:** "I want to message my family without Big Tech reading our conversations."
 
-### Phase 3: Refinement (Current Focus) 🚧
-*   [ ] **Backup Automation:** Cron jobs for `backup_memu.sh`.
-*   [ ] **Dashboard:** Simple Web UI for system status (CPU/Temp/Storage).
-*   [ ] **Multi-User Onboarding:** Streamlined invite flow.
+| Feature | Description |
+|---------|-------------|
+| Family group chat | Private rooms for your household |
+| End-to-end encryption | Optional E2EE (Matrix Olm/Megolm) |
+| Cross-device sync | Phone, tablet, desktop |
+| Media sharing | Photos, videos, files |
+| No ads, no mining | Your server, your rules |
 
-### Phase 4: Expansion (Future)
-*   [ ] **Home Automation:** Home Assistant Integration.
-*   [ ] **Voice:** Whisper STT for voice commands to bot.
-*   [ ] **Federation:** Connect with other Memu families.
+**Apps:** Element X (iOS/Android), Element Web
+
+### 4.2 Memu Photos
+
+**User Story:** "I want my camera roll backed up to my own drive, not Google's."
+
+| Feature | Description |
+|---------|-------------|
+| Auto-backup | Photos sync from phone automatically |
+| Face recognition | Local ML identifies family members |
+| Search | "Photos of Dad at the beach" |
+| Albums | Organize by event, person, date |
+| Original quality | No compression, full resolution |
+| Memories | "On this day" nostalgia features |
+
+**Apps:** Immich (iOS/Android)
+
+### 4.3 Memu Assistant
+
+**User Story:** "I want an AI that knows my family — without sending our data to OpenAI."
+
+| Command | What It Does |
+|---------|--------------|
+| `/remember [fact]` | Store family knowledge |
+| `/recall [query]` | Retrieve from memory |
+| `/addtolist [items]` | Shared shopping list |
+| `/showlist` | Display current list |
+| `/done [item]` | Mark complete |
+| `/remind [task] [time]` | Natural language reminders |
+| `/summarize` | AI summary of today's chat |
+
+**Future (Roadmap):**
+- Cross-silo queries: "Show photos from when we discussed Dad's birthday"
+- Voice commands via Whisper
+- Proactive suggestions: "Mom mentioned tulips last week — her birthday is coming up"
 
 ---
 
-## 7. Success Metrics (Current Status)
+## 5. Installation
 
-*   **Uptime:** >99% (Stable).
-*   **Performance:**
-    *   Chat Latency: <200ms.
-    *   AI Response: <5s (Llama 3.2).
-    *   Photo Scroll: 60fps (Immich).
-*   **Data Integrity:** 100% (Postgres + Backup Scripts).
+### The Promise
+
+**10 minutes. No terminal after initial script. No YAML editing.**
+
+### The Flow
+
+```
+1. Flash Linux to device (standard Debian/Ubuntu)
+         ↓
+2. Run: ./scripts/install.sh
+         ↓
+3. Open browser: http://memu.local
+         ↓
+4. Fill in 4 fields:
+   - Family name
+   - Admin password
+   - (Optional) Tailscale auth key
+         ↓
+5. Click "Create My Memu Server"
+         ↓
+6. Wait 2-3 minutes
+         ↓
+7. Done. Install Element + Immich apps on phones.
+```
+
+### What Gets Created
+
+- Matrix homeserver with admin account
+- Immich server ready for photo backup
+- AI assistant bot in your chat
+- Secure remote access via Tailscale
 
 ---
 
-## 8. Admin & Maintenance
+## 6. Security & Privacy
 
-### Key Commands
-*   **Start:** `docker compose up -d`
-*   **Logs:** `docker compose logs -f [service]`
-*   **Backup:** `./scripts/backup_memu.sh`
-*   **Update:** `git pull && docker compose build && docker compose up -d`
+### Data Sovereignty
 
-### Troubleshooting
-*   **Bot Silent?** Check `memu_intelligence` logs.
-*   **Photos Not Syncing?** Check `memu_photos_server` logs.
-*   **Site Offline?** Check `memu_tunnel` logs.
+| Principle | Implementation |
+|-----------|----------------|
+| **Your hardware** | Data lives on device you own |
+| **Your network** | Tailscale encrypts all traffic |
+| **Your keys** | E2EE keys never leave your devices |
+| **Zero telemetry** | We don't know who uses Memu |
+
+### Encryption
+
+| Layer | Technology |
+|-------|------------|
+| Transit | TLS 1.3 (Tailscale) |
+| Messages | Matrix E2EE (Olm/Megolm) |
+| Storage | LUKS full-disk (recommended) |
+
+### AI Privacy
+
+- **Local only:** Ollama runs entirely on your hardware
+- **No API calls:** Your prompts never leave your house
+- **No training:** Your data doesn't improve someone else's model
+
+---
+
+## 7. Roadmap
+
+### Phase 1: Foundation ✅ Complete
+- [x] Matrix chat (Synapse + Element)
+- [x] Photo backup (Immich)
+- [x] Local AI (Ollama)
+- [x] Web setup wizard
+- [x] Basic bot commands
+
+### Phase 2: Validation 🚧 Current
+- [x] Open source release
+- [x] Documentation
+- [ ] Community feedback (Reddit)
+- [ ] Hardware compatibility testing
+- [ ] Tailscale integration (replacing Cloudflare)
+
+### Phase 3: Polish (Post-Validation)
+- [ ] RAM auto-detection and model selection
+- [ ] Improved error messages
+- [ ] Backup/restore automation
+- [ ] System health dashboard
+
+### Phase 4: Context Intelligence (Future)
+- [ ] Cross-silo queries (chat + photos)
+- [ ] Semantic search across all data
+- [ ] Voice commands (Whisper)
+- [ ] Proactive family assistant
+
+### Phase 5: Appliance (If Validated)
+- [ ] Pre-configured hardware bundles
+- [ ] One-click updates
+- [ ] Family member onboarding flow
+- [ ] Mobile app (unified Memu app)
+
+---
+
+## 8. Business Model
+
+### Software
+**Free forever.** AGPLv3 open source.
+
+### Hardware (Future)
+| Option | Price | What You Get |
+|--------|-------|--------------|
+| **DIY** | $0 | Bring your own hardware |
+| **Memu Hub** | ~$350 | Pre-configured Mini PC + SSD |
+
+### Services (Future, Optional)
+| Service | Price | What You Get |
+|---------|-------|--------------|
+| **Relay** | ~$10/mo | Easy remote access without Tailscale setup |
+| **Support** | TBD | Priority help |
+
+**Philosophy:** Sell toasters, don't rent them.
+
+---
+
+## 9. Success Metrics
+
+### For Validation (Now)
+- [ ] 50+ engaged comments on Reddit
+- [ ] 10+ "I would use this" responses
+- [ ] Clear feedback on what's missing
+- [ ] No critical security issues found
+
+### For Product (Future)
+| Metric | Target |
+|--------|--------|
+| Setup success rate | >90% |
+| Chat latency | <200ms |
+| AI response time | <5s |
+| Photo sync reliability | >99% |
+| Family adoption | 3+ members active |
+
+---
+
+## 10. What Memu Is NOT
+
+| Not This | Why |
+|----------|-----|
+| A server for nerds | It's an appliance for families |
+| A privacy bunker | It's about ownership, not hiding |
+| A Nextcloud clone | Nextcloud is files; Memu is context |
+| A startup (yet) | It's a side project seeking validation |
+| Feature-complete | It's alpha software, expect rough edges |
+
+---
+
+## 11. The Ask
+
+If you're reading this, we need your help:
+
+1. **Try it** — Install on your hardware, report what breaks
+2. **Challenge it** — Is the value prop clear? What's missing?
+3. **Spread it** — Know someone who'd want this? Tell them
+4. **Build it** — PRs welcome, especially for testing and docs
+
+---
+
+## 12. Links
+
+- **GitHub:** https://github.com/kanchanepally/memu.digital
+- **License:** AGPLv3
+
+---
+
+*Built by a dad who wanted his family to own their digital life.*
+
+*Memu (మేము) = "we" — because your data belongs to you, not them.*
