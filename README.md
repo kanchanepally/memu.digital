@@ -103,7 +103,7 @@ sudo ./scripts/install.sh
 2. Fill in 4 fields:
    - Family name (e.g., "smiths")
    - Admin password
-   - Cloudflare token (optional — being replaced soon)
+   - Tailscale auth key (optional — for remote access)
 3. Click "Create My Memu Server"
 4. Wait 2-3 minutes
 5. Done!

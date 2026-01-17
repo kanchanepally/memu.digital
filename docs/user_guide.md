@@ -88,9 +88,10 @@ Memu works best on Ethernet. However, if you need to move the device to a locati
 *   **Can't reach http://memu.local?**
     *   Ensure your phone/laptop is on the same network as the Memu device.
     *   Try accessing it via the IP address (check your router's device list for "memu" or "raspberrypi").
-*   **Cloudflare Tunnel not connecting?**
-    *   Verify you copied the correct token.
-    *   Ensure your domain DNS in Cloudflare points to the Tunnel (CNAME record).
+*   **Tailscale not connecting?**
+    *   Verify you copied the correct auth key (starts with `tskey-auth-...`).
+    *   Check the [Tailscale admin console](https://login.tailscale.com/admin/machines) to see if your device appears.
+    *   Run `docker logs memu_tailscale` to check connection status.
 
 ---
 *Welcome home.*
