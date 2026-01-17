@@ -11,3 +11,6 @@ synapse/*.signing.key
 photos/
 backups/
 *.log
+_legacy_archive/
+systemd/
+__pycache__/

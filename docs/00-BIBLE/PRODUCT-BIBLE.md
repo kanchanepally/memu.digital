@@ -355,6 +355,6 @@ If you're reading this, we need your help:
 
 ---
 
-*Built by a dad who wanted his family to own their digital life.*
+*Built by a husband/dad who wanted his family to own their digital life.*
 
 *Memu (మేము) = "we" — because your data belongs to you, not them.*

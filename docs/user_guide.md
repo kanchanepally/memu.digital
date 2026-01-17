@@ -68,7 +68,7 @@ Memu works best on Ethernet. However, if you need to move the device to a locati
 
 1.  **Access the Terminal:**
     *   Plug a keyboard and monitor into the Raspberry Pi.
-    *   Login with username: `hareesh` (or your default user) and password.
+    *   Login with username: `memu-user` (or your default user) and password.
 2.  **Open Network Manager:**
     Run the following command:
     ```bash

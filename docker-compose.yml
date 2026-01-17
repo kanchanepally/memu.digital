@@ -41,7 +41,7 @@ services:
 
   synapse:
     container_name: memu_synapse
-    image: matrixdotorg/synapse:latest
+    image: matrixdotorg/synapse:v1.98.0
     ports:
       - "8008:8008"
     volumes:
@@ -58,7 +58,7 @@ services:
 
   element:
     container_name: memu_element
-    image: vectorim/element-web:latest
+    image: vectorim/element-web:v1.11.52
     ports:
       - "8080:80"
     volumes:
@@ -71,7 +71,7 @@ services:
 
   immich_server:
     container_name: memu_photos
-    image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION}
+    image: ghcr.io/immich-app/immich-server:v1.95.0
     command: [ "start.sh", "immich" ]
     restart: unless-stopped
     volumes:
@@ -93,7 +93,7 @@ services:
 
   immich_workers:
     container_name: memu_photos_workers
-    image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION}
+    image: ghcr.io/immich-app/immich-server:v1.95.0
     command: [ "start.sh", "microservices" ]
     restart: unless-stopped
     volumes:
@@ -113,7 +113,7 @@ services:
 
   immich_ml:
     container_name: memu_photos_ml
-    image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION}
+    image: ghcr.io/immich-app/immich-machine-learning:v1.95.0
     volumes:
       - model_cache:/cache
     environment:
@@ -127,7 +127,7 @@ services:
 
   ollama:
     container_name: memu_brain
-    image: ollama/ollama:latest
+    image: ollama/ollama:0.1.27
     restart: unless-stopped
     volumes:
       - ollama_data:/root/.ollama
@@ -164,24 +164,28 @@ services:
 
   # === NETWORK (TEMPORARY - SEE ISSUE #1) ===
 
-  tunnel:
-    container_name: memu_tunnel
-    image: cloudflare/cloudflared:latest
-    restart: unless-stopped
-    command: tunnel --no-autoupdate run
+  tailscale:
+    container_name: memu_tailscale
+    image: tailscale/tailscale:latest
+    hostname: memu-hub
     environment:
-      - TUNNEL_TOKEN=${CLOUDFLARED_TOKEN}
+      - TS_AUTHKEY=${TAILSCALE_AUTH_KEY}
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_USERSPACE=false
+    volumes:
+      - tailscale_data:/var/lib/tailscale
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    restart: unless-stopped
     networks:
       - memu_net
-    # NOTE: Cloudflare Tunnel violates ToS for video streaming
-    # This is temporary until we switch to Headscale/Tailscale
-    # See: https://github.com/yourusername/memu/issues/1
-
     # === ROUTING ===
 
   proxy:
     container_name: memu_proxy
-    image: nginx:alpine
+    image: nginx:1.25-alpine
     ports:
       - "80:80"
     volumes:
@@ -202,3 +206,4 @@ volumes:
   redisdata:
   model_cache:
   ollama_data:
+  tailscale_data:
