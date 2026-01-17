@@ -68,6 +68,17 @@ Environment=PYTHONUNBUFFERED=1
 [Install]
 WantedBy=multi-user.target
 EOF
+
+# 6. Install Production Service (for Handoff)
+# This allows the setup wizard to switch to the main stack
+if [ -f "services/systemd/memu-production.service" ]; then
+    cp services/systemd/memu-production.service /etc/systemd/system/memu-production.service
+    # Update working directory to match install location
+    sed -i "s|WorkingDirectory=.*|WorkingDirectory=${PROJECT_ROOT}|" /etc/systemd/system/memu-production.service
+else 
+    echo -e "${RED}[!] WARNING: memu-production.service not found. Handoff may fail.${NC}"
+fi
+
 systemctl daemon-reload
 
 # 6. Configuration & Network

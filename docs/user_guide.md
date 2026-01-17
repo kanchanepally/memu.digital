@@ -16,12 +16,11 @@ Your Memu device is designed to be a "Headless Appliance" (no monitor or keyboar
 Before you start the software setup, you need two things:
 
 1.  **A Domain Name:** You need a web address for your family (e.g., `thesmiths.com` or `smith-family.net`). You can buy one from Namecheap, GoDaddy, or Cloudflare.
-2.  **A Cloudflare Account (Free):** We use Cloudflare to securely tunnel your device to the internet without opening dangerous ports on your router.
-    *   Create a free account at [cloudflare.com](https://www.cloudflare.com).
-    *   Add your domain to Cloudflare.
-    *   Go to **Zero Trust > Networks > Tunnels**.
-    *   Create a new Tunnel named "memu".
-    *   **Copy the Tunnel Token** (it looks like a long string of random characters). You will need this in the next step.
+2.  **A Tailscale Account (Free):** We use Tailscale to securely tunnel your device to the internet without opening dangerous ports on your router.
+    *   Create a free account at [tailscale.com](https://tailscale.com).
+    *   Go to **Settings > Keys**.
+    *   Generate an **Auth Key**.
+    *   **Copy the Auth Key** (it looks like `tskey-auth-...`). You will need this in the next step.
 
 ## 🚀 3. The Setup Wizard
 
@@ -31,8 +30,8 @@ Before you start the software setup, you need two things:
 4.  Enter the following details:
     *   **Family Name:** (e.g., "Smiths"). This will create your local address.
     *   **Admin Password:** Create a strong password. This will be used for the "admin" account.
-    *   **Cloudflare Token:** Paste the token you copied in Step 2.
-5.  Click **"Install Memu OS"**.
+    *   **Tailscale Auth Key:** (Optional) Paste the key you generated earlier.
+5.  Click **"Create My Family Server"**.
 
 The system will now configure itself. This takes about **5-10 minutes**. Do not unplug the device.
 

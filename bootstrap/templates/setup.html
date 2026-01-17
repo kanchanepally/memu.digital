@@ -277,37 +277,28 @@
                 </div>
             </div>
 
-            <!-- Internet Access Section -->
+            <!-- Remote Access Section -->
             <div class="info-box" style="background: #fff9e6; border-color: #ffc107;">
                 <div class="info-box-header">
                     <span class="icon">🌍</span>
                     <span>Access from anywhere (optional)</span>
                 </div>
                 <div style="color: #666;">
-                    Right now, you can only use Memu when you're home. To access it from anywhere (like at work or
-                    traveling), we need to create a secure tunnel to the internet.
+                    To access Memu from outside your home, we use <strong>Tailscale</strong>. It's secure, private, and free for personal use.
                 </div>
                 <div class="toggle-section">
                     <button type="button" class="toggle-button" onclick="toggleDetails()">
-                        Why do I need Cloudflare? What's changing?
+                        How do I get a key?
                     </button>
                     <div id="detailsSection" class="collapsible-content">
-                        <p style="margin-bottom: 8px;">
-                            <strong>The Simple Answer:</strong> Cloudflare creates a secure path to your home without
-                            making your address public or opening dangerous "ports" on your router.
-                        </p>
-                        <p style="margin-bottom: 8px;">
-                            <strong>The Problem:</strong> Cloudflare doesn't allow video streaming through their tunnel
-                            (it's in their rules). Since your photos and videos go through this tunnel, we're breaking
-                            their rules.
-                        </p>
-                        <p>
-                            <strong>What We're Doing:</strong> We're switching to a better system (Headscale/Tailscale)
-                            that's designed for exactly this use case. But it's not ready yet.
-                        </p>
-                        <p style="margin-top: 8px; font-weight: 500;">
-                            <strong>What Should You Do?</strong> Skip this for now. You can set it up later when the new
-                            system is ready.
+                        <ol style="margin-left: 20px; margin-top: 8px;">
+                            <li>Go to <a href="https://login.tailscale.com/admin/settings/keys" target="_blank">tailscale.com/admin/settings/keys</a></li>
+                            <li>Click "Generate auth key"</li>
+                            <li>Copy the key (starts with "tskey-auth-...")</li>
+                            <li>Paste it below</li>
+                        </ol>
+                        <p style="margin-top: 8px;">
+                            <em>If you already entered this during the install script, you can leave it blank here.</em>
                         </p>
                     </div>
                 </div>
@@ -315,12 +306,11 @@
 
             <div class="input-group">
                 <label>
-                    Cloudflare Tunnel Token <span style="color: #999; font-weight: 400;">(Skip this for now)</span>
+                    Tailscale Auth Key <span style="color: #999; font-weight: 400;">(Optional)</span>
                 </label>
-                <input type="text" name="cloudflare_token" placeholder="Leave blank - we'll add this later">
+                <input type="text" name="tailscale_key" placeholder="tskey-auth-..." autocomplete="off">
                 <div class="help-text">
-                    You can add remote access later through Settings. For now, Memu will work perfectly on your home
-                    network.
+                    Leave blank if you're only using Memu at home, or if you already provided it in the terminal.
                 </div>
             </div>
 

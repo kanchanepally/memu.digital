@@ -52,7 +52,7 @@ I'm not anti-cloud. I use cloud services for lots of things. But my family's pho
 - ✅ Runs on ~$200 hardware
 
 **What's in progress:**
-- ⚠️ Remote access migration (Cloudflare → Headscale) — [Help me decide](https://github.com/kanchanepally/memu.digital/issues)
+- ⚠️ Remote access via Tailscale (optional, local network works without it)
 - ⚠️ Cross-silo AI queries ("show me photos from Christmas") — on roadmap
 - ⚠️ Alpha quality — tested on my family, probably has bugs
 - ⚠️ Voice-based interaction with AI — on roadmap

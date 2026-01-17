@@ -17,6 +17,25 @@ app = Flask(__name__)
 # Detect project root dynamically
 PROJECT_ROOT = Path(__file__).parent.parent.absolute()
 
+# Function to safely read existing .env values
+def read_existing_env():
+    env_path = PROJECT_ROOT / '.env'
+    if not env_path.exists():
+        return {}
+    
+    env_values = {}
+    try:
+        content = env_path.read_text()
+        for line in content.splitlines():
+            line = line.strip()
+            if not line or line.startswith('#') or '=' not in line:
+                continue
+            key, val = line.split('=', 1)
+            env_values[key.strip()] = val.strip()
+    except Exception:
+        pass
+    return env_values
+
 # Setup state tracking
 setup_state = {
     'stage': 'idle',
@@ -40,7 +59,7 @@ def configure():
     # Get form data
     family_name = request.form.get('family_name', '').strip()
     admin_password = request.form.get('password', '').strip()
-    cloudflare_token = request.form.get('cloudflare_token', '').strip()
+    tailscale_key = request.form.get('tailscale_key', '').strip()
     
     # Validate inputs
     if not family_name or not admin_password:
@@ -64,6 +83,13 @@ def configure():
         db_password = secrets.token_urlsafe(20)
         bot_password = secrets.token_urlsafe(20)
         
+        # Determine Tailscale key (New input OR preserve existing)
+        existing_env = read_existing_env()
+        existing_ts_key = existing_env.get('TAILSCALE_AUTH_KEY', '')
+        
+        # Logic: Use new key if provided, otherwise fall back to what's already in .env (from install.sh)
+        final_ts_key = tailscale_key if tailscale_key else existing_ts_key
+
         # Create .env file
         setup_state['stage'] = 'config'
         setup_state['message'] = 'Creating configuration files...'
@@ -85,7 +111,7 @@ UPLOAD_LOCATION=./photos
 IMMICH_VERSION=release
 
 # === NETWORK ===
-CLOUDFLARED_TOKEN={cloudflare_token}
+TAILSCALE_AUTH_KEY={final_ts_key}
 
 # === CHAT ===
 SYNAPSE_REPORT_STATS=no

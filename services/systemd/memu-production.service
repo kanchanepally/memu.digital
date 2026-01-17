@@ -1,0 +1,21 @@
+[Unit]
+Description=Memu OS Production Stack
+After=docker.service network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/home/memu-user/memu.digital
+# Ensure we use the correct user logic - if running as root system-wide
+User=root
+Group=root
+
+# Start
+ExecStart=/usr/bin/docker compose -f docker-compose.yml up -d
+
+# Stop
+ExecStop=/usr/bin/docker compose -f docker-compose.yml down
+
+[Install]
+WantedBy=multi-user.target
