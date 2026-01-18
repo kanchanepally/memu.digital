@@ -51,7 +51,7 @@ I'm not anti-cloud. I use cloud services for lots of things. But my family's pho
 - ✅ Photo backup from phones (face recognition, search, albums)
 - ✅ AI bot for lists, reminders, and family memory
 - ✅ 10-minute setup wizard (no YAML editing)
-- ✅ Remote access via Tailscale (works from anywhere)
+- ✅ Secure remote access via Tailscale (automatic HTTPS)
 - ✅ Runs on ~$250 hardware
 
 **What's in progress:**
@@ -110,26 +110,33 @@ sudo ./scripts/install.sh
 
 ### Step 2: Open the Web Wizard
 
-1. Visit `http://memu.local` in your browser (same network as the device)
+1. Visit `http://<device-ip>:8888` in your browser (same network as the device)
 2. Fill in:
    - **Family name** (e.g., "smiths") — becomes part of your chat identity
    - **Admin password** — write it down, no reset option
    - **Tailscale auth key** — connects your family's private network
 3. Click **"Create My Family Server"**
-4. Wait 2-3 minutes
+4. Wait 3-5 minutes
 
 **No YAML editing. No terminal commands after the initial script.**
 
-### Step 3: Connect Your Apps
+### Step 3: Install the Apps
 
-Once setup completes, install Tailscale on your phone/laptop, then:
+The setup wizard shows your server URLs when complete. You'll enter them once, then forget them.
 
-| App | Server Address | Notes |
-|-----|----------------|-------|
-| **Element** (Chat) | `http://memu-hub` | Sign in with `admin` + your password |
-| **Immich** (Photos) | `http://memu-hub:2283` | Create a new account (separate from chat) |
+**Every family member needs:**
 
-The `http://memu-hub` address works from anywhere — home, work, travelling — as long as Tailscale is running.
+1. **Tailscale** ([iOS](https://apps.apple.com/app/tailscale/id1470499037) / [Android](https://play.google.com/store/apps/details?id=com.tailscale.ipn)) — Creates your family's private network
+
+2. **Element** ([iOS](https://apps.apple.com/app/element-messenger/id1083446067) / [Android](https://play.google.com/store/apps/details?id=im.vector.app)) — For chat
+   - Server: `https://memu-hub.xxxxx.ts.net` (shown after setup)
+   - Sign in with `admin` + your password
+
+3. **Immich** ([iOS](https://apps.apple.com/app/immich/id1613945652) / [Android](https://play.google.com/store/apps/details?id=app.alextran.immich)) — For photos
+   - Server: `https://memu-hub.xxxxx.ts.net:8443` (shown after setup)
+   - Create a new account (separate from chat)
+
+**Once the apps are set up, just open them.** They work from anywhere — home, work, travelling — as long as Tailscale is connected.
 
 ---
 
@@ -153,7 +160,7 @@ The `http://memu-hub` address works from anywhere — home, work, travelling —
                           │
                    ┌──────▼──────┐
                    │  Tailscale  │  ← Your family's private network
-                   └──────┬──────┘
+                   └──────┬──────┘    (automatic HTTPS)
                           │
         ┌─────────────────┼─────────────────┐
         │                 │                 │
@@ -163,13 +170,13 @@ The `http://memu-hub` address works from anywhere — home, work, travelling —
    └─────────┘      └─────────┘      └─────────┘
 ```
 
-**Why Tailscale?** Traditional servers expose ports to the internet — hackers scan for them constantly. Tailscale creates a private network that only your family can access. Your Memu Hub is invisible to the rest of the internet.
+**Why Tailscale?** Traditional servers expose ports to the internet — hackers scan for them constantly. Tailscale creates a private network that only your family can access. Your Memu Hub is invisible to the rest of the internet, with automatic HTTPS certificates.
 
 ---
 
 ## The AI Assistant
 
-The bot lives in your family chat:
+The bot lives in your family chat. Find it by searching for `@memu_bot:yourfamily.memu.digital` in Element.
 
 | Command | What It Does |
 |---------|--------------|
@@ -181,6 +188,21 @@ The bot lives in your family chat:
 | `/remind [task] [time]` | Natural language → `/remind call mom tomorrow 3pm` |
 | `/summarize` | AI summary of today's chat |
 
+**Example: Shared Shopping List**
+```
+👨 /addtolist milk, eggs, bread
+🤖 ✓ Added 3 items to the list
+
+👩 /showlist
+🤖 📝 Shopping List:
+   ⬜ milk
+   ⬜ eggs  
+   ⬜ bread
+
+👨 /done milk
+🤖 ✓ Marked as done: milk
+```
+
 **Coming soon:** Cross-silo queries like "What photos do we have from Dad's birthday?" that search both chat mentions and photo metadata.
 
 ---
@@ -188,17 +210,26 @@ The bot lives in your family chat:
 ## Quick Reference
 
 ```
-┌─────────────────────────────────────────┐
-│         MEMU QUICK REFERENCE            │
-├─────────────────────────────────────────┤
-│  Chat Server:     http://memu-hub       │
-│  Photos Server:   http://memu-hub:2283  │
-│                                         │
-│  Chat App:        Element               │
-│  Photos App:      Immich                │
-│                                         │
-│  Not connecting?  Is Tailscale on?      │
-└─────────────────────────────────────────┘
+┌─────────────────────────────────────────────────┐
+│           MEMU QUICK REFERENCE                  │
+├─────────────────────────────────────────────────┤
+│                                                 │
+│  APPS TO INSTALL:                               │
+│    • Tailscale (required)                       │
+│    • Element (chat)                             │
+│    • Immich (photos)                            │
+│                                                 │
+│  SERVER URLS: (shown after setup)               │
+│    • Chat:   https://memu-hub.xxxxx.ts.net      │
+│    • Photos: https://memu-hub.xxxxx.ts.net:8443 │
+│                                                 │
+│  AI BOT:                                        │
+│    @memu_bot:yourfamily.memu.digital            │
+│                                                 │
+│  NOT CONNECTING?                                │
+│    → Is Tailscale running?                      │
+│                                                 │
+└─────────────────────────────────────────────────┘
 ```
 
 ---
@@ -259,10 +290,10 @@ A: Nextcloud is great for files but doesn't have native chat or local AI integra
 A: Synology is excellent but expensive (~$600+), no chat, and no local AI assistant.
 
 **Q: Do I need a domain name?**
-A: No. Your server is `http://memu-hub` via Tailscale. Your chat identity uses `yourfamily.memu.digital` but that's just an identifier, not a website you need to own.
+A: No. Tailscale gives you a URL like `https://memu-hub.xxxxx.ts.net` automatically. Your chat identity uses `yourfamily.memu.digital` but that's just an identifier, not a website you need to own.
 
 **Q: What if I'm not technical?**
-A: If you can follow instructions to plug in hardware and click through a wizard, you can do this. The hard part is already done.
+A: Right now, you need to be comfortable running a few terminal commands. We're working toward plug-and-play hardware for non-technical families.
 
 ---
 

@@ -8,11 +8,11 @@ Welcome to your family's **Digital Sanctuary**. This guide will help you set up 
 
 Memu gives your family three things, all running on hardware you own:
 
-| Service | What It Does | App to Use |
-|---------|--------------|------------|
+| Service | What It Does | App to Download |
+|---------|--------------|-----------------|
 | **Chat** | Private family messaging | Element |
 | **Photos** | Automatic photo backup | Immich |
-| **AI Assistant** | Shopping lists, reminders, family memory | Built into Chat |
+| **AI Assistant** | Shopping lists, reminders, family memory | Built into Element |
 
 Everything stays on your device. No company can see your data.
 
@@ -20,29 +20,26 @@ Everything stays on your device. No company can see your data.
 
 ## Part 1: Hardware Setup
 
-### What's in the Box
-- Memu Hub (Mini PC or Raspberry Pi)
+### What You Need
+- Mini PC (Intel N100 recommended) or Raspberry Pi 5
+- 1TB+ SSD storage
 - Power adapter
 - Ethernet cable
 
 ### Connections
 
-1. **Ethernet** — Connect the Hub to your home router
+1. **Ethernet** — Connect to your home router
 2. **Power** — Plug in and wait 2-3 minutes for boot
 
 That's it. No monitor or keyboard needed.
 
-> **Why Ethernet?** WiFi works, but wired is faster and more reliable for photo uploads. You can switch to WiFi later if needed.
+> **Why Ethernet?** WiFi works, but wired is faster and more reliable for photo uploads.
 
 ---
 
 ## Part 2: Create Your Tailscale Account
 
-Tailscale is how your family connects to Memu from anywhere — home, work, school, or travelling. It's free for personal use.
-
-### Why Tailscale?
-
-Traditional servers expose ports to the internet, making them targets for hackers. Tailscale creates a **private network** that only your family can access. Your Memu Hub is invisible to the rest of the internet.
+Tailscale creates a **private network** for your family. Your Memu Hub is invisible to the internet — only family members with Tailscale can access it.
 
 ### Get Your Auth Key (5 minutes)
 
@@ -51,274 +48,273 @@ Traditional servers expose ports to the internet, making them targets for hacker
 3. Click **"Generate auth key"**
 4. Copy the key (looks like `tskey-auth-kBZxs...`)
 
-Keep this key handy — you'll need it in the next step.
+Keep this key — you'll need it in the next step.
 
 ---
 
 ## Part 3: Run the Setup Wizard
 
+### Install Memu
+
+On the device that will run Memu:
+
+```bash
+git clone https://github.com/kanchanepally/memu.digital
+cd memu.digital
+sudo ./scripts/install.sh
+```
+
 ### Access the Wizard
 
-On a phone or laptop connected to the **same WiFi as your Memu Hub**:
+On a phone or laptop connected to the **same network**:
 
 1. Open a browser
-2. Go to: **http://memu.local**
-
-> **Can't reach it?** Try `http://memu-hub.local` or check your router's device list for the IP address.
+2. Go to: `http://<device-ip>:8888`
 
 ### Fill In Your Details
 
 | Field | What to Enter |
 |-------|---------------|
-| **Family Name** | Your family identifier (e.g., "smiths", "garcia-family") |
-| **Admin Password** | A strong password — write it down, there's no reset |
+| **Family Name** | Your family identifier (e.g., "smiths") |
+| **Admin Password** | A strong password — write it down, there's no reset! |
 | **Tailscale Auth Key** | The key you generated above |
 
-Click **"Create My Family Server"** and wait 2-3 minutes.
+Click **"Create My Family Server"** and wait 3-5 minutes.
 
-### What Gets Created
+### Setup Complete!
 
-- ✅ Chat server with your admin account
-- ✅ Photo backup server
-- ✅ AI assistant bot
-- ✅ Connection to your family's Tailscale network
+When finished, you'll see your server addresses:
 
----
+```
+Chat:   https://memu-hub.xxxxx.ts.net
+Photos: https://memu-hub.xxxxx.ts.net:8443
+```
 
-## Part 4: Connect Your Devices
-
-Once setup completes, you'll see your connection details:
-
-| | |
-|---|---|
-| **Server Address** | `http://memu-hub` |
-| **Your Username** | `@admin:yourfamily.memu.digital` |
-| **Password** | The one you just created |
-
-### Install Tailscale on Your Phone/Laptop
-
-Before the apps work, each device needs Tailscale:
-
-1. Download **Tailscale** from your app store
-2. Sign in with the same account you created earlier
-3. You'll see "Connected" — that's it
-
-Now `http://memu-hub` works from anywhere.
+**Save these URLs** — you'll need them once to set up each app, then you can forget them.
 
 ---
 
-### Set Up Chat (Element)
+## Part 4: Install the Apps
 
-**Download:** Element ([iOS](https://apps.apple.com/app/element-messenger/id1083446067) / [Android](https://play.google.com/store/apps/details?id=im.vector.app) / [Desktop](https://element.io/download))
+This is the important part. Once you set up the apps, you won't need to think about URLs again.
 
-**Connect:**
+### Step 1: Install Tailscale on Every Device
+
+Each family member's phone/laptop needs Tailscale:
+
+1. Download **Tailscale** ([iOS](https://apps.apple.com/app/tailscale/id1470499037) / [Android](https://play.google.com/store/apps/details?id=com.tailscale.ipn))
+2. Sign in with your Tailscale account
+3. That's it — now your device can reach Memu from anywhere
+
+---
+
+### Step 2: Set Up Chat (Element)
+
+**Download:** Element ([iOS](https://apps.apple.com/app/element-messenger/id1083446067) / [Android](https://play.google.com/store/apps/details?id=im.vector.app))
+
+**One-time setup:**
 1. Open Element
 2. Tap **"Sign in"**
-3. Tap **"Edit"** next to the server address
-4. Enter: `http://memu-hub`
-5. Sign in with:
+3. Tap **"Edit"** next to the server
+4. Enter your server URL: `https://memu-hub.xxxxx.ts.net`
+5. Sign in:
    - Username: `admin`
    - Password: [your password]
 
-**First thing to do:** Create a room called "Family" and you're ready to chat.
+**Done!** The app remembers everything. Just open Element to chat.
 
 ---
 
-### Set Up Photos (Immich)
+### Step 3: Set Up Photos (Immich)
 
 **Download:** Immich ([iOS](https://apps.apple.com/app/immich/id1613945652) / [Android](https://play.google.com/store/apps/details?id=app.alextran.immich))
 
-**Connect:**
+**One-time setup:**
 1. Open Immich
-2. Enter server URL: `http://memu-hub:2283`
-3. Tap **"Create account"** (Photos uses separate accounts from Chat)
-4. Create your photo account with any email/password
+2. Enter server URL: `https://memu-hub.xxxxx.ts.net:8443`
+3. Tap **"Create account"** 
+4. Create your photo account (any email/password)
 
-**Enable backup:**
+**Enable automatic backup:**
 1. Go to Settings → Backup
 2. Turn on **"Background Backup"**
-3. Your camera roll will start syncing
 
-> **Why separate accounts?** Immich and Matrix are different systems. Your photo account is independent from your chat account. You can use different credentials if you want.
+**Done!** Your photos now sync automatically. Open Immich to see your library.
+
+> **Note:** Immich uses separate accounts from chat. Each family member creates their own photo account.
 
 ---
 
-### Meet the AI Assistant
+## Part 5: Meet the AI Assistant 🤖
 
-The Memu bot lives in your chat. No separate app needed.
+This is where the magic happens. The **Memu Bot** lives in your chat and helps your family:
+- Keep a shared shopping list
+- Remember important information
+- Set reminders
+- Summarize busy chat days
 
-**Find the bot:**
-1. Open Element
-2. Start a new chat
+### Find the Bot
+
+1. Open **Element**
+2. Tap **+** to start a new chat
 3. Search for: `@memu_bot:yourfamily.memu.digital`
-4. Send: "Hello!"
+   *(replace "yourfamily" with your actual family name)*
+4. Tap on **memu_bot** to open a direct message
 
-**What it can do:**
+### Try These Commands
 
-| Command | Example |
-|---------|---------|
-| `/remember [fact]` | `/remember WiFi password is sunshine123` |
-| `/recall [query]` | `/recall WiFi password` |
-| `/addtolist [items]` | `/addtolist milk, eggs, bread` |
-| `/showlist` | Shows your shopping list |
-| `/done [item]` | `/done milk` |
-| `/remind [task] [time]` | `/remind call mom tomorrow 3pm` |
-| `/summarize` | Summarizes today's chat |
+| Command | What It Does | Try It! |
+|---------|--------------|---------|
+| `/showlist` | See the shopping list | `/showlist` |
+| `/addtolist` | Add items | `/addtolist milk, eggs, bread` |
+| `/done` | Mark item bought | `/done milk` |
+| `/remember` | Store a fact | `/remember WiFi is sunshine123` |
+| `/recall` | Find a fact | `/recall WiFi` |
+| `/remind` | Set a reminder | `/remind call mom tomorrow 3pm` |
+| `/summarize` | Summarize today's chat | `/summarize` |
+
+### How Families Use the Bot
+
+**Shopping:**
+> 🧑 `/addtolist milk, bread, cheese`  
+> 🤖 ✓ Added 3 items to the list  
+> 👩 `/done milk`  
+> 🤖 ✓ Marked as done: milk
+
+**Family Memory:**
+> 🧑 `/remember Grandma's birthday is March 15`  
+> 🤖 ✓ Remembered: Grandma's birthday is March 15  
+> 👩 `/recall grandma birthday`  
+> 🤖 💡 Grandma's birthday is March 15
+
+**Reminders:**
+> 🧑 `/remind pick up kids at 3pm`  
+> 🤖 ⏰ Reminder set for today 3:00 PM
+
+The bot is available to everyone in the family. Lists and memories are shared!
 
 ---
 
-## Part 5: Add Family Members
+## Part 6: Add Family Members
 
 ### Invite to Tailscale
 
-1. Go to [Tailscale Admin Console](https://login.tailscale.com/admin/machines)
+1. Go to [Tailscale Admin](https://login.tailscale.com/admin/users)
 2. Click **"Invite users"**
-3. Enter their email address
-4. They'll get an invite to join your network
+3. Enter their email
+4. They accept the invite and install Tailscale
 
-### Help Them Connect
+### Create Their Chat Account
 
-Share these instructions with each family member:
-
-> **Getting Started with Our Family Memu**
->
-> 1. Check your email for a Tailscale invite and accept it
-> 2. Download the **Tailscale** app and sign in
-> 3. Download **Element** for chat → Server: `http://memu-hub`
-> 4. Download **Immich** for photos → Server: `http://memu-hub:2283`
->
-> Ask [you] for login help!
-
-### Create Their Chat Accounts
-
-You'll need to create Matrix accounts for family members:
-
-```bash
-# SSH into your Memu or run locally
-docker exec -it memu_synapse register_new_matrix_user \
-  -u [username] \
-  -p [password] \
-  -c /data/homeserver.yaml \
-  http://localhost:8008
-```
-
-Or use the admin script:
 ```bash
 sudo ./scripts/memu-admin.sh
 # Select "1. Create New Chat User"
 ```
 
----
+### Share These Instructions
 
-## Everyday Use
+Send this to each family member:
 
-### At Home
-Everything just works. Apps connect automatically.
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   JOIN OUR FAMILY MEMU
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### Away From Home
-Make sure Tailscale is running on your device. Check the Tailscale app shows "Connected".
+1. Accept the Tailscale email invite
 
-### Troubleshooting Connection Issues
+2. Install these apps:
+   • Tailscale (required)
+   • Element (for chat)
+   • Immich (for photos)
 
-| Problem | Solution |
-|---------|----------|
-| "Can't reach server" | Is Tailscale running? Check the app. |
-| Element won't connect | Verify server is `http://memu-hub` (not https) |
-| Immich won't connect | Use `http://memu-hub:2283` (note the port) |
-| Photos not backing up | Check Immich Settings → Backup is enabled |
-| Tailscale shows "Offline" | Check your Memu Hub has power and ethernet |
+3. In Element:
+   → Server: https://memu-hub.xxxxx.ts.net
+   → Ask me for your username & password
 
-### Checking Server Health
+4. In Immich:
+   → Server: https://memu-hub.xxxxx.ts.net:8443
+   → Create your own account
 
-```bash
-# See all running services
-docker ps
+5. Find the family bot in Element:
+   → Search: @memu_bot:ourname.memu.digital
+   → Try: /showlist
 
-# Check specific service logs
-docker logs memu_synapse      # Chat
-docker logs memu_photos       # Photos
-docker logs memu_tailscale    # Network
-docker logs memu_intelligence # AI Bot
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
 ---
 
-## Understanding Your Setup
+## Daily Life with Memu
 
-### Your Two Identities
+### You Don't Need to Remember URLs
 
-| Type | Example | Used For |
-|------|---------|----------|
-| **Access URL** | `http://memu-hub` | Connecting apps to your server |
-| **Matrix Identity** | `@dad:smiths.memu.digital` | Your username in chats |
+Once the apps are set up:
+- **Chat:** Just open Element
+- **Photos:** Just open Immich (auto-syncs in background)
+- **Shopping list:** Message the bot in Element
 
-The Matrix identity (`smiths.memu.digital`) appears in usernames and room addresses. It doesn't need to be a working website — it's just an identifier.
+### Works Everywhere
 
-### What Lives Where
+As long as Tailscale is running, your apps connect automatically — home, work, school, travelling, anywhere.
 
-| Data | Location | Backed Up? |
-|------|----------|------------|
-| Chat history | PostgreSQL database | Via backup script |
-| Photos | `./photos` folder | Via backup script |
-| AI memory | PostgreSQL database | Via backup script |
-| Config | `.env`, `./synapse` | Part of project folder |
+### If Something's Not Connecting
 
-### Backup Your Data
+| Check | How |
+|-------|-----|
+| Is Tailscale running? | Open Tailscale app — should say "Connected" |
+| Is the Hub online? | Check it has power and ethernet |
+| Still stuck? | Restart the app |
+
+---
+
+## Backup Your Data
 
 ```bash
-# Run the backup script
 sudo ./scripts/backup.sh
-
-# Backups saved to ./backups/
 ```
 
-We recommend copying backups to an external drive weekly.
+Copy backups to an external drive weekly. Your data is precious!
 
 ---
 
-## Optional: WiFi Setup
+## Quick Reference
 
-Prefer WiFi over Ethernet? Here's how to switch.
-
-**You'll need:** A keyboard and monitor connected to the Hub (temporarily)
-
-1. Log in to the Hub (username: `memu-user` or your configured user)
-2. Run: `sudo nmtui`
-3. Select **"Activate a connection"**
-4. Choose your WiFi network and enter the password
-5. Once connected, unplug Ethernet
+```
+┌─────────────────────────────────────────────────┐
+│             MEMU QUICK REFERENCE                │
+├─────────────────────────────────────────────────┤
+│                                                 │
+│  APPS TO INSTALL:                               │
+│    • Tailscale (required for connection)        │
+│    • Element (chat)                             │
+│    • Immich (photos)                            │
+│                                                 │
+│  AI BOT IN ELEMENT:                             │
+│    @memu_bot:yourfamily.memu.digital            │
+│                                                 │
+│  USEFUL COMMANDS:                               │
+│    /showlist     - see shopping list            │
+│    /addtolist    - add items                    │
+│    /done         - mark item complete           │
+│    /remember     - store a fact                 │
+│    /recall       - find a fact                  │
+│                                                 │
+│  NOT CONNECTING?                                │
+│    → Check Tailscale app is running             │
+│                                                 │
+└─────────────────────────────────────────────────┘
+```
 
 ---
 
 ## Getting Help
 
-- **GitHub Issues:** [github.com/kanchanepally/memu/issues](https://github.com/kanchanepally/memu/issues)
-- **Check Logs:** `docker compose logs` shows what's happening
-- **Restart Services:** `docker compose restart` fixes most issues
-
----
-
-## Quick Reference Card
-
-Print this for your fridge:
-
-```
-┌─────────────────────────────────────────┐
-│           MEMU QUICK REFERENCE          │
-├─────────────────────────────────────────┤
-│  Server Address:  http://memu-hub       │
-│  Photos Address:  http://memu-hub:2283  │
-│                                         │
-│  Chat App:        Element               │
-│  Photos App:      Immich                │
-│                                         │
-│  Not connecting?  Is Tailscale running? │
-│                                         │
-│  Admin:           [your username]       │
-│  Password:        [stored safely]       │
-└─────────────────────────────────────────┘
-```
+- **GitHub:** [github.com/kanchanepally/memu.digital/issues](https://github.com/kanchanepally/memu.digital/issues)
+- **Logs:** `docker compose logs`
+- **Restart:** `docker compose restart`
 
 ---
 
 *Welcome to your Digital Sanctuary.*
+
+*Memu (మేము) = "we" in Telugu — your data belongs to you, not them.*
