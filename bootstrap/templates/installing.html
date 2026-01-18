@@ -28,7 +28,7 @@
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             width: 100%;
-            max-width: 560px;
+            max-width: 550px;
             text-align: center;
         }
 
@@ -52,18 +52,6 @@
             }
         }
 
-        .success-icon {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 24px;
-            font-size: 40px;
-        }
-
         h2 {
             font-size: 24px;
             color: #333;
@@ -74,14 +62,14 @@
             font-size: 15px;
             color: #666;
             margin-bottom: 30px;
-            min-height: 24px;
+            min-height: 40px;
         }
 
         .progress-bar {
             width: 100%;
-            height: 6px;
+            height: 8px;
             background: #e1e8ed;
-            border-radius: 3px;
+            border-radius: 4px;
             overflow: hidden;
             margin-bottom: 30px;
         }
@@ -101,9 +89,14 @@
         .step {
             display: flex;
             align-items: center;
-            padding: 12px 0;
+            padding: 10px 0;
             font-size: 14px;
             color: #999;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .step:last-child {
+            border-bottom: none;
         }
 
         .step-icon {
@@ -116,6 +109,7 @@
             align-items: center;
             justify-content: center;
             font-size: 12px;
+            font-weight: 600;
             transition: all 0.3s;
             flex-shrink: 0;
         }
@@ -129,6 +123,19 @@
             border-color: #667eea;
             background: #667eea;
             color: white;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
         }
 
         .step.complete {
@@ -141,181 +148,118 @@
             color: white;
         }
 
+        .step.warning {
+            color: #f39c12;
+        }
+
+        .step.warning .step-icon {
+            border-color: #f39c12;
+            background: #f39c12;
+            color: white;
+        }
+
+        .warnings-box {
+            background: #fff9e6;
+            border: 1px solid #f39c12;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: left;
+            font-size: 13px;
+            display: none;
+        }
+
+        .warnings-box.show {
+            display: block;
+        }
+
+        .warnings-box h4 {
+            color: #f39c12;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .warnings-box ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #666;
+        }
+
         .info-box {
             background: #f8f9fa;
-            border-radius: 12px;
+            border-radius: 10px;
             padding: 20px;
             font-size: 13px;
             color: #666;
             text-align: left;
-            margin-bottom: 20px;
         }
 
         .info-box strong {
             display: block;
             color: #333;
-            margin-bottom: 12px;
-            font-size: 14px;
-        }
-
-        .credential-box {
-            background: #f0f7ff;
-            border: 2px solid #667eea;
-            border-radius: 10px;
-            padding: 16px;
-            margin: 16px 0;
-            text-align: left;
-        }
-
-        .credential-box h4 {
-            font-size: 13px;
-            color: #667eea;
             margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
-        .credential-row {
+        .success-checkmark {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #27ae60;
             display: flex;
-            justify-content: space-between;
-            padding: 6px 0;
-            font-size: 13px;
-            border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 40px;
+            color: white;
         }
 
-        .credential-row:last-child {
-            border-bottom: none;
+        .error-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #e74c3c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 40px;
+            color: white;
         }
 
-        .credential-row .label {
-            color: #666;
-        }
-
-        .credential-row .value {
-            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
-            color: #333;
+        a {
+            color: #667eea;
+            text-decoration: none;
             font-weight: 500;
         }
 
-        .app-instructions {
-            background: white;
-            border: 1px solid #e1e8ed;
-            border-radius: 10px;
-            margin: 12px 0;
-            overflow: hidden;
-        }
-
-        .app-header {
-            background: #f8f9fa;
-            padding: 12px 16px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 600;
-            color: #333;
-            font-size: 14px;
-        }
-
-        .app-header .app-icon {
-            font-size: 20px;
-        }
-
-        .app-body {
-            padding: 16px;
-            font-size: 13px;
-            line-height: 1.6;
-        }
-
-        .app-body ol {
-            margin: 0;
-            padding-left: 20px;
-        }
-
-        .app-body li {
-            margin: 6px 0;
-        }
-
-        .warning-box {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
-            border-radius: 8px;
-            padding: 14px;
-            font-size: 12px;
-            text-align: left;
-            margin-top: 16px;
-        }
-
-        .warning-box strong {
-            color: #856404;
-        }
-
-        .success-actions {
-            margin-top: 24px;
-        }
-
-        .primary-button {
-            display: inline-block;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 14px 32px;
-            border-radius: 10px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 15px;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .primary-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-
-        .secondary-link {
-            display: block;
-            margin-top: 12px;
-            color: #667eea;
-            font-size: 13px;
-            text-decoration: none;
-        }
-
-        .secondary-link:hover {
+        a:hover {
             text-decoration: underline;
         }
 
-        code {
-            background: #e8e8e8;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
-            font-size: 12px;
-        }
-
-        .error-box {
-            background: #ffeaea;
-            border: 1px solid #e74c3c;
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
             border-radius: 10px;
-            padding: 20px;
-            text-align: left;
+            text-decoration: none;
+            font-weight: 600;
             margin-top: 20px;
+            transition: transform 0.2s;
         }
 
-        .error-box h4 {
-            color: #c0392b;
-            margin-bottom: 8px;
+        .cta-button:hover {
+            transform: translateY(-2px);
+            text-decoration: none;
         }
 
-        .hidden {
-            display: none;
-        }
-
-        @media (max-width: 480px) {
+        @media (max-width: 600px) {
             .container {
-                padding: 30px 24px;
+                padding: 30px 20px;
             }
 
-            .credential-row {
-                flex-direction: column;
-                gap: 2px;
+            .step {
+                font-size: 13px;
             }
         }
     </style>
@@ -323,264 +267,202 @@
 
 <body>
     <div class="container">
-        <!-- LOADING STATE -->
-        <div id="loadingState">
-            <div class="spinner-container">
-                <div class="spinner" id="spinner"></div>
+        <div class="spinner-container">
+            <div class="spinner" id="spinner"></div>
+        </div>
+
+        <h2 id="title">Setting Up Your Memu Server</h2>
+
+        <div class="status-message" id="statusMessage">
+            Initializing...
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="steps" id="stepsContainer">
+            <div class="step" data-step="1">
+                <div class="step-icon">1</div>
+                <span>Generating configuration</span>
             </div>
-
-            <h2 id="title">Setting Up Your Family Server</h2>
-
-            <div class="status-message" id="statusMessage">
-                Initializing...
+            <div class="step" data-step="2">
+                <div class="step-icon">2</div>
+                <span>Starting database</span>
             </div>
-
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
+            <div class="step" data-step="4">
+                <div class="step-icon">3</div>
+                <span>Creating databases</span>
             </div>
-
-            <div class="steps">
-                <div class="step" id="step-secrets">
-                    <div class="step-icon">1</div>
-                    <span>Generating secure secrets</span>
-                </div>
-                <div class="step" id="step-config">
-                    <div class="step-icon">2</div>
-                    <span>Creating configuration files</span>
-                </div>
-                <div class="step" id="step-services">
-                    <div class="step-icon">3</div>
-                    <span>Starting core services</span>
-                </div>
-                <div class="step" id="step-users">
-                    <div class="step-icon">4</div>
-                    <span>Creating user accounts</span>
-                </div>
-                <div class="step" id="step-production">
-                    <div class="step-icon">5</div>
-                    <span>Launching production</span>
-                </div>
+            <div class="step" data-step="5">
+                <div class="step-icon">4</div>
+                <span>Starting chat server</span>
             </div>
-
-            <div class="info-box">
-                <strong>⏳ What's happening?</strong>
-                We're configuring your private family server with encrypted chat,
-                photo backup, and an AI assistant. This usually takes 2-3 minutes.
+            <div class="step" data-step="7">
+                <div class="step-icon">5</div>
+                <span>Creating user accounts</span>
+            </div>
+            <div class="step" data-step="10">
+                <div class="step-icon">6</div>
+                <span>Starting services</span>
+            </div>
+            <div class="step" data-step="12">
+                <div class="step-icon">7</div>
+                <span>Configuring network</span>
             </div>
         </div>
 
-        <!-- SUCCESS STATE -->
-        <div id="successState" class="hidden">
-            <div class="success-icon">🎉</div>
+        <div class="warnings-box" id="warningsBox">
+            <h4>⚠️ Warnings (non-blocking)</h4>
+            <ul id="warningsList"></ul>
+        </div>
 
-            <h2>Your Memu is Ready!</h2>
-            <p class="status-message">Your family's digital sanctuary is now live.</p>
-
-            <!-- Connection Details -->
-            <div class="credential-box">
-                <h4>🔑 Your Admin Account</h4>
-                <div class="credential-row">
-                    <span class="label">Username</span>
-                    <span class="value">admin</span>
-                </div>
-                <div class="credential-row">
-                    <span class="label">Password</span>
-                    <span class="value">[the password you just created]</span>
-                </div>
-                <div class="credential-row">
-                    <span class="label">Server Address</span>
-                    <span class="value">http://memu-hub</span>
-                </div>
-                <div class="credential-row">
-                    <span class="label">Matrix ID</span>
-                    <span class="value">@admin:<span id="successDomain">family</span>.memu.digital</span>
-                </div>
-            </div>
-
-            <!-- App Setup Instructions -->
-            <div style="text-align: left; margin-top: 24px;">
-                <strong style="font-size: 14px; color: #333;">📱 Connect Your Apps</strong>
-
-                <div class="app-instructions">
-                    <div class="app-header">
-                        <span class="app-icon">💬</span>
-                        <span>Chat — Element App</span>
-                    </div>
-                    <div class="app-body">
-                        <ol>
-                            <li>Download <strong>Element</strong> (iOS/Android/Desktop)</li>
-                            <li>Tap <em>"Sign in"</em> → <em>"Edit"</em> homeserver</li>
-                            <li>Enter: <code>http://memu-hub</code></li>
-                            <li>Sign in with: <code>admin</code> + your password</li>
-                        </ol>
-                    </div>
-                </div>
-
-                <div class="app-instructions">
-                    <div class="app-header">
-                        <span class="app-icon">📷</span>
-                        <span>Photos — Immich App</span>
-                    </div>
-                    <div class="app-body">
-                        <ol>
-                            <li>Download <strong>Immich</strong> (iOS/Android)</li>
-                            <li>Enter server URL: <code>http://memu-hub:2283</code></li>
-                            <li>Create a <em>new account</em> (Photos uses separate accounts)</li>
-                            <li>Enable <em>"Automatic Backup"</em> in settings</li>
-                        </ol>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tailscale Reminder -->
-            <div class="warning-box">
-                <strong>📱 Is Tailscale running?</strong><br>
-                The <code>http://memu-hub</code> address works when Tailscale is connected on your device.
-                If you can't connect, check that the Tailscale app is running and shows "Connected".
-                <br><br>
-                <strong>Adding family members?</strong> Send them a Tailscale invite from your
-                <a href="https://login.tailscale.com/admin/machines" target="_blank">admin console</a>,
-                then share the app setup instructions above.
-            </div>
-
-            <!-- Actions -->
-            <div class="success-actions">
-                <a href="http://memu-hub" class="primary-button" target="_blank">
-                    Open Memu Hub →
-                </a>
-                <a href="#" class="secondary-link" onclick="window.print(); return false;">
-                    Print these instructions
-                </a>
+        <div class="info-box" id="infoBox">
+            <strong>What's happening?</strong>
+            We're configuring your private family server with:
+            <ul style="margin: 10px 0 0 20px; line-height: 1.8;">
+                <li>Encrypted chat (Matrix)</li>
+                <li>Photo backup (Immich)</li>
+                <li>AI assistant (Ollama)</li>
+            </ul>
+            <div style="margin-top: 10px; color: #999;">
+                This usually takes 3-5 minutes.
             </div>
         </div>
 
-        <!-- ERROR STATE -->
-        <div id="errorState" class="hidden">
-            <div style="font-size: 60px; margin-bottom: 20px;">⚠️</div>
-            <h2>Setup Hit a Snag</h2>
-
-            <div class="error-box">
-                <h4>What went wrong:</h4>
-                <p id="errorMessage">Unknown error occurred.</p>
-
-                <div style="margin-top: 16px; font-size: 12px;">
-                    <strong>Try these steps:</strong>
-                    <ol style="margin: 8px 0 0 16px;">
-                        <li>Check Docker is running: <code>docker ps</code></li>
-                        <li>View detailed logs: <code>docker compose logs</code></li>
-                        <li>Restart and try again: <code>docker compose down && docker compose up -d</code></li>
-                    </ol>
-                </div>
-            </div>
-
-            <div class="success-actions">
-                <a href="/" class="primary-button">
-                    ← Try Again
-                </a>
-                <a href="https://github.com/kanchanepally/memu/issues" class="secondary-link" target="_blank">
-                    Report this issue
-                </a>
-            </div>
-        </div>
+        <div id="finalMessage"></div>
     </div>
 
     <script>
         const domain = "{{ domain }}";
-
-        const stages = {
-            'secrets': { step: 0, progress: 20, text: 'Generating secure passwords...' },
-            'config': { step: 1, progress: 40, text: 'Creating configuration files...' },
-            'services': { step: 2, progress: 60, text: 'Starting chat server and database...' },
-            'users': { step: 3, progress: 80, text: 'Creating admin and bot accounts...' },
-            'production': { step: 4, progress: 95, text: 'Launching all services...' },
-            'complete': { step: 5, progress: 100, text: 'Setup complete!' }
-        };
-
-        const stepKeys = ['secrets', 'config', 'services', 'users', 'production'];
-        let currentStage = 'idle';
+        let currentStep = 0;
         let pollInterval;
 
-        function updateUI(stage, message, error = null) {
-            const stageData = stages[stage];
+        function updateUI(data) {
+            const { stage, step, message, error, warnings } = data;
 
-            if (stageData) {
-                // Update progress bar
-                document.getElementById('progressFill').style.width = stageData.progress + '%';
+            // Update progress bar
+            const progress = Math.min((step / 12) * 100, 100);
+            document.getElementById('progressFill').style.width = progress + '%';
 
-                // Update status message
-                document.getElementById('statusMessage').textContent = message || stageData.text;
+            // Update status message
+            document.getElementById('statusMessage').textContent = message;
 
-                // Update steps
-                for (let i = 0; i < stepKeys.length; i++) {
-                    const stepEl = document.getElementById(`step-${stepKeys[i]}`);
-                    if (!stepEl) continue;
+            // Update steps
+            document.querySelectorAll('.step').forEach(stepEl => {
+                const stepNum = parseInt(stepEl.dataset.step);
+                stepEl.classList.remove('active', 'complete', 'warning');
 
-                    stepEl.classList.remove('active', 'complete');
-
-                    if (i < stageData.step) {
-                        stepEl.classList.add('complete');
-                        stepEl.querySelector('.step-icon').textContent = '✓';
-                    } else if (i === stageData.step && stageData.step < stepKeys.length) {
-                        stepEl.classList.add('active');
-                    }
+                if (stepNum < step) {
+                    stepEl.classList.add('complete');
+                    stepEl.querySelector('.step-icon').textContent = '✓';
+                } else if (stepNum === step || (stepNum < step + 3 && stepNum >= step)) {
+                    stepEl.classList.add('active');
                 }
+            });
+
+            // Show warnings if any
+            if (warnings && warnings.length > 0) {
+                const warningsBox = document.getElementById('warningsBox');
+                const warningsList = document.getElementById('warningsList');
+                warningsList.innerHTML = warnings.map(w => `<li>${w}</li>`).join('');
+                warningsBox.classList.add('show');
             }
 
-            if (error) {
-                showError(error);
-            }
-
+            // Handle completion
             if (stage === 'complete') {
                 showSuccess();
+            }
+
+            // Handle error
+            if (error) {
+                showError(error);
             }
         }
 
         function showSuccess() {
             clearInterval(pollInterval);
 
-            document.getElementById('loadingState').classList.add('hidden');
-            document.getElementById('successState').classList.remove('hidden');
+            document.getElementById('spinner').style.display = 'none';
+            document.getElementById('title').textContent = 'Your Memu is Ready! 🎉';
 
-            // Update domain in success message
-            const domainPart = domain.replace('.memu.digital', '');
-            document.getElementById('successDomain').textContent = domainPart;
+            document.getElementById('stepsContainer').innerHTML = `
+                <div class="success-checkmark">✓</div>
+            `;
+
+            document.getElementById('infoBox').innerHTML = `
+                <strong>✅ Setup Complete!</strong>
+                
+                <div style="margin: 16px 0; padding: 12px; background: #f0f7ff; border-radius: 8px;">
+                    <strong>Your Chat Account:</strong><br>
+                    <div style="margin-top: 6px; font-family: monospace; font-size: 13px;">
+                        Username: <code>admin</code><br>
+                        Server: <code>${domain}</code>
+                    </div>
+                </div>
+
+                <hr style="margin: 20px 0; border: none; border-top: 1px solid #e1e8ed;">
+
+                <strong>📱 Next Steps</strong>
+                <ol style="margin: 12px 0 0 20px; font-size: 13px; line-height: 1.8;">
+                    <li>Install <strong>Element X</strong> app on your phone</li>
+                    <li>Tap "Change homeserver"</li>
+                    <li>Enter: <code>http://${window.location.hostname}</code></li>
+                    <li>Login with username: <code>admin</code></li>
+                </ol>
+
+                <div style="margin-top: 16px; padding: 12px; background: #e8f5e9; border-radius: 6px; font-size: 12px;">
+                    <strong>📸 For Photos:</strong> Install the <strong>Immich</strong> app and connect to <code>http://${window.location.hostname}:2283</code>
+                </div>
+            `;
+
+            document.getElementById('finalMessage').innerHTML = `
+                <a href="http://${window.location.hostname}" class="cta-button">
+                    Open Your Memu →
+                </a>
+            `;
         }
 
         function showError(error) {
             clearInterval(pollInterval);
 
-            document.getElementById('loadingState').classList.add('hidden');
-            document.getElementById('errorState').classList.remove('hidden');
-            document.getElementById('errorMessage').textContent = error;
+            document.getElementById('spinner').style.display = 'none';
+            document.getElementById('title').textContent = 'Setup Error';
+
+            document.getElementById('stepsContainer').innerHTML = `
+                <div class="error-icon">✗</div>
+            `;
+
+            document.getElementById('infoBox').innerHTML = `
+                <strong style="color: #e74c3c;">Something went wrong:</strong>
+                <div style="margin-top: 10px; padding: 10px; background: #fff; border-radius: 5px; font-family: monospace; font-size: 12px;">
+                    ${error}
+                </div>
+                <div style="margin-top: 15px; font-size: 12px;">
+                    <strong>What to do:</strong><br>
+                    1. Check Docker: <code>docker ps</code><br>
+                    2. View logs: <code>docker compose logs</code><br>
+                    3. Try again or <a href="https://github.com/kanchanepally/memu/issues" target="_blank">open an issue</a>
+                </div>
+            `;
         }
 
-        // Poll for status updates
+        // Poll for status
         function pollStatus() {
             fetch('/status')
                 .then(res => res.json())
                 .then(data => {
-                    if (data.stage !== currentStage || data.error) {
-                        currentStage = data.stage;
-                        updateUI(data.stage, data.message, data.error);
+                    if (data.step !== currentStep || data.error) {
+                        currentStep = data.step;
+                        updateUI(data);
                     }
                 })
-                .catch(err => {
-                    console.error('Status check failed:', err);
-                });
+                .catch(err => console.error('Status poll failed:', err));
         }
 
         // Start polling
         pollInterval = setInterval(pollStatus, 1500);
-
-        // Initial poll
         pollStatus();
-
-        // Timeout fallback - if still loading after 5 minutes, something's wrong
-        setTimeout(() => {
-            if (currentStage !== 'complete' && !document.getElementById('errorState').classList.contains('hidden') === false) {
-                showError('Setup is taking longer than expected. Please check the server logs.');
-            }
-        }, 300000);
     </script>
 </body>
 

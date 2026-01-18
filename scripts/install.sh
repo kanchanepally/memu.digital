@@ -1,127 +1,105 @@
 #!/bin/bash
 # =============================================================================
-# Memu OS - Revised Installer (v4.0)
+# Memu OS - Silent Installer (v4.1)
 # =============================================================================
-# 
-# This script implements TWO-STAGE BOOT:
-#   Stage A: Prepare environment (no containers running)
-#   Stage B: Hand off to Setup Wizard (which starts containers in order)
 #
-# Key insight: We DON'T start docker compose here. The wizard does that
-# AFTER it has created all the config files.
+# CHANGE FROM v4.0: This script is now 100% SILENT.
+# - No prompts
+# - No user input
+# - All configuration happens in the Web Wizard
+#
+# This enables:
+# - Unattended installation (USB boot scenario)
+# - Single point of user interaction (the wizard)
+# - No confusion about "did I enter that already?"
 # =============================================================================
 
 set -e
 
-# Colors for output
+# Colors for output (still useful for logs)
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
+log() { echo -e "${GREEN}[MEMU]${NC} $1"; }
+warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+error() { echo -e "${RED}[ERROR]${NC} $1"; }
+
 echo -e "${BLUE}"
 echo "╔═══════════════════════════════════════════════════════════════╗"
 echo "║   Memu OS - The Private Family Cloud                          ║"
-echo "║   v4.0 (Two-Stage Boot)                                       ║"
+echo "║   v4.1 (Silent Install)                                       ║"
 echo "╚═══════════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
 
 # =============================================================================
-# STAGE A: Environment Preparation (No Containers Yet)
+# CONFIGURATION
 # =============================================================================
 
 PROJECT_ROOT=$(pwd)
 REAL_USER="${SUDO_USER:-$(whoami)}"
+WIZARD_PORT=8888
 
-echo -e "${YELLOW}[Stage A] Preparing Environment${NC}"
+# =============================================================================
+# STAGE A: Environment Preparation (Silent, No Prompts)
+# =============================================================================
 
-# -----------------------------------------------------------------------------
-# A1: Check Prerequisites
-# -----------------------------------------------------------------------------
-echo -e "${GREEN}[A1] Checking prerequisites...${NC}"
-
-if ! command -v docker &> /dev/null; then
-    echo -e "${RED}Docker not found. Installing...${NC}"
-    apt-get update -qq
-    apt-get install -y docker.io docker-compose-v2
-fi
-
-# Verify Docker is running
-if ! docker info &> /dev/null; then
-    echo -e "${RED}Docker daemon not running. Starting...${NC}"
-    systemctl start docker
-    systemctl enable docker
-fi
+log "Starting silent installation..."
 
 # -----------------------------------------------------------------------------
-# A2: Check Hardware (RAM)
+# A1: Install System Dependencies
 # -----------------------------------------------------------------------------
-echo -e "${GREEN}[A2] Checking hardware...${NC}"
+log "Installing system dependencies..."
 
+apt-get update -qq
+apt-get install -y -qq docker.io docker-compose-v2 curl python3-pip > /dev/null 2>&1
+
+# Ensure Docker is running
+systemctl start docker 2>/dev/null || true
+systemctl enable docker 2>/dev/null || true
+
+# Install Python dependencies (Flask for wizard)
+pip install flask requests --break-system-packages --ignore-installed -q 2>/dev/null || \
+pip3 install flask requests --break-system-packages --ignore-installed -q 2>/dev/null || true
+
+# -----------------------------------------------------------------------------
+# A2: Check Hardware
+# -----------------------------------------------------------------------------
 TOTAL_RAM_MB=$(free -m | awk '/^Mem:/{print $2}')
 if [ "$TOTAL_RAM_MB" -lt 7500 ]; then
-    echo -e "${YELLOW}[!] WARNING: Less than 8GB RAM detected (${TOTAL_RAM_MB}MB).${NC}"
-    echo "    AI features may be limited. Recommended: 16GB for full experience."
-    sleep 2
+    warn "Less than 8GB RAM detected (${TOTAL_RAM_MB}MB). AI features may be limited."
 fi
 
 # -----------------------------------------------------------------------------
-# A3: Setup Swap (Critical for AI Stability)
+# A3: Setup Swap
 # -----------------------------------------------------------------------------
-echo -e "${GREEN}[A3] Configuring swap...${NC}"
-
 if [ ! -f /swapfile ]; then
-    echo "    Creating 8GB swap file..."
-    fallocate -l 8G /swapfile
+    log "Creating swap file..."
+    fallocate -l 8G /swapfile 2>/dev/null || dd if=/dev/zero of=/swapfile bs=1M count=8192 status=none
     chmod 600 /swapfile
-    mkswap /swapfile
+    mkswap /swapfile > /dev/null
     swapon /swapfile
-    echo '/swapfile none swap sw 0 0' >> /etc/fstab
-    echo "    Swap configured."
-else
-    echo "    Swap already exists."
+    grep -q '/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
 fi
 
 # -----------------------------------------------------------------------------
-# A4: Install Python Dependencies for Wizard
+# A4: Create Directory Structure
 # -----------------------------------------------------------------------------
-echo -e "${GREEN}[A4] Installing wizard dependencies...${NC}"
+log "Creating directory structure..."
 
-apt-get install -y python3-pip curl -qq
-
-# Install Flask with flags to handle Ubuntu's pre-installed packages
-pip install flask requests --break-system-packages --ignore-installed 2>/dev/null || \
-pip3 install flask requests --break-system-packages --ignore-installed
-
-# -----------------------------------------------------------------------------
-# A5: Create Directory Structure with Correct Permissions
-# -----------------------------------------------------------------------------
-echo -e "${GREEN}[A5] Creating directory structure...${NC}"
-
-# These directories MUST exist before Docker tries to mount them
-mkdir -p synapse
-mkdir -p photos
-mkdir -p backups
-mkdir -p nginx/conf.d
-
-# Synapse needs write access for signing keys and logs
+mkdir -p synapse photos backups nginx/conf.d bootstrap/templates
 chmod 777 synapse/
-
-# Fix ownership for the real user (not root)
-chown -R $REAL_USER:$REAL_USER synapse photos backups nginx
-
-echo "    Directories created with correct permissions."
+chown -R $REAL_USER:$REAL_USER synapse photos backups nginx 2>/dev/null || true
 
 # -----------------------------------------------------------------------------
-# A6: Create Placeholder Config Files
+# A5: Create Placeholder Config Files
 # -----------------------------------------------------------------------------
-echo -e "${GREEN}[A6] Creating placeholder configurations...${NC}"
+log "Creating placeholder configurations..."
 
-# Element config - MUST exist before Docker tries to mount it
-# (Docker will create a directory instead of a file if this doesn't exist)
-if [ ! -f element-config.json ]; then
-    cat > element-config.json << 'ELEMENT_EOF'
+# Element config (MUST exist as a FILE, not directory)
+[ ! -f element-config.json ] && cat > element-config.json << 'EOF'
 {
     "default_server_config": {
         "m.homeserver": {
@@ -132,109 +110,65 @@ if [ ! -f element-config.json ]; then
     "brand": "Memu",
     "default_theme": "light"
 }
-ELEMENT_EOF
-    echo "    Created element-config.json placeholder"
-fi
+EOF
 
-# Nginx config - placeholder that returns "setup in progress"
-cat > nginx/conf.d/default.conf << 'NGINX_EOF'
+# Nginx placeholder config
+cat > nginx/conf.d/default.conf << 'EOF'
 server {
     listen 80;
     server_name localhost;
-    
     location / {
         return 200 'Memu setup in progress. Visit port 8888 to continue.';
         add_header Content-Type text/plain;
     }
 }
-NGINX_EOF
-echo "    Created nginx placeholder config"
+EOF
 
 # -----------------------------------------------------------------------------
-# A7: Create Base .env File
+# A6: Create Base .env (No prompts - wizard will fill in details)
 # -----------------------------------------------------------------------------
-echo -e "${GREEN}[A7] Creating environment configuration...${NC}"
+log "Creating environment configuration..."
 
-# Generate secure passwords
+# Generate secure database password
 DB_PASSWORD=$(openssl rand -base64 24 | tr -d '/+=' | head -c 24)
 
-# Check if .env already exists (preserve Tailscale key if so)
+# Preserve existing Tailscale key if present
 EXISTING_TS_KEY=""
-if [ -f .env ]; then
-    EXISTING_TS_KEY=$(grep "^TAILSCALE_AUTH_KEY=" .env | cut -d'=' -f2)
-fi
+[ -f .env ] && EXISTING_TS_KEY=$(grep "^TAILSCALE_AUTH_KEY=" .env 2>/dev/null | cut -d'=' -f2 || true)
 
-cat > .env << ENV_EOF
-# ===========================================
-# MEMU SUITE - ENVIRONMENT CONFIGURATION
+cat > .env << EOF
+# Memu Configuration (v4.1)
 # Generated: $(date '+%Y-%m-%d %H:%M:%S')
-# ===========================================
+# All values will be updated by the Setup Wizard
 
-# --- GENERAL ---
 SERVER_NAME=memu.local
 TZ=$(cat /etc/timezone 2>/dev/null || echo "UTC")
 
-# --- DATABASE ---
 DB_USER=memu_user
 DB_PASSWORD=${DB_PASSWORD}
 DB_NAME=immich
 
-# --- PHOTOS ---
 UPLOAD_LOCATION=./photos
-
-# --- CHAT ---
 SYNAPSE_REPORT_STATS=no
 
-# --- AI ---
 AI_ENABLED=true
 OLLAMA_MODEL=llama3.2
 MACHINE_LEARNING_WORKERS=1
 MACHINE_LEARNING_WORKER_TIMEOUT=120
 
-# --- BOT (populated by wizard after user creation) ---
 MATRIX_BOT_USERNAME=@memu_bot:memu.local
 MATRIX_BOT_TOKEN=
 
-# --- NETWORKING ---
 TAILSCALE_AUTH_KEY=${EXISTING_TS_KEY}
-ENV_EOF
-
-echo "    Created .env with secure database password"
+EOF
 
 # -----------------------------------------------------------------------------
-# A8: Collect Tailscale Key (if not already set)
+# A7: Install Systemd Services
 # -----------------------------------------------------------------------------
-if [ -z "$EXISTING_TS_KEY" ]; then
-    echo ""
-    echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
-    echo "  REMOTE ACCESS SETUP (Optional)"
-    echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
-    echo ""
-    echo "  To access Memu from outside your home network, you need Tailscale."
-    echo ""
-    echo "  1. Go to: https://login.tailscale.com/admin/settings/keys"
-    echo "  2. Click 'Generate auth key'"
-    echo "  3. Copy the key (starts with 'tskey-auth-...')"
-    echo ""
-    echo "  Press ENTER to skip (you can add it later in the web wizard)"
-    echo ""
-    read -p "  Paste Tailscale Auth Key: " TS_KEY
-    
-    if [ -n "$TS_KEY" ]; then
-        sed -i "s|^TAILSCALE_AUTH_KEY=.*|TAILSCALE_AUTH_KEY=$TS_KEY|" .env
-        echo "    Tailscale key saved."
-    else
-        echo "    Skipped. You can add this in the web wizard."
-    fi
-fi
+log "Installing system services..."
 
-# -----------------------------------------------------------------------------
-# A9: Install Systemd Services
-# -----------------------------------------------------------------------------
-echo -e "${GREEN}[A9] Installing system services...${NC}"
-
-# Setup Wizard Service (runs on port 8888 to avoid conflict with nginx/80)
-cat > /etc/systemd/system/memu-setup.service << WIZARD_EOF
+# Setup Wizard Service
+cat > /etc/systemd/system/memu-setup.service << EOF
 [Unit]
 Description=Memu OS Setup Wizard
 After=network.target docker.service
@@ -248,14 +182,15 @@ ExecStart=/usr/bin/python3 app.py
 Restart=on-failure
 RestartSec=5
 Environment=PYTHONUNBUFFERED=1
-Environment=WIZARD_PORT=8888
+Environment=WIZARD_PORT=${WIZARD_PORT}
+Environment=PROJECT_ROOT=${PROJECT_ROOT}
 
 [Install]
 WantedBy=multi-user.target
-WIZARD_EOF
+EOF
 
-# Production Service (will be enabled by wizard after setup completes)
-cat > /etc/systemd/system/memu-production.service << PROD_EOF
+# Production Service
+cat > /etc/systemd/system/memu-production.service << EOF
 [Unit]
 Description=Memu OS Production Stack
 After=docker.service network-online.target
@@ -270,48 +205,36 @@ ExecStop=/usr/bin/docker compose -f docker-compose.yml down
 
 [Install]
 WantedBy=multi-user.target
-PROD_EOF
+EOF
 
 systemctl daemon-reload
-echo "    Systemd services installed."
 
 # =============================================================================
-# STAGE A COMPLETE - Hand Off to Wizard
+# STAGE A COMPLETE - Start Wizard
 # =============================================================================
 
-echo ""
-echo -e "${GREEN}╔═══════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║   Stage A Complete - Environment Prepared                     ║${NC}"
-echo -e "${GREEN}╚═══════════════════════════════════════════════════════════════╝${NC}"
-echo ""
-echo -e "${BLUE}Starting Setup Wizard...${NC}"
-echo ""
+log "Starting Setup Wizard..."
 
-# Start the wizard
 systemctl enable memu-setup.service
 systemctl start memu-setup.service
 
-# Wait a moment for it to start
+# Wait for wizard to start
 sleep 3
 
-# Get IP addresses for user
+# Get network info
 LOCAL_IP=$(hostname -I | awk '{print $1}')
 HOSTNAME=$(hostname)
 
 echo ""
 echo -e "${GREEN}╔═══════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║   NEXT STEP: Open the Setup Wizard                            ║${NC}"
+echo -e "${GREEN}║   Installation Complete - Open the Setup Wizard               ║${NC}"
 echo -e "${GREEN}╚═══════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 echo "  On a device connected to the same network, open:"
 echo ""
-echo -e "    ${BLUE}http://${LOCAL_IP}:8888${NC}"
+echo -e "    ${BLUE}http://${LOCAL_IP}:${WIZARD_PORT}${NC}"
 echo ""
-echo "  Or try:"
-echo -e "    ${BLUE}http://${HOSTNAME}.local:8888${NC}"
+echo "  Or try: http://${HOSTNAME}.local:${WIZARD_PORT}"
 echo ""
-echo "  The wizard will guide you through the rest of the setup."
-echo ""
-echo -e "${YELLOW}  Note: Do NOT run 'docker compose up' manually.${NC}"
-echo -e "${YELLOW}        The wizard handles this in the correct order.${NC}"
+echo -e "  ${YELLOW}The wizard will guide you through the rest.${NC}"
 echo ""
