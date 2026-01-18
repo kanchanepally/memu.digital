@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 """
-Memu Bootstrap Wizard (v4.1)
+Memu Bootstrap Wizard (v4.2)
 
 TESTED: January 18, 2026 on DigitalOcean
+
+FIXES FROM v4.1:
+1. Element config now uses Tailscale hostname for correct HTTPS access
+2. Tailscale hostname auto-detected after connection
+3. Better status reporting for UI progress tracking
 
 FIXES FROM v4.0:
 1. Database creation uses simple CREATE DATABASE (not \gexec)
@@ -34,7 +39,8 @@ setup_state = {
     'total_steps': 12,
     'message': '',
     'error': None,
-    'warnings': []
+    'warnings': [],
+    'tailscale_hostname': None
 }
 
 def update_state(stage, step, message, error=None, warning=None):
@@ -242,10 +248,11 @@ def run_setup(clean_slug, domain, admin_password, tailscale_key, server_ip):
                         warning='AI assistant may need manual configuration.')
         
         # =====================================================================
-        # STEP 10: Generate Element Config (FIXED - uses actual server IP)
+        # STEP 10: Generate Element Config (initial - may be updated by Tailscale)
         # =====================================================================
         update_state('services', 10, 'Configuring chat interface...')
         
+        # Initial config uses server IP (for local access)
         element_config = {
             "default_server_config": {
                 "m.homeserver": {
@@ -276,12 +283,17 @@ def run_setup(clean_slug, domain, admin_password, tailscale_key, server_ip):
             update_state('network', 12, 'Configuring remote access...')
             configure_tailscale(domain, server_ip)
         else:
-            update_state('network', 12, 'Skipping remote access (no Tailscale key)')
+            update_state('network', 12, 'Skipping remote access (no Tailscale key provided)')
         
         # =====================================================================
         # DONE
         # =====================================================================
-        update_state('complete', 12, 'Setup complete!')
+        ts_hostname = setup_state.get('tailscale_hostname')
+        if ts_hostname:
+            update_state('complete', 12, f'Setup complete! Access via https://{ts_hostname}')
+        else:
+            update_state('complete', 12, f'Setup complete! Access via http://{server_ip}')
+        
         schedule_handoff()
         
     except Exception as e:
@@ -296,7 +308,7 @@ def run_setup(clean_slug, domain, admin_password, tailscale_key, server_ip):
 # =============================================================================
 
 def generate_synapse_config(domain, db_password, registration_secret):
-    return f"""# Memu Synapse Configuration (v4.1)
+    return f"""# Memu Synapse Configuration (v4.2)
 server_name: "{domain}"
 pid_file: /data/homeserver.pid
 
@@ -480,9 +492,35 @@ def get_user_token_with_retry(username, password, max_retries=5):
 # TAILSCALE
 # =============================================================================
 
+def get_tailscale_hostname():
+    """Get the Tailscale FQDN for this machine"""
+    try:
+        result = run_cmd([
+            'docker', 'exec', 'memu_tailscale',
+            'tailscale', 'status', '--json'
+        ], check=False)
+        
+        if result.returncode == 0:
+            status = json.loads(result.stdout)
+            # Get our own DNS name
+            dns_name = status.get('Self', {}).get('DNSName', '')
+            if dns_name:
+                # Remove trailing dot if present
+                return dns_name.rstrip('.')
+    except Exception as e:
+        print(f"  ⚠ Could not get Tailscale hostname: {e}")
+    
+    return None
+
+
 def configure_tailscale(domain, server_ip):
+    """Configure Tailscale serve and update Element config with correct hostname"""
+    global setup_state
+    
+    # Wait for Tailscale to be fully connected
     time.sleep(5)
     
+    # Get Docker network gateway
     try:
         result = run_cmd([
             'docker', 'network', 'inspect', 'memu-suite_memu_net',
@@ -492,16 +530,60 @@ def configure_tailscale(domain, server_ip):
     except:
         gateway = '172.18.0.1'
     
-    run_cmd(['docker', 'exec', 'memu_tailscale', 'tailscale', 'serve', '--bg', '--https', '443', f'http://{gateway}:80'], check=False)
-    run_cmd(['docker', 'exec', 'memu_tailscale', 'tailscale', 'serve', '--bg', '--https', '8443', f'http://{gateway}:2283'], check=False)
+    print(f"  Using gateway: {gateway}")
+    
+    # Configure Tailscale serve for Element (port 443) and Immich (port 8443)
+    run_cmd([
+        'docker', 'exec', 'memu_tailscale',
+        'tailscale', 'serve', '--bg', '--https', '443', f'http://{gateway}:80'
+    ], check=False)
+    
+    run_cmd([
+        'docker', 'exec', 'memu_tailscale',
+        'tailscale', 'serve', '--bg', '--https', '8443', f'http://{gateway}:2283'
+    ], check=False)
+    
+    # Wait a moment for Tailscale to register
+    time.sleep(3)
+    
+    # Get the Tailscale hostname
+    ts_hostname = get_tailscale_hostname()
+    
+    if ts_hostname:
+        print(f"  ✓ Tailscale hostname: {ts_hostname}")
+        setup_state['tailscale_hostname'] = ts_hostname
+        
+        # Update Element config to use Tailscale HTTPS URL
+        element_config = {
+            "default_server_config": {
+                "m.homeserver": {
+                    "base_url": f"https://{ts_hostname}",
+                    "server_name": domain
+                }
+            },
+            "brand": "Memu",
+            "default_theme": "light"
+        }
+        (PROJECT_ROOT / 'element-config.json').write_text(json.dumps(element_config, indent=2))
+        
+        # Restart Element to pick up new config
+        run_cmd(['docker', 'restart', 'memu_element'], check=False)
+        print("  ✓ Element config updated for Tailscale access")
+        
+        update_state('network', 12, f'Remote access configured: https://{ts_hostname}')
+    else:
+        print("  ⚠ Could not detect Tailscale hostname - Element config unchanged")
+        update_state('network', 12, 'Remote access configured (hostname detection failed)',
+                    warning='Could not auto-detect Tailscale URL. You may need to edit Element homeserver manually.')
 
 
 def schedule_handoff():
+    """Schedule the handoff from setup wizard to production services"""
     subprocess.run([
         "sudo", "systemd-run",
         "--unit=memu-handoff", "--description=Memu Handoff", "--no-block",
         "/bin/bash", "-c",
-        "sleep 5; systemctl stop memu-setup.service; systemctl disable memu-setup.service; systemctl enable memu-production.service"
+        "sleep 5; systemctl stop memu-setup.service; systemctl disable memu-setup.service; systemctl enable memu-production.service; systemctl start memu-production.service"
     ], check=False)
 
 
@@ -511,7 +593,7 @@ def schedule_handoff():
 
 if __name__ == '__main__':
     print("=" * 60)
-    print("Memu Setup Wizard (v4.1)")
+    print("Memu Setup Wizard (v4.2)")
     print(f"Port: {WIZARD_PORT} | Project: {PROJECT_ROOT}")
     print("=" * 60)
     app.run(host='0.0.0.0', port=WIZARD_PORT, debug=False, threaded=True)
