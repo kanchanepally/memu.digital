@@ -1,249 +1,390 @@
 #!/usr/bin/env python3
 """
-Memu Bootstrap Wizard
+Memu Bootstrap Wizard (v4.0)
 Web-based setup interface for first-time configuration
+
+KEY CHANGE FROM v3: This wizard now STARTS containers in the correct order,
+rather than assuming they're already running.
+
+Flow:
+1. User fills in form (family name, password, optional tailscale key)
+2. Wizard creates all config files FIRST
+3. Wizard starts database container
+4. Wizard waits for database to be healthy
+5. Wizard creates required databases (immich, synapse)
+6. Wizard starts Synapse container
+7. Wizard waits for Synapse to be healthy
+8. Wizard creates Matrix users
+9. Wizard starts remaining containers
+10. Wizard configures Tailscale serve (if key provided)
+11. Done!
 """
 
 import os
 import subprocess
 import secrets
 import time
+import json
 import requests
 from pathlib import Path
 from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
 
-# Detect project root dynamically
+# Configuration
+WIZARD_PORT = int(os.environ.get('WIZARD_PORT', 8888))
 PROJECT_ROOT = Path(__file__).parent.parent.absolute()
 
-# Function to safely read existing .env values
-def read_existing_env():
+# Setup state tracking (for progress polling)
+setup_state = {
+    'stage': 'idle',
+    'step': 0,
+    'total_steps': 10,
+    'message': '',
+    'error': None
+}
+
+def update_state(stage, step, message, error=None):
+    """Update the global setup state for progress polling"""
+    global setup_state
+    setup_state = {
+        'stage': stage,
+        'step': step,
+        'total_steps': 10,
+        'message': message,
+        'error': error
+    }
+    print(f"[{stage}] Step {step}/10: {message}")
+
+
+def read_env_file():
+    """Read current .env values into a dict"""
     env_path = PROJECT_ROOT / '.env'
     if not env_path.exists():
         return {}
     
-    env_values = {}
-    try:
-        content = env_path.read_text()
-        for line in content.splitlines():
-            line = line.strip()
-            if not line or line.startswith('#') or '=' not in line:
-                continue
-            key, val = line.split('=', 1)
-            env_values[key.strip()] = val.strip()
-    except Exception:
-        pass
-    return env_values
+    values = {}
+    for line in env_path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith('#') or '=' not in line:
+            continue
+        key, val = line.split('=', 1)
+        values[key.strip()] = val.strip()
+    return values
 
-# Setup state tracking
-setup_state = {
-    'stage': 'idle',
-    'message': '',
-    'error': None
-}
+
+def update_env_var(key, value):
+    """Update a single variable in .env"""
+    env_path = PROJECT_ROOT / '.env'
+    if not env_path.exists():
+        env_path.write_text(f"{key}={value}\n")
+        return
+    
+    lines = env_path.read_text().splitlines()
+    found = False
+    
+    for i, line in enumerate(lines):
+        if line.strip().startswith(f"{key}="):
+            lines[i] = f"{key}={value}"
+            found = True
+            break
+    
+    if not found:
+        lines.append(f"{key}={value}")
+    
+    env_path.write_text('\n'.join(lines) + '\n')
+
+
+def get_system_timezone():
+    """Get system timezone, fallback to UTC"""
+    try:
+        return Path('/etc/timezone').read_text().strip()
+    except:
+        return 'UTC'
+
+
+def run_docker_command(cmd, check=True):
+    """Run a docker command and return result"""
+    full_cmd = ["docker"] + cmd
+    print(f"  Running: {' '.join(full_cmd)}")
+    result = subprocess.run(full_cmd, capture_output=True, text=True, cwd=PROJECT_ROOT)
+    if check and result.returncode != 0:
+        raise Exception(f"Docker command failed: {result.stderr}")
+    return result
+
+
+def run_compose_command(cmd, check=True):
+    """Run a docker compose command"""
+    full_cmd = ["docker", "compose"] + cmd
+    print(f"  Running: {' '.join(full_cmd)}")
+    result = subprocess.run(full_cmd, capture_output=True, text=True, cwd=PROJECT_ROOT)
+    if check and result.returncode != 0:
+        raise Exception(f"Compose command failed: {result.stderr}")
+    return result
+
+
+# =============================================================================
+# ROUTES
+# =============================================================================
 
 @app.route('/')
 def welcome():
     """Show initial setup form"""
     return render_template('setup.html')
 
+
+@app.route('/status')
+def status():
+    """Return current setup status for progress polling"""
+    return jsonify(setup_state)
+
+
 @app.route('/configure', methods=['POST'])
 def configure():
     """Process setup form and begin configuration"""
-    global setup_state
-    
-    # Reset state
-    setup_state = {'stage': 'starting', 'message': 'Starting setup...', 'error': None}
     
     # Get form data
     family_name = request.form.get('family_name', '').strip()
     admin_password = request.form.get('password', '').strip()
     tailscale_key = request.form.get('tailscale_key', '').strip()
     
-    # Validate inputs
+    # Validate
     if not family_name or not admin_password:
         return "Missing required information (family name or password)", 400
     
     if len(admin_password) < 8:
         return "Password must be at least 8 characters", 400
     
-    # Clean family name for URL
+    # Clean family name for domain
     clean_slug = "".join(c for c in family_name if c.isalnum()).lower()
     if not clean_slug:
         return "Family name must contain at least one letter or number", 400
     
     domain = f"{clean_slug}.memu.digital"
     
+    # Show progress page immediately (actual work happens via polling)
+    # We'll spawn the actual setup in a background thread
+    import threading
+    thread = threading.Thread(
+        target=run_setup,
+        args=(clean_slug, domain, admin_password, tailscale_key)
+    )
+    thread.start()
+    
+    return render_template('installing.html', domain=domain)
+
+
+def run_setup(clean_slug, domain, admin_password, tailscale_key):
+    """
+    Main setup logic - runs in background thread.
+    This is where the magic happens.
+    """
+    
     try:
-        # Generate secure secrets
-        setup_state['stage'] = 'secrets'
-        setup_state['message'] = 'Generating secure secrets...'
-        
-        db_password = secrets.token_urlsafe(20)
+        # Read existing env
+        env = read_env_file()
+        db_password = env.get('DB_PASSWORD', secrets.token_urlsafe(20))
         bot_password = secrets.token_urlsafe(20)
         
-        # Determine Tailscale key (New input OR preserve existing)
-        existing_env = read_existing_env()
-        existing_ts_key = existing_env.get('TAILSCALE_AUTH_KEY', '')
+        # Merge Tailscale key (form input takes priority over .env)
+        final_ts_key = tailscale_key or env.get('TAILSCALE_AUTH_KEY', '')
         
-        # Logic: Use new key if provided, otherwise fall back to what's already in .env (from install.sh)
-        final_ts_key = tailscale_key if tailscale_key else existing_ts_key
-
-        # Create .env file
-        setup_state['stage'] = 'config'
-        setup_state['message'] = 'Creating configuration files...'
+        # =========================================================
+        # STEP 1: Generate Configuration Files
+        # =========================================================
+        update_state('config', 1, 'Generating configuration files...')
         
-        env_content = f"""# Memu Configuration
-# Generated: {time.strftime('%Y-%m-%d %H:%M:%S')}
-
-# === SERVER IDENTITY ===
-SERVER_NAME={domain}
-TZ={get_system_timezone()}
-
-# === DATABASE ===
-DB_USER=memu_user
-DB_PASSWORD={db_password}
-DB_NAME=immich
-
-# === PHOTOS ===
-UPLOAD_LOCATION=./photos
-IMMICH_VERSION=release
-
-# === NETWORK ===
-TAILSCALE_AUTH_KEY={final_ts_key}
-
-# === CHAT ===
-SYNAPSE_REPORT_STATS=no
-
-# === AI ===
-AI_ENABLED=true
-OLLAMA_MODEL=llama3.2
-MACHINE_LEARNING_WORKERS=1
-MACHINE_LEARNING_WORKER_TIMEOUT=120
-
-# === BOT (will be populated after user creation) ===
-MATRIX_BOT_USERNAME=@memu_bot:{domain}
-MATRIX_BOT_TOKEN=
-"""
+        # Update .env with final values
+        update_env_var('SERVER_NAME', domain)
+        update_env_var('DB_PASSWORD', db_password)
+        update_env_var('MATRIX_BOT_USERNAME', f'@memu_bot:{domain}')
+        if final_ts_key:
+            update_env_var('TAILSCALE_AUTH_KEY', final_ts_key)
         
-        env_path = PROJECT_ROOT / '.env'
-        env_path.write_text(env_content)
+        # Generate Synapse config (uses SEPARATE database)
+        synapse_config = generate_synapse_config(domain, db_password)
+        synapse_path = PROJECT_ROOT / 'synapse' / 'homeserver.yaml'
+        synapse_path.write_text(synapse_config)
         
         # Generate Nginx config
-        setup_state['message'] = 'Configuring web server...'
-        generate_nginx_config(domain)
-
-        # Generate Synapse config
-        setup_state['message'] = 'Configuring chat server...'
-        generate_synapse_config(domain, db_password)
+        nginx_config = generate_nginx_config(domain)
+        nginx_path = PROJECT_ROOT / 'nginx' / 'conf.d' / 'default.conf'
+        nginx_path.write_text(nginx_config)
         
-        # Generate Element config
-        generate_element_config(domain)
+        # Generate Element config (will be updated again after Tailscale)
+        element_config = generate_element_config(domain, "http://localhost:8008")
+        element_path = PROJECT_ROOT / 'element-config.json'
+        element_path.write_text(json.dumps(element_config, indent=2))
         
-        # Create necessary directories
-        (PROJECT_ROOT / 'photos').mkdir(exist_ok=True)
-        (PROJECT_ROOT / 'backups').mkdir(exist_ok=True)
+        time.sleep(1)  # Brief pause for filesystem
         
-        # Start core services
-        setup_state['stage'] = 'services'
-        setup_state['message'] = 'Starting database and chat server...'
+        # =========================================================
+        # STEP 2: Start Database Container
+        # =========================================================
+        update_state('database', 2, 'Starting database...')
         
-        start_core_services()
+        run_compose_command(['up', '-d', 'database'])
         
-        # Wait for Synapse to be ready
-        setup_state['message'] = 'Waiting for chat server to initialize...'
-        if not wait_for_synapse(max_wait=60):
-            raise Exception("Chat server failed to start. Check logs: docker compose logs synapse")
+        # =========================================================
+        # STEP 3: Wait for Database Health
+        # =========================================================
+        update_state('database', 3, 'Waiting for database to be ready...')
         
-        # Create users
-        setup_state['stage'] = 'users'
-        setup_state['message'] = 'Creating admin account...'
+        if not wait_for_database(max_wait=60):
+            raise Exception("Database failed to start. Check: docker compose logs database")
         
+        # =========================================================
+        # STEP 4: Create Separate Databases
+        # =========================================================
+        update_state('database', 4, 'Creating databases...')
+        
+        create_databases(db_password)
+        
+        # =========================================================
+        # STEP 5: Start Synapse
+        # =========================================================
+        update_state('synapse', 5, 'Starting chat server...')
+        
+        run_compose_command(['up', '-d', 'synapse'])
+        
+        # =========================================================
+        # STEP 6: Wait for Synapse Health
+        # =========================================================
+        update_state('synapse', 6, 'Waiting for chat server...')
+        
+        if not wait_for_synapse(max_wait=90):
+            raise Exception("Chat server failed to start. Check: docker compose logs synapse")
+        
+        # =========================================================
+        # STEP 7: Create Matrix Users
+        # =========================================================
+        update_state('users', 7, 'Creating user accounts...')
+        
+        # Create admin user
         create_matrix_user('admin', admin_password, is_admin=True)
+        time.sleep(2)
         
-        setup_state['message'] = 'Creating bot account...'
+        # Create bot user
         create_matrix_user('memu_bot', bot_password, is_admin=False)
+        time.sleep(2)
         
         # Get bot token
-        setup_state['message'] = 'Configuring bot authentication...'
         bot_token = get_user_token('memu_bot', bot_password)
-        
-        if not bot_token:
-            # Non-fatal - can be added manually later
-            setup_state['error'] = 'Could not auto-generate bot token. You can add it manually later.'
-        else:
-            # Update .env with bot token
+        if bot_token:
             update_env_var('MATRIX_BOT_TOKEN', bot_token)
+        else:
+            print("WARNING: Could not get bot token. Bot features may not work.")
         
-        # Launch production
-        setup_state['stage'] = 'production'
-        setup_state['message'] = 'Launching all services...'
+        # =========================================================
+        # STEP 8: Start Remaining Services
+        # =========================================================
+        update_state('services', 8, 'Starting all services...')
         
-        launch_production(clean_slug)
+        # Start everything else
+        run_compose_command(['up', '-d'])
         
-        # Success!
-        setup_state['stage'] = 'complete'
-        setup_state['message'] = f'Setup complete! Your server is ready at https://{domain}'
+        time.sleep(5)  # Let services settle
         
-        return render_template('installing.html', domain=domain)
+        # =========================================================
+        # STEP 9: Configure Tailscale (if key provided)
+        # =========================================================
+        if final_ts_key:
+            update_state('network', 9, 'Configuring remote access...')
+            configure_tailscale(domain)
+        else:
+            update_state('network', 9, 'Skipping remote access (no Tailscale key)')
         
-    except subprocess.CalledProcessError as e:
-        error_msg = f"Command failed: {e.cmd}. Check Docker is running."
-        setup_state['error'] = error_msg
-        return error_msg, 500
+        # =========================================================
+        # STEP 10: Success!
+        # =========================================================
+        update_state('complete', 10, f'Setup complete! Your server is ready.')
+        
+        # Schedule handoff to production service
+        schedule_handoff()
         
     except Exception as e:
-        error_msg = f"Setup failed: {str(e)}"
-        setup_state['error'] = error_msg
-        return error_msg, 500
+        update_state('error', setup_state['step'], str(e), error=str(e))
+        print(f"SETUP FAILED: {e}")
+        import traceback
+        traceback.print_exc()
 
-@app.route('/status')
-def status():
-    """Return current setup status (for progress polling)"""
-    return jsonify(setup_state)
 
-def get_system_timezone():
-    """Get system timezone, fallback to UTC"""
-    try:
-        with open('/etc/timezone', 'r') as f:
-            return f.read().strip()
-    except:
-        return 'UTC'
+# =============================================================================
+# HELPER FUNCTIONS
+# =============================================================================
+
+def generate_synapse_config(domain, db_password):
+    """Generate Synapse homeserver.yaml"""
+    
+    registration_secret = secrets.token_urlsafe(32)
+    
+    return f"""# Memu Synapse Configuration
+# Generated by Setup Wizard
+
+server_name: "{domain}"
+pid_file: /data/homeserver.pid
+
+listeners:
+  - port: 8008
+    tls: false
+    type: http
+    x_forwarded: true
+    resources:
+      - names: [client, federation]
+        compress: false
+
+# CRITICAL: Synapse uses its OWN database (not shared with Immich)
+database:
+  name: psycopg2
+  args:
+    user: memu_user
+    password: "{db_password}"
+    database: memu_synapse
+    host: database
+    cp_min: 5
+    cp_max: 10
+
+enable_registration: false
+enable_registration_captcha: false
+report_stats: false
+
+media_store_path: /data/media_store
+
+registration_shared_secret: "{registration_secret}"
+
+# Logging
+log_config: "/data/memu.local.log.config"
+"""
+
 
 def generate_nginx_config(domain):
-    """Generate Nginx reverse proxy configuration"""
-    nginx_dir = PROJECT_ROOT / 'nginx' / 'conf.d'
-    nginx_dir.mkdir(parents=True, exist_ok=True)
+    """Generate Nginx reverse proxy config"""
     
-    config = f"""server {{
+    return f"""server {{
     listen 80;
     server_name localhost;
 
-    # Use Docker's internal DNS resolver to prevent startup crashes
     resolver 127.0.0.11 valid=30s;
 
     # Matrix API
     location ~ ^/(_matrix|_synapse/client) {{
         set $upstream_synapse http://synapse:8008;
         proxy_pass $upstream_synapse;
-        
         proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header Host $host;
         client_max_body_size 50M;
     }}
 
-    # Element Web
+    # Element Web (Chat UI)
     location / {{
         set $upstream_element http://element:80;
         proxy_pass $upstream_element;
-        
         proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header Host $host;
     }}
 
-    # Matrix discovery
+    # Matrix Federation Discovery
     location /.well-known/matrix/server {{
         return 200 '{{"m.server": "{domain}:443"}}';
         add_header Content-Type application/json;
@@ -256,16 +397,14 @@ def generate_nginx_config(domain):
     }}
 }}
 """
-    
-    config_path = nginx_dir / 'default.conf'
-    config_path.write_text(config)
 
-def generate_element_config(domain):
-    """Generate Element Web configuration"""
-    config = {
+
+def generate_element_config(domain, homeserver_url):
+    """Generate Element Web config"""
+    return {
         "default_server_config": {
             "m.homeserver": {
-                "base_url": f"https://{domain}",
+                "base_url": homeserver_url,
                 "server_name": domain
             }
         },
@@ -273,136 +412,90 @@ def generate_element_config(domain):
         "default_theme": "light",
         "show_labs_settings": True
     }
+
+
+def wait_for_database(max_wait=60):
+    """Wait for PostgreSQL to be healthy"""
+    start = time.time()
     
-    import json
-    config_path = PROJECT_ROOT / 'element-config.json'
-    config_path.write_text(json.dumps(config, indent=2))
-
-def generate_synapse_config(domain, db_password):
-    """Generate clean Synapse configuration to avoid duplicates"""
+    while time.time() - start < max_wait:
+        result = run_docker_command(
+            ['exec', 'memu_postgres', 'pg_isready', '-U', 'memu_user'],
+            check=False
+        )
+        if result.returncode == 0:
+            return True
+        time.sleep(2)
     
-    # We use a clean template that avoids the duplicate database/listener issues
-    # found in the default generated config
-    config = f"""# Memu Synapse Configuration
-# Generated by Bootstrap Wizard
+    return False
 
-server_name: "{domain}"
-pid_file: /data/homeserver.pid
-listeners:
-  - port: 8008
-    tls: false
-    type: http
-    x_forwarded: true
-    resources:
-      - names: [client, federation]
-        compress: false
 
-database:
-  name: psycopg2
-  args:
-    user: memu_user
-    password: "{db_password}"
-    database: immich
-    host: database
-    cp_min: 5
-    cp_max: 10
-
-enable_registration: false
-enable_registration_captcha: false
-enable_registration_without_verification: false
-
-report_stats: false
-
-# Media storage
-media_store_path: /data/media_store
-
-# Shared secret for admin tools (REQUIRED for user creation)
-registration_shared_secret: "{secrets.token_urlsafe(32)}"
-
-# Signing keys will be generated automatically by Synapse on first run
-# because we cleaned the directory and set permissions in install.sh
-"""
+def create_databases(db_password):
+    """Create separate databases for Synapse and Immich"""
     
-    # Ensure directory exists
-    synapse_dir = PROJECT_ROOT / 'synapse'
-    synapse_dir.mkdir(parents=True, exist_ok=True)
+    # Commands to create databases (if they don't exist)
+    commands = [
+        "SELECT 'CREATE DATABASE memu_synapse' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'memu_synapse')\\gexec",
+        "SELECT 'CREATE DATABASE memu_immich' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'memu_immich')\\gexec",
+    ]
     
-    # Write config
-    config_path = synapse_dir / 'homeserver.yaml'
-    config_path.write_text(config)
+    for cmd in commands:
+        run_docker_command([
+            'exec', 'memu_postgres',
+            'psql', '-U', 'memu_user', '-d', 'postgres', '-c', cmd
+        ], check=False)
+    
+    # Also ensure the 'immich' database exists (for backward compatibility)
+    run_docker_command([
+        'exec', 'memu_postgres',
+        'psql', '-U', 'memu_user', '-d', 'postgres', '-c',
+        "SELECT 'CREATE DATABASE immich' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'immich')\\gexec"
+    ], check=False)
 
-def start_core_services():
-    """Start database and Synapse"""
-    subprocess.run(
-        ["docker", "compose", "up", "-d", "database", "synapse"],
-        cwd=PROJECT_ROOT,
-        check=True
-    )
 
-def wait_for_synapse(max_wait=180):
-    """Wait for Synapse to be ready"""
+def wait_for_synapse(max_wait=90):
+    """Wait for Synapse to respond"""
     start = time.time()
     
     while time.time() - start < max_wait:
         try:
-            resp = requests.get("http://localhost:8008/_matrix/client/versions", timeout=2)
+            resp = requests.get("http://localhost:8008/_matrix/client/versions", timeout=3)
             if resp.status_code == 200:
                 return True
-        except requests.exceptions.RequestException:
+        except:
             pass
-        
-        time.sleep(2)
+        time.sleep(3)
     
     return False
+
 
 def create_matrix_user(username, password, is_admin=False):
     """Create a Matrix user account"""
     admin_flag = "--admin" if is_admin else "--no-admin"
     
-    cmd = [
-        "docker", "compose", "exec", "-T", "synapse",
-        "register_new_matrix_user",
-        "-u", username,
-        "-p", password,
+    result = run_docker_command([
+        'compose', 'exec', '-T', 'synapse',
+        'register_new_matrix_user',
+        '-u', username,
+        '-p', password,
         admin_flag,
-        "-c", "/data/homeserver.yaml",
-        "http://localhost:8008"
-    ]
+        '-c', '/data/homeserver.yaml',
+        'http://localhost:8008'
+    ], check=False)
     
-    # Run command and capture output to detect errors
-    try:
-        result = subprocess.run(
-            cmd, 
-            cwd=PROJECT_ROOT,
-            capture_output=True,
-            text=True
-        )
-        
-        if result.returncode != 0:
-            # Check if failure is just "User taken"
-            if "already taken" in result.stderr or "already in use" in result.stderr:
-                print(f"User {username} already exists (skipping).")
-            else:
-                # Real error - surface it!
-                print(f"Error creating user {username}: {result.stderr}")
-                raise Exception(f"Failed to create user {username}: {result.stderr}")
+    if result.returncode != 0:
+        if "already taken" in result.stderr or "already in use" in result.stderr:
+            print(f"  User {username} already exists (ok)")
         else:
-            print(f"User {username} created successfully.")
-            
-    except Exception as e:
-        print(f"Critical error in user creation: {e}")
-        raise
+            print(f"  WARNING: User creation may have failed: {result.stderr}")
 
-def get_user_token(username, password):
-    """Get access token for a user via login with retries"""
-    max_retries = 10
-    retry_delay = 3
+
+def get_user_token(username, password, retries=5):
+    """Get access token via Matrix login"""
     
-    for attempt in range(max_retries):
+    for attempt in range(retries):
+        time.sleep(2)
         try:
-            # Wait a moment for consistency
-            time.sleep(retry_delay)
-            
             resp = requests.post(
                 "http://localhost:8008/_matrix/client/r0/login",
                 json={
@@ -412,75 +505,93 @@ def get_user_token(username, password):
                 },
                 timeout=10
             )
-            
-            if resp.status_code == 403:
-                print(f"Login failed (attempt {attempt+1}/{max_retries}): Invalid credentials (or user not ready)")
-                continue
-                
-            resp.raise_for_status()
-            data = resp.json()
-            return data.get("access_token")
-            
-        except requests.exceptions.RequestException as e:
-            print(f"Login connection failed (attempt {attempt+1}/{max_retries}): {e}")
-            continue
-            
+            if resp.status_code == 200:
+                return resp.json().get("access_token")
+        except Exception as e:
+            print(f"  Login attempt {attempt+1} failed: {e}")
+    
     return None
 
-def update_env_var(key, value):
-    """Update a variable in the .env file"""
-    env_path = PROJECT_ROOT / '.env'
-    
-    if not env_path.exists():
-        return
-    
-    lines = env_path.read_text().splitlines()
-    updated = False
-    
-    for i, line in enumerate(lines):
-        if line.startswith(f"{key}="):
-            lines[i] = f"{key}={value}"
-            updated = True
-            break
-    
-    if not updated:
-        lines.append(f"{key}={value}")
-    
-    env_path.write_text('\n'.join(lines) + '\n')
 
-def launch_production(family_slug):
-    """Launch all production services"""
-    # Launch the script that handles production startup
-    # HANDOFF LOGIC:
-    # We must switch from Setup (Port 80) to Production (Port 80).
-    # Standard subprocesses are killed when the parent service stops (cgroup).
-    # We use 'systemd-run' to spawn a transient independent unit that survives our death.
+def configure_tailscale(domain):
+    """Configure Tailscale serve for ingress"""
+    
+    # Wait for Tailscale to be connected
+    time.sleep(5)
+    
+    # Get the Docker network gateway (where nginx listens)
+    # This is typically 172.x.0.1 on the memu_net bridge
+    try:
+        result = run_docker_command([
+            'network', 'inspect', 'memu-suite_memu_net',
+            '--format', '{{range .IPAM.Config}}{{.Gateway}}{{end}}'
+        ], check=False)
+        gateway = result.stdout.strip() or '172.18.0.1'
+    except:
+        gateway = '172.18.0.1'
+    
+    # Configure tailscale serve for main web interface (port 443)
+    run_docker_command([
+        'exec', 'memu_tailscale',
+        'tailscale', 'serve', '--bg', '--https', '443',
+        f'http://{gateway}:80'
+    ], check=False)
+    
+    # Configure tailscale serve for Immich photos (port 8443)
+    run_docker_command([
+        'exec', 'memu_tailscale',
+        'tailscale', 'serve', '--bg', '--https', '8443',
+        f'http://{gateway}:2283'
+    ], check=False)
+    
+    # Get Tailscale hostname for Element config
+    result = run_docker_command([
+        'exec', 'memu_tailscale',
+        'tailscale', 'status', '--json'
+    ], check=False)
+    
+    try:
+        ts_status = json.loads(result.stdout)
+        ts_hostname = ts_status.get('Self', {}).get('DNSName', '').rstrip('.')
+        if ts_hostname:
+            # Update Element config with Tailscale URL
+            element_config = generate_element_config(domain, f"https://{ts_hostname}")
+            element_path = PROJECT_ROOT / 'element-config.json'
+            element_path.write_text(json.dumps(element_config, indent=2))
+            print(f"  Updated Element config for Tailscale: {ts_hostname}")
+    except:
+        print("  Could not update Element config with Tailscale URL")
+
+
+def schedule_handoff():
+    """Schedule transition from setup wizard to production service"""
     
     handoff_script = (
-        "sleep 3; "
+        "sleep 5; "
         "systemctl stop memu-setup.service; "
         "systemctl disable memu-setup.service; "
         "systemctl enable memu-production.service; "
-        "systemctl start memu-production.service"
     )
-
-    # Note: check=False because if systemd-run fails, we can't do much else.
-    # We use --no-block to return immediately.
+    
     subprocess.run([
-        "sudo", "systemd-run", 
-        "--unit=memu-handoff", 
+        "sudo", "systemd-run",
+        "--unit=memu-handoff",
         "--description=Memu Setup Handoff",
         "--no-block",
         "/bin/bash", "-c", handoff_script
     ], check=False)
 
+
+# =============================================================================
+# MAIN
+# =============================================================================
+
 if __name__ == '__main__':
-    print("=" * 50)
-    print("Memu Setup Wizard")
-    print("=" * 50)
-    print(f"Visit: http://{os.uname().nodename}.local")
-    print("   or: http://localhost")
-    print("=" * 50)
+    print("=" * 60)
+    print("Memu Setup Wizard (v4.0)")
+    print("=" * 60)
+    print(f"Listening on port {WIZARD_PORT}")
+    print(f"Project root: {PROJECT_ROOT}")
+    print("=" * 60)
     
-    # Run on all interfaces (accessible from network)
-    app.run(host='0.0.0.0', port=80, debug=False)
+    app.run(host='0.0.0.0', port=WIZARD_PORT, debug=False, threaded=True)
