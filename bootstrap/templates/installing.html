@@ -282,32 +282,28 @@
         </div>
 
         <div class="steps" id="stepsContainer">
-            <div class="step" data-step="1">
+            <div class="step" data-step-min="1" data-step-max="1">
                 <div class="step-icon">1</div>
                 <span>Generating configuration</span>
             </div>
-            <div class="step" data-step="2">
+            <div class="step" data-step-min="2" data-step-max="4">
                 <div class="step-icon">2</div>
                 <span>Starting database</span>
             </div>
-            <div class="step" data-step="4">
+            <div class="step" data-step-min="5" data-step-max="6">
                 <div class="step-icon">3</div>
-                <span>Creating databases</span>
-            </div>
-            <div class="step" data-step="5">
-                <div class="step-icon">4</div>
                 <span>Starting chat server</span>
             </div>
-            <div class="step" data-step="7">
-                <div class="step-icon">5</div>
+            <div class="step" data-step-min="7" data-step-max="9">
+                <div class="step-icon">4</div>
                 <span>Creating user accounts</span>
             </div>
-            <div class="step" data-step="10">
-                <div class="step-icon">6</div>
+            <div class="step" data-step-min="10" data-step-max="11">
+                <div class="step-icon">5</div>
                 <span>Starting services</span>
             </div>
-            <div class="step" data-step="12">
-                <div class="step-icon">7</div>
+            <div class="step" data-step-min="12" data-step-max="12">
+                <div class="step-icon">6</div>
                 <span>Configuring network</span>
             </div>
         </div>
@@ -336,10 +332,17 @@
     <script>
         const domain = "{{ domain }}";
         let currentStep = 0;
+        let currentStage = '';
         let pollInterval;
+        let tailscaleHostname = null;
 
         function updateUI(data) {
-            const { stage, step, message, error, warnings } = data;
+            const { stage, step, message, error, warnings, tailscale_hostname } = data;
+
+            // Store tailscale hostname if provided
+            if (tailscale_hostname) {
+                tailscaleHostname = tailscale_hostname;
+            }
 
             // Update progress bar
             const progress = Math.min((step / 12) * 100, 100);
@@ -348,17 +351,22 @@
             // Update status message
             document.getElementById('statusMessage').textContent = message;
 
-            // Update steps
+            // Update steps using range-based matching
             document.querySelectorAll('.step').forEach(stepEl => {
-                const stepNum = parseInt(stepEl.dataset.step);
+                const minStep = parseInt(stepEl.dataset.stepMin);
+                const maxStep = parseInt(stepEl.dataset.stepMax);
+
                 stepEl.classList.remove('active', 'complete', 'warning');
 
-                if (stepNum < step) {
+                if (step > maxStep) {
+                    // This step range is complete
                     stepEl.classList.add('complete');
                     stepEl.querySelector('.step-icon').textContent = '✓';
-                } else if (stepNum === step || (stepNum < step + 3 && stepNum >= step)) {
+                } else if (step >= minStep && step <= maxStep) {
+                    // Currently in this step range
                     stepEl.classList.add('active');
                 }
+                // Otherwise, step is still pending (default styling)
             });
 
             // Show warnings if any
@@ -386,9 +394,21 @@
             document.getElementById('spinner').style.display = 'none';
             document.getElementById('title').textContent = 'Your Memu is Ready! 🎉';
 
-            document.getElementById('stepsContainer').innerHTML = `
-                <div class="success-checkmark">✓</div>
-            `;
+            // Mark all steps complete
+            document.querySelectorAll('.step').forEach(stepEl => {
+                stepEl.classList.remove('active');
+                stepEl.classList.add('complete');
+                stepEl.querySelector('.step-icon').textContent = '✓';
+            });
+
+            // Determine the access URL
+            const accessUrl = tailscaleHostname
+                ? `https://${tailscaleHostname}`
+                : `http://${window.location.hostname}`;
+
+            const immichUrl = tailscaleHostname
+                ? `https://${tailscaleHostname}:8443`
+                : `http://${window.location.hostname}:2283`;
 
             document.getElementById('infoBox').innerHTML = `
                 <strong>✅ Setup Complete!</strong>
@@ -407,17 +427,17 @@
                 <ol style="margin: 12px 0 0 20px; font-size: 13px; line-height: 1.8;">
                     <li>Install <strong>Element X</strong> app on your phone</li>
                     <li>Tap "Change homeserver"</li>
-                    <li>Enter: <code>http://${window.location.hostname}</code></li>
+                    <li>Enter: <code>${accessUrl}</code></li>
                     <li>Login with username: <code>admin</code></li>
                 </ol>
 
                 <div style="margin-top: 16px; padding: 12px; background: #e8f5e9; border-radius: 6px; font-size: 12px;">
-                    <strong>📸 For Photos:</strong> Install the <strong>Immich</strong> app and connect to <code>http://${window.location.hostname}:2283</code>
+                    <strong>📸 For Photos:</strong> Install the <strong>Immich</strong> app and connect to <code>${immichUrl}</code>
                 </div>
             `;
 
             document.getElementById('finalMessage').innerHTML = `
-                <a href="http://${window.location.hostname}" class="cta-button">
+                <a href="${accessUrl}" class="cta-button" target="_blank">
                     Open Your Memu →
                 </a>
             `;
@@ -435,14 +455,14 @@
 
             document.getElementById('infoBox').innerHTML = `
                 <strong style="color: #e74c3c;">Something went wrong:</strong>
-                <div style="margin-top: 10px; padding: 10px; background: #fff; border-radius: 5px; font-family: monospace; font-size: 12px;">
+                <div style="margin-top: 10px; padding: 10px; background: #fff; border-radius: 5px; font-family: monospace; font-size: 12px; word-break: break-word;">
                     ${error}
                 </div>
                 <div style="margin-top: 15px; font-size: 12px;">
                     <strong>What to do:</strong><br>
                     1. Check Docker: <code>docker ps</code><br>
                     2. View logs: <code>docker compose logs</code><br>
-                    3. Try again or <a href="https://github.com/kanchanepally/memu/issues" target="_blank">open an issue</a>
+                    3. Try again or <a href="https://github.com/kanchanepally/memu.digital/issues" target="_blank">open an issue</a>
                 </div>
             `;
         }
@@ -452,16 +472,24 @@
             fetch('/status')
                 .then(res => res.json())
                 .then(data => {
-                    if (data.step !== currentStep || data.error) {
+                    // Update if step changed, stage changed, or there's an error
+                    if (data.step !== currentStep || data.stage !== currentStage || data.error) {
                         currentStep = data.step;
+                        currentStage = data.stage;
                         updateUI(data);
                     }
                 })
-                .catch(err => console.error('Status poll failed:', err));
+                .catch(err => {
+                    console.error('Status poll failed:', err);
+                    // If polling fails after completion, that's expected (wizard shut down)
+                    if (currentStage === 'complete') {
+                        clearInterval(pollInterval);
+                    }
+                });
         }
 
         // Start polling
-        pollInterval = setInterval(pollStatus, 1500);
+        pollInterval = setInterval(pollStatus, 1000);
         pollStatus();
     </script>
 </body>
