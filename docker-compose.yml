@@ -2,9 +2,6 @@ name: memu-suite
 
 # Memu: Family Digital Infrastructure
 # This stack runs: Chat (Matrix), Photos (Immich), AI (Ollama)
-#
-# IMPORTANT: This file expects config files to exist before containers start.
-# Run the setup wizard first, or use install.sh which handles this.
 
 services:
   # === CORE INFRASTRUCTURE ===
@@ -13,8 +10,6 @@ services:
     container_name: memu_postgres
     image: tensorchord/pgvecto-rs:pg15-v0.2.0
     environment:
-      # Note: POSTGRES_DB creates ONE database. We create additional databases
-      # via the setup wizard (memu_synapse, memu_immich)
       POSTGRES_DB: ${DB_NAME:-immich}
       POSTGRES_USER: ${DB_USER:-memu_user}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -27,8 +22,6 @@ services:
       start_period: 30s
     volumes:
       - pgdata:/var/lib/postgresql/data
-      # Optional: mount init scripts for additional database setup
-      # - ./scripts/init_memory.sql:/docker-entrypoint-initdb.d/init_memory.sql:ro
     restart: unless-stopped
     networks:
       - memu_net
@@ -78,8 +71,6 @@ services:
     ports:
       - "8080:80"
     volumes:
-      # IMPORTANT: This file MUST exist before the container starts
-      # The install script creates a placeholder; the wizard updates it
       - ./element-config.json:/app/config.json:ro
     restart: unless-stopped
     networks:
@@ -99,7 +90,6 @@ services:
       - DB_HOSTNAME=database
       - DB_USERNAME=${DB_USER:-memu_user}
       - DB_PASSWORD=${DB_PASSWORD}
-      # Immich uses its own database (created by wizard)
       - DB_DATABASE_NAME=${DB_NAME:-immich}
       - REDIS_HOSTNAME=cache
     depends_on:
@@ -201,7 +191,6 @@ services:
       - TS_AUTHKEY=${TAILSCALE_AUTH_KEY}
       - TS_STATE_DIR=/var/lib/tailscale
       - TS_USERSPACE=false
-      # Accept DNS to enable MagicDNS
       - TS_EXTRA_ARGS=--accept-dns=true
     volumes:
       - tailscale_data:/var/lib/tailscale
@@ -221,8 +210,8 @@ services:
     ports:
       - "80:80"
     volumes:
-      # IMPORTANT: Config file must exist before container starts
-      # - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      # FIXED: Uncommented and pointing to the file created by install.sh/wizard
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
     depends_on:
       - element
       - synapse
