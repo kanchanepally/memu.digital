@@ -28,7 +28,7 @@
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             width: 100%;
-            max-width: 500px;
+            max-width: 520px;
         }
 
         .logo {
@@ -67,6 +67,11 @@
             color: #e74c3c;
         }
 
+        label .optional {
+            color: #999;
+            font-weight: 400;
+        }
+
         input {
             width: 100%;
             padding: 14px;
@@ -89,10 +94,29 @@
             line-height: 1.4;
         }
 
-        .domain-preview {
+        .identity-preview {
+            margin-top: 12px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
             font-size: 13px;
+        }
+
+        .identity-preview .preview-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+        }
+
+        .identity-preview .preview-label {
+            color: #666;
+        }
+
+        .identity-preview .preview-value {
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            font-size: 12px;
             color: #667eea;
-            margin-top: 6px;
             font-weight: 500;
         }
 
@@ -101,9 +125,19 @@
             border: 2px solid #667eea;
             border-radius: 10px;
             padding: 16px;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             font-size: 13px;
             line-height: 1.6;
+        }
+
+        .info-box.warning {
+            background: #fff9e6;
+            border-color: #f0c000;
+        }
+
+        .info-box.success {
+            background: #e8f5e9;
+            border-color: #4caf50;
         }
 
         .info-box-header {
@@ -129,9 +163,9 @@
         }
 
         .toggle-section {
-            margin-top: 16px;
-            padding-top: 16px;
-            border-top: 1px solid #e1e8ed;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
         }
 
         .toggle-button {
@@ -142,11 +176,21 @@
             font-weight: 600;
             cursor: pointer;
             padding: 0;
-            text-decoration: underline;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .toggle-button:hover {
             color: #5568d3;
+        }
+
+        .toggle-button .arrow {
+            transition: transform 0.2s;
+        }
+
+        .toggle-button.open .arrow {
+            transform: rotate(90deg);
         }
 
         .collapsible-content {
@@ -174,12 +218,12 @@
             transition: transform 0.2s, box-shadow 0.2s;
         }
 
-        button:hover:not(:disabled) {
+        button[type="submit"]:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
         }
 
-        button:disabled {
+        button[type="submit"]:disabled {
             opacity: 0.6;
             cursor: not-allowed;
         }
@@ -212,6 +256,65 @@
             width: 100%;
             background: #27ae60;
         }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .step-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #e1e8ed;
+        }
+
+        .step-dot.active {
+            background: #667eea;
+            width: 24px;
+            border-radius: 4px;
+        }
+
+        .section-divider {
+            height: 1px;
+            background: #e1e8ed;
+            margin: 28px 0;
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #999;
+            margin-bottom: 16px;
+        }
+
+        code {
+            background: #e8e8e8;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            font-size: 12px;
+        }
+
+        a {
+            color: #667eea;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 24px;
+            }
+
+            .identity-preview .preview-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 2px;
+            }
+        }
     </style>
 </head>
 
@@ -222,48 +325,74 @@
             <p>Your family's digital sanctuary</p>
         </div>
 
-        <!-- Explanation Box -->
+        <div class="step-indicator">
+            <div class="step-dot active"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+        </div>
+
+        <!-- What you're setting up -->
         <div class="info-box">
             <div class="info-box-header">
                 <span class="icon">🏠</span>
-                <span>What you're setting up:</span>
+                <span>What you're setting up</span>
             </div>
             <ul>
-                <li>Your own private chat (like WhatsApp)</li>
-                <li>Your own photo backup (like Google Photos)</li>
-                <li>An AI assistant that works offline</li>
+                <li><strong>Private chat</strong> — like WhatsApp, but yours</li>
+                <li><strong>Photo backup</strong> — like Google Photos, but yours</li>
+                <li><strong>AI assistant</strong> — works offline, stays private</li>
             </ul>
-            <div style="margin-top: 10px; font-weight: 500; color: #667eea;">
-                All running on YOUR device. No company can see your data.
+            <div
+                style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(102,126,234,0.2); color: #667eea; font-weight: 500;">
+                Everything runs on this device. No company can see your data.
             </div>
         </div>
 
         <form id="setupForm" action="/configure" method="POST">
+
+            <!-- SECTION: Family Identity -->
+            <div class="section-title">Your Family Identity</div>
+
             <div class="input-group">
                 <label>
                     Family Name <span class="required">*</span>
                 </label>
-                <input type="text" name="family_name" id="familyName" placeholder="e.g., smiths" required
-                    pattern="[a-zA-Z0-9]+" minlength="2" maxlength="30">
-                <div class="domain-preview">
-                    Your web address: <span id="preview">...</span>.memu.digital
-                </div>
+                <input type="text" name="family_name" id="familyName"
+                    placeholder="e.g., smiths, garcia-family, team-awesome" required pattern="[a-zA-Z0-9\-]+"
+                    minlength="2" maxlength="30" autocomplete="off">
                 <div class="help-text">
-                    This is like your family's last name for the internet. Letters and numbers only.
+                    This becomes part of your family's digital identity. Letters, numbers, and hyphens only.
+                </div>
+
+                <div class="identity-preview" id="identityPreview" style="display: none;">
+                    <div class="preview-row">
+                        <span class="preview-label">Your server address:</span>
+                        <span class="preview-value">http://memu-hub</span>
+                    </div>
+                    <div class="preview-row">
+                        <span class="preview-label">Your usernames will be:</span>
+                        <span class="preview-value">@name:<span id="domainPreview">family</span>.memu.digital</span>
+                    </div>
                 </div>
             </div>
+
+            <div class="section-divider"></div>
+
+            <!-- SECTION: Security -->
+            <div class="section-title">Admin Account</div>
 
             <div class="input-group">
                 <label>
                     Admin Password <span class="required">*</span>
                 </label>
                 <input type="password" name="password" id="password" placeholder="Create a strong password" required
-                    minlength="8">
+                    minlength="8" autocomplete="new-password">
                 <div class="password-strength">
                     <div class="password-strength-bar" id="strengthBar"></div>
                 </div>
                 <div class="help-text">
-                    This password protects your entire server. Make it strong and write it down somewhere safe!
+                    This is the master password for your server. Write it down somewhere safe — there's no "forgot
+                    password" by design.
                 </div>
             </div>
 
@@ -271,58 +400,119 @@
                 <label>
                     Confirm Password <span class="required">*</span>
                 </label>
-                <input type="password" id="confirmPassword" placeholder="Enter password again" required minlength="8">
+                <input type="password" id="confirmPassword" placeholder="Enter password again" required minlength="8"
+                    autocomplete="new-password">
                 <div class="help-text" id="passwordMatch" style="color: #e74c3c; display: none;">
-                    Passwords don't match
+                    ⚠️ Passwords don't match
                 </div>
             </div>
 
-            <!-- Remote Access Section -->
-            <div class="info-box" style="background: #fff9e6; border-color: #ffc107;">
+            <div class="section-divider"></div>
+
+            <!-- SECTION: Family Network -->
+            <div class="section-title">Connect Your Family</div>
+
+            <div class="info-box">
                 <div class="info-box-header">
                     <span class="icon">🌍</span>
-                    <span>Access from anywhere (optional)</span>
+                    <span>How your family stays connected</span>
                 </div>
-                <div style="color: #666;">
-                    To access Memu from outside your home, we use <strong>Tailscale</strong>. It's secure, private, and free for personal use.
+                <p>
+                    Memu uses <strong>Tailscale</strong> to create a private network for your family —
+                    so everyone can chat and share photos whether they're at home, at work, or travelling.
+                </p>
+                <p style="margin-top: 12px;">
+                    <strong>One-time setup for each family member:</strong>
+                </p>
+                <ol style="margin: 8px 0 0 20px;">
+                    <li>Install the free Tailscale app (2 minutes)</li>
+                    <li>Accept your invite link</li>
+                    <li>Done — <code>http://memu-hub</code> works from anywhere</li>
+                </ol>
+                <p style="margin-top: 12px; font-size: 12px; color: #666;">
+                    Think of Tailscale as your family's private tunnel. No strangers can find your server,
+                    but family members can reach it from anywhere in the world.
+                </p>
+            </div>
+
+            <div class="info-box warning">
+                <div class="info-box-header">
+                    <span class="icon">🔑</span>
+                    <span>You'll need a Tailscale auth key</span>
                 </div>
-                <div class="toggle-section">
-                    <button type="button" class="toggle-button" onclick="toggleDetails()">
-                        How do I get a key?
+                <p style="margin-bottom: 12px;">
+                    This connects your Memu server to your family's private network.
+                </p>
+
+                <div class="toggle-section" style="border-top: none; padding-top: 0; margin-top: 0;">
+                    <button type="button" class="toggle-button" id="tailscaleToggle" onclick="toggleTailscaleHelp()">
+                        <span class="arrow">▶</span>
+                        <span>How do I get one? (takes 2 minutes)</span>
                     </button>
-                    <div id="detailsSection" class="collapsible-content">
+                    <div id="tailscaleHelp" class="collapsible-content">
                         <ol style="margin-left: 20px; margin-top: 8px;">
-                            <li>Go to <a href="https://login.tailscale.com/admin/settings/keys" target="_blank">tailscale.com/admin/settings/keys</a></li>
+                            <li>Go to <a href="https://login.tailscale.com/admin/settings/keys" target="_blank"
+                                    rel="noopener">tailscale.com/admin/settings/keys</a></li>
+                            <li>Sign up or log in (free for families)</li>
                             <li>Click "Generate auth key"</li>
-                            <li>Copy the key (starts with "tskey-auth-...")</li>
+                            <li>Copy the key (starts with <code>tskey-auth-...</code>)</li>
                             <li>Paste it below</li>
                         </ol>
-                        <p style="margin-top: 8px;">
-                            <em>If you already entered this during the install script, you can leave it blank here.</em>
-                        </p>
                     </div>
                 </div>
             </div>
 
             <div class="input-group">
                 <label>
-                    Tailscale Auth Key <span style="color: #999; font-weight: 400;">(Optional)</span>
+                    Tailscale Auth Key
                 </label>
-                <input type="text" name="tailscale_key" placeholder="tskey-auth-..." autocomplete="off">
+                <input type="text" name="tailscale_key" id="tailscaleKey" placeholder="tskey-auth-..."
+                    autocomplete="off" spellcheck="false">
                 <div class="help-text">
-                    Leave blank if you're only using Memu at home, or if you already provided it in the terminal.
+                    Already entered this during the terminal install? You can leave this blank — we'll use that one.
                 </div>
             </div>
 
+            <!-- How you'll connect summary -->
+            <div class="info-box success">
+                <div class="info-box-header">
+                    <span class="icon">✅</span>
+                    <span>After setup, here's how everyone connects</span>
+                </div>
+                <table style="width: 100%; font-size: 12px; margin-top: 4px;">
+                    <tr>
+                        <td style="padding: 4px 0; color: #666;">Server address:</td>
+                        <td style="padding: 4px 0;"><code>http://memu-hub</code></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 4px 0; color: #666;">Chat app:</td>
+                        <td style="padding: 4px 0;">Element (free, iOS/Android/Desktop)</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 4px 0; color: #666;">Photos app:</td>
+                        <td style="padding: 4px 0;">Immich (free, iOS/Android)</td>
+                    </tr>
+                </table>
+                <p style="margin-top: 10px; font-size: 11px; color: #444;">
+                    Works from home, work, school, or anywhere — as long as Tailscale is running.
+                </p>
+            </div>
+
             <button type="submit" id="submitBtn">
-                Create My Family Server
+                Create My Family Server →
             </button>
+
+            <p style="text-align: center; margin-top: 16px; font-size: 12px; color: #999;">
+                Setup takes about 2-3 minutes
+            </p>
         </form>
     </div>
 
     <script>
+        // DOM Elements
         const familyInput = document.getElementById('familyName');
-        const preview = document.getElementById('preview');
+        const domainPreview = document.getElementById('domainPreview');
+        const identityPreview = document.getElementById('identityPreview');
         const passwordInput = document.getElementById('password');
         const confirmInput = document.getElementById('confirmPassword');
         const strengthBar = document.getElementById('strengthBar');
@@ -330,15 +520,24 @@
         const submitBtn = document.getElementById('submitBtn');
         const form = document.getElementById('setupForm');
 
-        function toggleDetails() {
-            const details = document.getElementById('detailsSection');
-            details.classList.toggle('show');
+        // Toggle Tailscale help section
+        function toggleTailscaleHelp() {
+            const help = document.getElementById('tailscaleHelp');
+            const toggle = document.getElementById('tailscaleToggle');
+            help.classList.toggle('show');
+            toggle.classList.toggle('open');
         }
 
-        // Update domain preview
+        // Update identity preview as user types family name
         familyInput.addEventListener('input', function () {
-            const val = this.value.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-            preview.textContent = val || '...';
+            const val = this.value.replace(/[^a-zA-Z0-9\-]/g, '').toLowerCase();
+
+            if (val.length > 0) {
+                identityPreview.style.display = 'block';
+                domainPreview.textContent = val;
+            } else {
+                identityPreview.style.display = 'none';
+            }
         });
 
         // Password strength indicator
@@ -347,9 +546,15 @@
             const strength = calculateStrength(password);
 
             strengthBar.className = 'password-strength-bar';
-            if (strength > 0) strengthBar.classList.add('strength-weak');
-            if (strength > 40) strengthBar.classList.add('strength-medium');
-            if (strength > 70) strengthBar.classList.add('strength-strong');
+            if (password.length > 0) {
+                if (strength > 70) {
+                    strengthBar.classList.add('strength-strong');
+                } else if (strength > 40) {
+                    strengthBar.classList.add('strength-medium');
+                } else {
+                    strengthBar.classList.add('strength-weak');
+                }
+            }
 
             checkPasswordMatch();
         });
@@ -366,7 +571,7 @@
                 confirmInput.style.borderColor = '#e74c3c';
             } else {
                 passwordMatch.style.display = 'none';
-                confirmInput.style.borderColor = '#e1e8ed';
+                confirmInput.style.borderColor = match && bothFilled ? '#27ae60' : '#e1e8ed';
             }
         }
 
@@ -380,18 +585,31 @@
             return strength;
         }
 
-        // Form submission
+        // Form validation and submission
         form.addEventListener('submit', function (e) {
+            // Check password match
             if (passwordInput.value !== confirmInput.value) {
                 e.preventDefault();
-                alert('Passwords do not match');
+                confirmInput.focus();
+                passwordMatch.style.display = 'block';
                 return;
             }
 
+            // Validate family name
+            const familyName = familyInput.value.trim();
+            if (!/^[a-zA-Z0-9\-]+$/.test(familyName)) {
+                e.preventDefault();
+                alert('Family name can only contain letters, numbers, and hyphens.');
+                familyInput.focus();
+                return;
+            }
+
+            // All good - show loading state
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Setting up your server...';
+            submitBtn.textContent = 'Creating your server...';
         });
 
+        // Focus first field on load
         familyInput.focus();
     </script>
 </body>

@@ -1,6 +1,6 @@
 # Memu (మేము): Own Your Family's Digital Life
 
-> **Status:** Alpha. My family uses it daily (been since Oct/25). Ready for adventurous testers.
+> **Status:** Alpha. My family uses it daily (since Oct '25). Ready for adventurous testers.
 
 **Memu (మేము)** = "we" in Telugu. Your family's data belongs to *you*, not *them*.
 
@@ -8,19 +8,21 @@
 
 ## What Is This?
 
-Every app wants to be "AI-powered" — and as a technology portfolio director, i see that they all need your data to work.
+Every app wants to be "AI-powered" — and as a technology portfolio director, I see that they all need your data to work.
 
-Here's the thing: your family's data is incredibly valuable **context**. Your photos know who you are and where you've been. Your chats know your inside jokes and plans. Your calendar knows your schedule. 
+Here's the thing: your family's data is incredibly valuable **context**. Your photos know who you are and where you've been. Your chats know your inside jokes and plans. Your calendar knows your schedule.
 
 But that context is scattered across Google, Apple, Meta, and Amazon. Each has a slice. None let you use it in a unified way. And you can't take it with you.
 
 **Memu consolidates your family's digital life onto hardware you own:**
 
-- **Chat** (Matrix): Like WhatsApp, but on your server
-- **Photos** (Immich): Like Google Photos, but on your drive  
-- **AI Assistant** (Ollama): Like ChatGPT, but it never leaves your house
+| Service | What It Replaces | The Difference |
+|---------|------------------|----------------|
+| **Chat** (Matrix) | WhatsApp, iMessage | You own the server |
+| **Photos** (Immich) | Google Photos, iCloud | You own the storage |
+| **AI Assistant** (Ollama) | ChatGPT, Siri | It never leaves your house |
 
-The magic is the **Context Engine** — an AI that knows your family because it has access to your photos *and* your chats *and* your history. All running locally  - and in your control.
+The magic is the **Context Engine** — an AI that knows your family because it has access to your photos *and* your chats *and* your history. All running locally, all in your control.
 
 ---
 
@@ -48,14 +50,14 @@ I'm not anti-cloud. I use cloud services for lots of things. But my family's pho
 - ✅ Family group chat (E2E encrypted)
 - ✅ Photo backup from phones (face recognition, search, albums)
 - ✅ AI bot for lists, reminders, and family memory
-- ✅ 2-step setup wizard (no YAML editing)
-- ✅ Runs on ~$200 hardware
+- ✅ 10-minute setup wizard (no YAML editing)
+- ✅ Remote access via Tailscale (works from anywhere)
+- ✅ Runs on ~$250 hardware
 
 **What's in progress:**
-- ⚠️ Remote access via Tailscale (optional, local network works without it)
 - ⚠️ Cross-silo AI queries ("show me photos from Christmas") — on roadmap
-- ⚠️ Alpha quality — tested on my family, probably has bugs
 - ⚠️ Voice-based interaction with AI — on roadmap
+- ⚠️ Alpha quality — tested on my family, probably has bugs
 
 ---
 
@@ -66,13 +68,13 @@ I'm not anti-cloud. I use cloud services for lots of things. But my family's pho
 | Component | Spec | Why |
 |-----------|------|-----|
 | CPU | Intel N100 | QuickSync for 4K video transcoding |
-| RAM | **16GB (mandatory)** | Synapse + Immich ML + Ollama and associated context engineering layer need it |
-| Storage | 1TB+ NVMe | 2TB if you have large photo libraries like ours! |
-| Network | Gigabit Ethernet | Wi-Fi works, wired is more reliable |
+| RAM | **16GB** | Synapse + Immich ML + Ollama need it |
+| Storage | 1TB+ NVMe | 2TB if you have large photo libraries |
+| Network | Gigabit Ethernet | WiFi works, wired is more reliable |
 
 **Cost:** ~$250-300 total
 
-**Why N100?** I started on Raspberry Pi 5, which works great for chat and basic photos. But when my wife's better phone started shooting 4K video, the Pi struggled with transcoding and ran hot. The N100's QuickSync handles 4K smoothly at lower power.
+**Why N100?** I started on Raspberry Pi 5, which works great for chat and basic photos. But when my wife's phone started shooting 4K video, the Pi struggled with transcoding. The N100's QuickSync handles 4K smoothly.
 
 ### Alternative: Raspberry Pi 5
 
@@ -89,7 +91,16 @@ Still works for:
 
 **Total time:** 10-15 minutes
 
-### Step 1: Run the installer
+### Prerequisites
+
+You'll need a **Tailscale account** (free) for your family to connect from anywhere.
+
+1. Create account at [tailscale.com](https://tailscale.com)
+2. Go to [Settings → Keys](https://login.tailscale.com/admin/settings/keys)
+3. Generate an **Auth Key**
+4. Copy it (looks like `tskey-auth-...`)
+
+### Step 1: Run the Installer
 
 ```bash
 git clone https://github.com/kanchanepally/memu.digital
@@ -97,29 +108,32 @@ cd memu.digital
 sudo ./scripts/install.sh
 ```
 
-### Step 2: Open the web wizard
+### Step 2: Open the Web Wizard
 
-1. Visit `http://[your-hostname].local` in your browser
-2. Fill in 4 fields:
-   - Family name (e.g., "smiths")
-   - Admin password
-   - Tailscale auth key (optional — for remote access)
-3. Click "Create My Memu Server"
+1. Visit `http://memu.local` in your browser (same network as the device)
+2. Fill in:
+   - **Family name** (e.g., "smiths") — becomes part of your chat identity
+   - **Admin password** — write it down, no reset option
+   - **Tailscale auth key** — connects your family's private network
+3. Click **"Create My Family Server"**
 4. Wait 2-3 minutes
-5. Done!
 
-**No YAML editing. No terminal after the initial script.**
+**No YAML editing. No terminal commands after the initial script.**
 
-### What Gets Installed
-- Chat server (Matrix/Synapse)
-- Photo backup (Immich)  
-- AI assistant (Ollama with Llama 3.2)
-- PostgreSQL database
-- All dependencies and configs
+### Step 3: Connect Your Apps
+
+Once setup completes, install Tailscale on your phone/laptop, then:
+
+| App | Server Address | Notes |
+|-----|----------------|-------|
+| **Element** (Chat) | `http://memu-hub` | Sign in with `admin` + your password |
+| **Immich** (Photos) | `http://memu-hub:2283` | Create a new account (separate from chat) |
+
+The `http://memu-hub` address works from anywhere — home, work, travelling — as long as Tailscale is running.
 
 ---
 
-## The Tech Stack
+## How It Works
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -127,41 +141,65 @@ sudo ./scripts/install.sh
 ├─────────────────────────────────────────────────────────────┤
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
 │  │  Matrix  │  │  Immich  │  │  Ollama  │  │ Context  │    │
-│  │  (Chat)  │  │ (Photos) │  │  (LLM)   │  │  Engine  │    │
+│  │  (Chat)  │  │ (Photos) │  │   (AI)   │  │  Engine  │    │
 │  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘    │
 │       └─────────────┴─────────────┴─────────────┘          │
 │                         │                                   │
 │              ┌──────────▼──────────┐                       │
 │              │     PostgreSQL      │                       │
-│              │  (shared + pgvector)│                       │
+│              │   (unified data)    │                       │
 │              └─────────────────────┘                       │
 └─────────────────────────────────────────────────────────────┘
+                          │
+                   ┌──────▼──────┐
+                   │  Tailscale  │  ← Your family's private network
+                   └──────┬──────┘
+                          │
+        ┌─────────────────┼─────────────────┐
+        │                 │                 │
+   ┌────▼────┐      ┌────▼────┐      ┌────▼────┐
+   │  Dad's  │      │  Mom's  │      │  Kid's  │
+   │  Phone  │      │  Laptop │      │  Tablet │
+   └─────────┘      └─────────┘      └─────────┘
 ```
 
-- **Orchestration:** Docker Compose
-- **Database:** PostgreSQL 15 with pgvector
-- **Chat:** Matrix Synapse + Element
-- **Photos:** Immich
-- **AI:** Ollama (Llama 3.2 3B)
-- **License:** AGPLv3 (open source, prevents cloud cloning)
+**Why Tailscale?** Traditional servers expose ports to the internet — hackers scan for them constantly. Tailscale creates a private network that only your family can access. Your Memu Hub is invisible to the rest of the internet.
 
 ---
 
 ## The AI Assistant
 
-The bot lives in your family chat and handles:
+The bot lives in your family chat:
 
-| Command | What it does |
+| Command | What It Does |
 |---------|--------------|
-| `/remember [fact]` | Stores info → "WiFi at grandma's is ABC123" |
-| `/recall [query]` | Retrieves info → "What's grandma's WiFi?" |
-| `/addtolist [items]` | Shared shopping list → "Add milk, eggs" |
+| `/remember [fact]` | Store info → `/remember WiFi at grandma's is ABC123` |
+| `/recall [query]` | Retrieve info → `/recall grandma WiFi` |
+| `/addtolist [items]` | Shared list → `/addtolist milk, eggs, bread` |
 | `/showlist` | Display current list |
-| `/done [item]` | Mark item complete |
-| `/remind [task] [time]` | Natural language → "Call mom tomorrow" |
+| `/done [item]` | Mark complete → `/done milk` |
+| `/remind [task] [time]` | Natural language → `/remind call mom tomorrow 3pm` |
 | `/summarize` | AI summary of today's chat |
 
 **Coming soon:** Cross-silo queries like "What photos do we have from Dad's birthday?" that search both chat mentions and photo metadata.
+
+---
+
+## Quick Reference
+
+```
+┌─────────────────────────────────────────┐
+│         MEMU QUICK REFERENCE            │
+├─────────────────────────────────────────┤
+│  Chat Server:     http://memu-hub       │
+│  Photos Server:   http://memu-hub:2283  │
+│                                         │
+│  Chat App:        Element               │
+│  Photos App:      Immich                │
+│                                         │
+│  Not connecting?  Is Tailscale on?      │
+└─────────────────────────────────────────┘
+```
 
 ---
 
@@ -176,7 +214,6 @@ The bot lives in your family chat and handles:
 **Business model:**
 - Software: Free forever (AGPLv3)
 - Hardware: Buy once, own forever
-- Optional relay service: ~$10/mo for easy remote access
 
 ---
 
@@ -184,10 +221,10 @@ The bot lives in your family chat and handles:
 
 **What I need help with:**
 
-1. **Network architecture** — Headscale vs Tailscale? [Join the discussion](https://github.com/kanchanepally/memu.digital/issues)
-2. **Testing** — Does this work on your hardware?
-3. **Security** — Audit for privacy leaks (please!)
-4. **Docs** — Make installation clearer
+1. **Testing** — Does this work on your hardware?
+2. **Security** — Audit for privacy leaks (please!)
+3. **Docs** — Make installation clearer
+4. **Features** — PRs welcome
 
 ---
 
@@ -206,20 +243,26 @@ If AI-assisted development bothers you, this might not be your project. If "work
 
 ## FAQ
 
-**Q: Why should I trust you?**  
+**Q: Why should I trust you?**
 A: You shouldn't trust me. Trust the code — it's open source. Audit it.
 
-**Q: Is this really private?**  
+**Q: Is this really private?**
 A: Data never leaves your hardware. Zero telemetry. I literally don't know who uses this.
 
-**Q: What if it breaks?**  
+**Q: What if it breaks?**
 A: Open an issue. I'll help, or you fix it and send a PR.
 
-**Q: Why not just use Nextcloud?**  
+**Q: Why not just use Nextcloud?**
 A: Nextcloud is great for files but doesn't have native chat or local AI integration.
 
-**Q: Why not just use Synology?**  
-A: Synology is excellent but expensive, no chat, and no local AI assistant.
+**Q: Why not just use Synology?**
+A: Synology is excellent but expensive (~$600+), no chat, and no local AI assistant.
+
+**Q: Do I need a domain name?**
+A: No. Your server is `http://memu-hub` via Tailscale. Your chat identity uses `yourfamily.memu.digital` but that's just an identifier, not a website you need to own.
+
+**Q: What if I'm not technical?**
+A: If you can follow instructions to plug in hardware and click through a wizard, you can do this. The hard part is already done.
 
 ---
 
@@ -235,6 +278,7 @@ Built on the shoulders of:
 - [Matrix](https://matrix.org) — Federated chat
 - [Immich](https://immich.app) — Self-hosted photos
 - [Ollama](https://ollama.ai) — Local LLMs
+- [Tailscale](https://tailscale.com) — Private networking
 - Everyone building for data sovereignty
 
 ---
@@ -245,4 +289,4 @@ Built on the shoulders of:
 
 ---
 
-*Built by a dad who wanted his family to own their digital life.*
+*Built by a dad/husband who wanted his family to own their digital life.*
