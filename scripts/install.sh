@@ -3,29 +3,26 @@
 # Memu OS - Silent Installer (v4.1)
 # =============================================================================
 #
-# CHANGE FROM v4.0: This script is now 100% SILENT.
-# - No prompts
-# - No user input
-# - All configuration happens in the Web Wizard
+# TESTED: January 18, 2026 on DigitalOcean (8GB Ubuntu 24.04)
+# 
+# This script is 100% SILENT - no prompts, no user input.
+# All configuration happens in the Web Wizard.
 #
-# This enables:
-# - Unattended installation (USB boot scenario)
-# - Single point of user interaction (the wizard)
-# - No confusion about "did I enter that already?"
+# FIXES FROM v4.0:
+# - Removed all `read -p` prompts (unattended install)
+# - Creates placeholder configs BEFORE docker touches them
+# - Proper directory permissions for Synapse
 # =============================================================================
 
 set -e
 
-# Colors for output (still useful for logs)
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
-RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
 log() { echo -e "${GREEN}[MEMU]${NC} $1"; }
 warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
-error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 echo -e "${BLUE}"
 echo "╔═══════════════════════════════════════════════════════════════╗"
@@ -34,17 +31,9 @@ echo "║   v4.1 (Silent Install)                                       ║"
 echo "╚═══════════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
 
-# =============================================================================
-# CONFIGURATION
-# =============================================================================
-
 PROJECT_ROOT=$(pwd)
 REAL_USER="${SUDO_USER:-$(whoami)}"
 WIZARD_PORT=8888
-
-# =============================================================================
-# STAGE A: Environment Preparation (Silent, No Prompts)
-# =============================================================================
 
 log "Starting silent installation..."
 
@@ -54,13 +43,11 @@ log "Starting silent installation..."
 log "Installing system dependencies..."
 
 apt-get update -qq
-apt-get install -y -qq docker.io docker-compose-v2 curl python3-pip > /dev/null 2>&1
+apt-get install -y -qq docker.io docker-compose-v2 curl python3-pip jq > /dev/null 2>&1
 
-# Ensure Docker is running
 systemctl start docker 2>/dev/null || true
 systemctl enable docker 2>/dev/null || true
 
-# Install Python dependencies (Flask for wizard)
 pip install flask requests --break-system-packages --ignore-installed -q 2>/dev/null || \
 pip3 install flask requests --break-system-packages --ignore-installed -q 2>/dev/null || true
 
@@ -94,11 +81,11 @@ chmod 777 synapse/
 chown -R $REAL_USER:$REAL_USER synapse photos backups nginx 2>/dev/null || true
 
 # -----------------------------------------------------------------------------
-# A5: Create Placeholder Config Files
+# A5: Create Placeholder Config Files (CRITICAL)
 # -----------------------------------------------------------------------------
 log "Creating placeholder configurations..."
 
-# Element config (MUST exist as a FILE, not directory)
+# Element config - MUST exist as a FILE (Docker will make it a directory otherwise)
 [ ! -f element-config.json ] && cat > element-config.json << 'EOF'
 {
     "default_server_config": {
@@ -112,7 +99,7 @@ log "Creating placeholder configurations..."
 }
 EOF
 
-# Nginx placeholder config
+# Nginx placeholder
 cat > nginx/conf.d/default.conf << 'EOF'
 server {
     listen 80;
@@ -124,22 +111,35 @@ server {
 }
 EOF
 
+# Synapse log config (prevents startup errors)
+cat > synapse/memu.local.log.config << 'EOF'
+version: 1
+formatters:
+  precise:
+    format: '%(asctime)s - %(name)s - %(lineno)d - %(levelname)s - %(request)s - %(message)s'
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: precise
+root:
+    level: INFO
+    handlers: [console]
+disable_existing_loggers: false
+EOF
+
 # -----------------------------------------------------------------------------
-# A6: Create Base .env (No prompts - wizard will fill in details)
+# A6: Create Base .env
 # -----------------------------------------------------------------------------
 log "Creating environment configuration..."
 
-# Generate secure database password
 DB_PASSWORD=$(openssl rand -base64 24 | tr -d '/+=' | head -c 24)
 
-# Preserve existing Tailscale key if present
 EXISTING_TS_KEY=""
 [ -f .env ] && EXISTING_TS_KEY=$(grep "^TAILSCALE_AUTH_KEY=" .env 2>/dev/null | cut -d'=' -f2 || true)
 
 cat > .env << EOF
 # Memu Configuration (v4.1)
 # Generated: $(date '+%Y-%m-%d %H:%M:%S')
-# All values will be updated by the Setup Wizard
 
 SERVER_NAME=memu.local
 TZ=$(cat /etc/timezone 2>/dev/null || echo "UTC")
@@ -167,7 +167,6 @@ EOF
 # -----------------------------------------------------------------------------
 log "Installing system services..."
 
-# Setup Wizard Service
 cat > /etc/systemd/system/memu-setup.service << EOF
 [Unit]
 Description=Memu OS Setup Wizard
@@ -189,7 +188,6 @@ Environment=PROJECT_ROOT=${PROJECT_ROOT}
 WantedBy=multi-user.target
 EOF
 
-# Production Service
 cat > /etc/systemd/system/memu-production.service << EOF
 [Unit]
 Description=Memu OS Production Stack
@@ -209,19 +207,16 @@ EOF
 
 systemctl daemon-reload
 
-# =============================================================================
-# STAGE A COMPLETE - Start Wizard
-# =============================================================================
-
+# -----------------------------------------------------------------------------
+# START WIZARD
+# -----------------------------------------------------------------------------
 log "Starting Setup Wizard..."
 
 systemctl enable memu-setup.service
 systemctl start memu-setup.service
 
-# Wait for wizard to start
 sleep 3
 
-# Get network info
 LOCAL_IP=$(hostname -I | awk '{print $1}')
 HOSTNAME=$(hostname)
 
