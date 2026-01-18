@@ -12,6 +12,7 @@
 # - Removed all `read -p` prompts (unattended install)
 # - Creates placeholder configs BEFORE docker touches them
 # - Proper directory permissions for Synapse
+# - IDEMPOTENT: Preserves existing passwords/configs if re-run
 # =============================================================================
 
 set -e
@@ -83,10 +84,11 @@ chown -R $REAL_USER:$REAL_USER synapse photos backups nginx 2>/dev/null || true
 # -----------------------------------------------------------------------------
 # A5: Create Placeholder Config Files (CRITICAL)
 # -----------------------------------------------------------------------------
-log "Creating placeholder configurations..."
+log "Checking configuration files..."
 
-# Element config - MUST exist as a FILE (Docker will make it a directory otherwise)
-[ ! -f element-config.json ] && cat > element-config.json << 'EOF'
+# Element config - Only create if missing (don't overwrite working config)
+if [ ! -f element-config.json ]; then
+    cat > element-config.json << 'EOF'
 {
     "default_server_config": {
         "m.homeserver": {
@@ -98,9 +100,12 @@ log "Creating placeholder configurations..."
     "default_theme": "light"
 }
 EOF
+    log "Created placeholder element-config.json"
+fi
 
-# Nginx placeholder
-cat > nginx/conf.d/default.conf << 'EOF'
+# Nginx placeholder - Only create if missing
+if [ ! -f nginx/conf.d/default.conf ]; then
+    cat > nginx/conf.d/default.conf << 'EOF'
 server {
     listen 80;
     server_name localhost;
@@ -110,8 +115,10 @@ server {
     }
 }
 EOF
+    log "Created placeholder nginx config"
+fi
 
-# Synapse log config (prevents startup errors)
+# Synapse log config (Always safe to ensure)
 cat > synapse/memu.local.log.config << 'EOF'
 version: 1
 formatters:
@@ -128,14 +135,24 @@ disable_existing_loggers: false
 EOF
 
 # -----------------------------------------------------------------------------
-# A6: Create Base .env
+# A6: Create or Update .env (PRESERVE SECRETS)
 # -----------------------------------------------------------------------------
-log "Creating environment configuration..."
+log "Configuring environment..."
 
+# Initialize defaults
 DB_PASSWORD=$(openssl rand -base64 24 | tr -d '/+=' | head -c 24)
-
 EXISTING_TS_KEY=""
-[ -f .env ] && EXISTING_TS_KEY=$(grep "^TAILSCALE_AUTH_KEY=" .env 2>/dev/null | cut -d'=' -f2 || true)
+EXISTING_BOT_TOKEN=""
+
+# Read existing values if .env exists
+if [ -f .env ]; then
+    EXISTING_DB_PASS=$(grep "^DB_PASSWORD=" .env 2>/dev/null | cut -d'=' -f2)
+    [ -n "$EXISTING_DB_PASS" ] && DB_PASSWORD=$EXISTING_DB_PASS
+    
+    EXISTING_TS_KEY=$(grep "^TAILSCALE_AUTH_KEY=" .env 2>/dev/null | cut -d'=' -f2)
+    EXISTING_BOT_TOKEN=$(grep "^MATRIX_BOT_TOKEN=" .env 2>/dev/null | cut -d'=' -f2)
+    log "Preserved existing credentials from .env"
+fi
 
 cat > .env << EOF
 # Memu Configuration (v4.1)
@@ -157,7 +174,7 @@ MACHINE_LEARNING_WORKERS=1
 MACHINE_LEARNING_WORKER_TIMEOUT=120
 
 MATRIX_BOT_USERNAME=@memu_bot:memu.local
-MATRIX_BOT_TOKEN=
+MATRIX_BOT_TOKEN=${EXISTING_BOT_TOKEN}
 
 TAILSCALE_AUTH_KEY=${EXISTING_TS_KEY}
 EOF
