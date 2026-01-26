@@ -269,11 +269,51 @@ As long as Tailscale is running, your apps connect automatically — home, work,
 
 ## Backup Your Data
 
-```bash
-sudo ./scripts/backup.sh
+Your family's data is precious. Memu automatically backs up everything:
+- Photos and videos
+- Chat messages and attachments
+- AI memories and lists
+- All configuration
+
+### Automatic Backups
+
+Memu runs automatic backups every night at 2am. You don't need to do anything!
+
+To check backup status, message the bot in Element:
+```
+/backup-status
 ```
 
-Copy backups to an external drive weekly. Your data is precious!
+The bot will tell you:
+- When the last backup ran
+- How many backups are stored
+- Whether you need to make a USB backup
+
+### USB Backups (Recommended Weekly)
+
+For extra safety, copy your backup to a USB drive weekly:
+
+1. Plug a USB drive into your Memu Hub
+2. The bot will automatically copy the latest backup
+3. You'll get a message when it's done: "Safe to remove the drive"
+
+Store this USB somewhere safe (different room, or a relative's house).
+
+### Manual Backup
+
+If you want to run a backup manually:
+```bash
+sudo /opt/memu/scripts/backup.sh
+```
+
+### Restore from Backup
+
+If you need to restore (new hardware, disk failure):
+```bash
+sudo /opt/memu/scripts/restore.sh
+```
+
+This will show available backups and guide you through restoration.
 
 ---
 
@@ -293,11 +333,14 @@ Copy backups to an external drive weekly. Your data is precious!
 │    @memu_bot:yourfamily.memu.digital            │
 │                                                 │
 │  USEFUL COMMANDS:                               │
-│    /showlist     - see shopping list            │
-│    /addtolist    - add items                    │
-│    /done         - mark item complete           │
-│    /remember     - store a fact                 │
-│    /recall       - find a fact                  │
+│    /showlist      - see shopping list           │
+│    /addtolist     - add items                   │
+│    /done          - mark item complete          │
+│    /remember      - store a fact                │
+│    /recall        - find a fact                 │
+│    /remind        - set a reminder              │
+│    /backup-status - check backup health         │
+│    /help          - show all commands           │
 │                                                 │
 │  NOT CONNECTING?                                │
 │    → Check Tailscale app is running             │

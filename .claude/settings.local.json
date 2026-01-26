@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmd /c \"C:\\\\Users\\\\Lenovo\\\\Code\\\\memu\\\\memu-os\\\\services\\\\intelligence\\\\venv\\\\Scripts\\\\python.exe -m pytest C:\\\\Users\\\\Lenovo\\\\Code\\\\memu\\\\memu-os\\\\services\\\\intelligence\\\\tests\\\\test_memory.py -v\")",
+      "Bash(C:\\\\Python313\\\\python.exe -m pytest:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(\"C:/Users/Lenovo/Code/memu/memu-os/services/intelligence/venv/Scripts/python.exe\" -m pytest:*)",
+      "Bash(\"C:/Users/Lenovo/Code/memu/memu-os/services/intelligence/venv/Scripts/python.exe\" -m pip install pytest pytest-asyncio)",
+      "Bash(pip install:*)"
+    ]
+  }
+}

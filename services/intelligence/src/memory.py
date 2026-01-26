@@ -66,6 +66,20 @@ class MemoryStore:
             processed BOOLEAN DEFAULT FALSE
         );
         CREATE INDEX IF NOT EXISTS idx_reminders_due_processed ON reminders(due_at, processed);
+
+        -- 4. Backup History
+        CREATE TABLE IF NOT EXISTS backup_history (
+            id SERIAL PRIMARY KEY,
+            filename TEXT NOT NULL,
+            size_bytes BIGINT NOT NULL,
+            status TEXT NOT NULL,
+            error TEXT,
+            duration_seconds INT,
+            usb_copied_at TIMESTAMP,
+            notification_sent BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT NOW()
+        );
+        CREATE INDEX IF NOT EXISTS idx_backup_created ON backup_history(created_at DESC);
         """
         try:
             async with self.pool.acquire() as conn:
@@ -153,3 +167,132 @@ class MemoryStore:
                 RETURNING item
             """, room_id, f'%{item_name}%')
             return row['item'] if row else None
+
+    # =========================================================================
+    # Backup History Methods
+    # =========================================================================
+
+    async def record_backup(
+        self,
+        filename: str,
+        size_bytes: int,
+        status: str,
+        duration_seconds: int,
+        error: Optional[str] = None
+    ):
+        """Record a backup attempt in the database.
+
+        Args:
+            filename: Name of the backup archive file
+            size_bytes: Size of the backup in bytes
+            status: 'success', 'failed', or 'in_progress'
+            duration_seconds: How long the backup took
+            error: Error message if backup failed
+        """
+        async with self.pool.acquire() as conn:
+            await conn.execute("""
+                INSERT INTO backup_history
+                (filename, size_bytes, status, duration_seconds, error)
+                VALUES ($1, $2, $3, $4, $5)
+            """, filename, size_bytes, status, duration_seconds, error)
+        logger.info(f"Recorded backup: {filename} ({status})")
+
+    async def get_latest_backup(self) -> Optional[Dict[str, Any]]:
+        """Get the most recent backup record.
+
+        Returns:
+            Dictionary with backup details, or None if no backups exist
+        """
+        async with self.pool.acquire() as conn:
+            row = await conn.fetchrow("""
+                SELECT id, filename, size_bytes, status, error,
+                       duration_seconds, usb_copied_at, notification_sent, created_at
+                FROM backup_history
+                ORDER BY created_at DESC
+                LIMIT 1
+            """)
+            return dict(row) if row else None
+
+    async def get_backup_count(self) -> int:
+        """Get the total number of successful backups stored locally.
+
+        Returns:
+            Number of successful backup records
+        """
+        async with self.pool.acquire() as conn:
+            count = await conn.fetchval("""
+                SELECT COUNT(*) FROM backup_history
+                WHERE status = 'success'
+            """)
+            return count or 0
+
+    async def get_total_backup_size(self) -> int:
+        """Get the total size of all successful backups.
+
+        Returns:
+            Total size in bytes, or 0 if no backups
+        """
+        async with self.pool.acquire() as conn:
+            total = await conn.fetchval("""
+                SELECT SUM(size_bytes) FROM backup_history
+                WHERE status = 'success'
+            """)
+            return total or 0
+
+    async def mark_usb_copied(self, backup_id: int):
+        """Mark a backup as copied to USB drive.
+
+        Args:
+            backup_id: ID of the backup record to update
+        """
+        async with self.pool.acquire() as conn:
+            await conn.execute("""
+                UPDATE backup_history
+                SET usb_copied_at = NOW()
+                WHERE id = $1
+            """, backup_id)
+        logger.info(f"Marked backup {backup_id} as copied to USB")
+
+    async def get_unnotified_failures(self) -> List[Dict[str, Any]]:
+        """Get failed backups that haven't been notified yet.
+
+        Returns:
+            List of failed backup records needing notification
+        """
+        async with self.pool.acquire() as conn:
+            rows = await conn.fetch("""
+                SELECT id, filename, error, created_at
+                FROM backup_history
+                WHERE status = 'failed'
+                AND notification_sent = FALSE
+                ORDER BY created_at DESC
+            """)
+            return [dict(r) for r in rows]
+
+    async def mark_notification_sent(self, backup_id: int):
+        """Mark a backup's failure notification as sent.
+
+        Args:
+            backup_id: ID of the backup record to update
+        """
+        async with self.pool.acquire() as conn:
+            await conn.execute("""
+                UPDATE backup_history
+                SET notification_sent = TRUE
+                WHERE id = $1
+            """, backup_id)
+        logger.info(f"Marked notification sent for backup {backup_id}")
+
+    async def get_last_usb_backup_time(self) -> Optional[datetime]:
+        """Get the timestamp of the most recent USB backup.
+
+        Returns:
+            Datetime of last USB backup, or None if never backed up to USB
+        """
+        async with self.pool.acquire() as conn:
+            result = await conn.fetchval("""
+                SELECT MAX(usb_copied_at)
+                FROM backup_history
+                WHERE usb_copied_at IS NOT NULL
+            """)
+            return result

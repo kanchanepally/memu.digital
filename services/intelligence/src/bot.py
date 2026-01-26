@@ -4,8 +4,9 @@ from nio import AsyncClient, MatrixRoom, RoomMessageText, InviteMemberEvent
 from config import Config
 from brain import Brain
 from memory import MemoryStore
+from backup_manager import BackupManager
 import dateparser
-from datetime import datetime
+from datetime import datetime, timedelta
 
 logger = logging.getLogger("memu.bot")
 
@@ -18,6 +19,8 @@ class MemuBot:
         self.client.access_token = Config.MATRIX_BOT_TOKEN
         self.brain = Brain()
         self.memory = MemoryStore()
+        self.backup_manager = BackupManager(self.memory)
+        self._last_usb_reminder_sent = None  # Track when we last sent USB reminder
 
     async def start(self):
         logger.info("Starting MemuBot...")
@@ -30,6 +33,9 @@ class MemuBot:
 
         # Start reminder checker loop in background
         asyncio.create_task(self.check_reminders_loop())
+
+        # Start backup notification checker loop
+        asyncio.create_task(self.check_backup_notifications_loop())
 
         try:
             # Sync forever
@@ -82,6 +88,10 @@ class MemuBot:
             await self.handle_mark_done(room_id, content)
         elif content.startswith('/summarize'):
             await self.handle_summarize(room_id)
+        elif content.startswith('/backup-status') or content.startswith('/backupstatus'):
+            await self.handle_backup_status(room_id)
+        elif content.startswith('/help'):
+            await self.handle_help(room_id)
         else:
             # Implicit check
             intent = await self.brain.analyze_intent(content)
@@ -230,6 +240,39 @@ class MemuBot:
         else:
             await self.send_text(room_id, "❌ Failed to fetch history (API error).")
 
+    async def handle_backup_status(self, room_id: str):
+        """Show backup status to the user."""
+        try:
+            status = await self.backup_manager.get_status()
+            message = self.backup_manager.format_status_message(status)
+            await self.send_text(room_id, message)
+        except Exception as e:
+            logger.error(f"Error getting backup status: {e}")
+            await self.send_text(room_id, "Failed to get backup status. Please check system logs.")
+
+    async def handle_help(self, room_id: str):
+        """Show available commands."""
+        help_text = """**Memu Bot Commands**
+
+**Memory**
+/remember [fact] - Save a fact
+/recall [query] - Search saved facts
+
+**Lists**
+/addtolist item1, item2 - Add items to shopping list
+/showlist - Show the shopping list
+/done [item] - Mark item as complete
+
+**Reminders**
+/remind [task] [time] - Set a reminder
+
+**Utilities**
+/summarize - Summarize recent chat
+/backup-status - Check backup health
+/help - Show this help"""
+
+        await self.send_text(room_id, help_text)
+
     async def check_reminders_loop(self):
         while True:
             try:
@@ -241,3 +284,74 @@ class MemuBot:
                 logger.error(f"Error checking reminders: {e}")
 
             await asyncio.sleep(10)
+
+    async def check_backup_notifications_loop(self):
+        """Check for backup failures, USB events, and send notifications."""
+        # Wait for initial sync to complete
+        await asyncio.sleep(30)
+
+        while True:
+            try:
+                # Check for unnotified backup failures
+                failures = await self.backup_manager.get_unnotified_failures()
+
+                for failure in failures:
+                    message = self.backup_manager.format_failure_message(failure)
+                    await self._broadcast_to_rooms(message)
+                    await self.backup_manager.mark_notification_sent(failure['id'])
+                    logger.info(f"Sent backup failure notification for {failure['filename']}")
+
+                # Check for USB drive detection
+                if await self.backup_manager.check_usb_detected():
+                    logger.info("USB drive detected, initiating backup copy...")
+                    result = await self.backup_manager.handle_usb_backup()
+
+                    if result:
+                        if result.get('status') == 'success':
+                            message = self.backup_manager.format_usb_success_message(result)
+                        else:
+                            message = self.backup_manager.format_usb_error_message(result)
+                        await self._broadcast_to_rooms(message)
+
+                # Check for weekly USB reminder (Sunday between 9-11am)
+                await self._check_weekly_usb_reminder()
+
+            except Exception as e:
+                logger.error(f"Error checking backup notifications: {e}")
+
+            # Check every 30 seconds for USB, 5 minutes overall is too slow for USB detection
+            await asyncio.sleep(30)
+
+    async def _check_weekly_usb_reminder(self):
+        """Send weekly USB backup reminder on Sunday mornings if overdue."""
+        now = datetime.now()
+
+        # Only send on Sunday (weekday 6) between 9am and 11am
+        if now.weekday() != 6 or now.hour < 9 or now.hour >= 11:
+            return
+
+        # Don't send more than once per day
+        if self._last_usb_reminder_sent:
+            if (now - self._last_usb_reminder_sent).days < 1:
+                return
+
+        # Check if USB reminder should be sent
+        if await self.backup_manager.should_send_usb_reminder():
+            status = await self.backup_manager.get_status()
+            message = self.backup_manager.format_usb_reminder_message(status)
+            await self._broadcast_to_rooms(message)
+            self._last_usb_reminder_sent = now
+            logger.info("Sent weekly USB backup reminder")
+
+    async def _broadcast_to_rooms(self, message: str):
+        """Send a message to all joined rooms.
+
+        Args:
+            message: Message text to send
+        """
+        if hasattr(self.client, 'rooms') and self.client.rooms:
+            for room_id in self.client.rooms:
+                try:
+                    await self.send_text(room_id, message)
+                except Exception as e:
+                    logger.error(f"Failed to send message to {room_id}: {e}")

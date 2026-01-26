@@ -222,7 +222,44 @@ ExecStop=/usr/bin/docker compose -f docker-compose.yml down
 WantedBy=multi-user.target
 EOF
 
+# Backup service (runs backup.sh)
+cat > /etc/systemd/system/memu-backup.service << EOF
+[Unit]
+Description=Memu Backup Service
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=${PROJECT_ROOT}
+ExecStart=${PROJECT_ROOT}/scripts/backup.sh
+StandardOutput=journal
+StandardError=journal
+TimeoutStartSec=7200
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Backup timer (runs daily at 2am)
+cat > /etc/systemd/system/memu-backup.timer << EOF
+[Unit]
+Description=Daily Memu Backup Timer
+
+[Timer]
+OnCalendar=*-*-* 02:00:00
+RandomizedDelaySec=300
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+
 systemctl daemon-reload
+
+# Enable backup timer (will start on next boot, or manually)
+systemctl enable memu-backup.timer 2>/dev/null || true
 
 # -----------------------------------------------------------------------------
 # START WIZARD

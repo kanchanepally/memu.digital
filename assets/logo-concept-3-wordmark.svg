@@ -1,0 +1,31 @@
+<svg width="320" height="100" viewBox="0 0 320 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="memuGradient3" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Custom wordmark with connected letters -->
+  <g fill="url(#memuGradient3)">
+    <!-- m -->
+    <path d="M 20 70 L 20 30 Q 20 25, 25 25 Q 30 25, 30 30 L 30 35 Q 35 28, 42 28 Q 48 28, 50 33 Q 55 28, 62 28 Q 72 28, 72 38 L 72 70 Q 72 72, 70 72 Q 68 72, 68 70 L 68 40 Q 68 35, 62 35 Q 56 35, 56 40 L 56 70 Q 56 72, 54 72 Q 52 72, 52 70 L 52 40 Q 52 35, 46 35 Q 40 35, 40 40 L 40 70 Q 40 75, 35 75 L 25 75 Q 20 75, 20 70 Z"
+          stroke="none"/>
+
+    <!-- e -->
+    <path d="M 85 49 Q 85 32, 100 32 Q 115 32, 115 49 Q 115 52, 112 52 L 92 52 Q 92 60, 100 60 Q 106 60, 109 56 Q 111 54, 113 56 Q 115 58, 113 61 Q 108 68, 100 68 Q 85 68, 85 49 Z M 92 46 L 108 46 Q 108 39, 100 39 Q 92 39, 92 46 Z"
+          stroke="none"/>
+
+    <!-- m -->
+    <path d="M 130 70 L 130 30 Q 130 25, 135 25 Q 140 25, 140 30 L 140 35 Q 145 28, 152 28 Q 158 28, 160 33 Q 165 28, 172 28 Q 182 28, 182 38 L 182 70 Q 182 72, 180 72 Q 178 72, 178 70 L 178 40 Q 178 35, 172 35 Q 166 35, 166 40 L 166 70 Q 166 72, 164 72 Q 162 72, 162 70 L 162 40 Q 162 35, 156 35 Q 150 35, 150 40 L 150 70 Q 150 75, 145 75 L 135 75 Q 130 75, 130 70 Z"
+          stroke="none"/>
+
+    <!-- u -->
+    <path d="M 195 30 Q 195 28, 197 28 Q 199 28, 199 30 L 199 55 Q 199 68, 211 68 Q 223 68, 223 55 L 223 30 Q 223 28, 225 28 Q 227 28, 227 30 L 227 70 Q 227 75, 222 75 L 217 75 Q 212 75, 212 70 L 212 65 Q 207 72, 199 72 Q 189 72, 189 62 L 189 30 Q 189 28, 191 28 Q 193 28, 195 30 Z"
+          stroke="none"/>
+  </g>
+
+  <!-- Subtle Telugu below -->
+  <text x="250" y="55" font-family="sans-serif" font-size="18" font-weight="300"
+        fill="#667eea" opacity="0.5">మేము</text>
+</svg>

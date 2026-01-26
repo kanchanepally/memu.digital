@@ -4,19 +4,24 @@ from bot import MemuBot
 from nio import RoomMessageText, MatrixRoom, InviteMemberEvent
 from datetime import datetime
 
+pytest_plugins = ('pytest_asyncio',)
+
+
 @pytest.fixture
 def mock_bot():
     with patch("bot.AsyncClient") as mock_client:
         with patch("bot.MemoryStore") as mock_memory:
             with patch("bot.Brain") as mock_brain:
-                bot = MemuBot()
-                bot.client = AsyncMock()
-                bot.client.user_id = "@bot:test"
-                # Mock next_batch for summarize test
-                bot.client.next_batch = "s12345"
-                bot.memory = AsyncMock()
-                bot.brain = AsyncMock()
-                return bot
+                with patch("bot.BackupManager") as mock_backup_manager:
+                    bot = MemuBot()
+                    bot.client = AsyncMock()
+                    bot.client.user_id = "@bot:test"
+                    # Mock next_batch for summarize test
+                    bot.client.next_batch = "s12345"
+                    bot.memory = AsyncMock()
+                    bot.brain = AsyncMock()
+                    bot.backup_manager = AsyncMock()
+                    return bot
 
 @pytest.mark.asyncio
 async def test_process_message_remember(mock_bot):
@@ -92,3 +97,35 @@ async def test_handle_summarize_success(mock_bot):
     mock_bot.client.room_messages.assert_called_with("room1", start="s12345", direction='b', limit=50)
     mock_bot.brain.summarize_chat.assert_called()
     mock_bot.client.room_send.assert_called()
+
+
+@pytest.mark.asyncio
+async def test_process_message_backup_status(mock_bot):
+    """Bot responds to /backup-status with formatted status."""
+    mock_bot.backup_manager.get_status = AsyncMock(return_value={
+        'health': 'healthy',
+        'last_backup_human': '6 hours ago',
+        'last_backup_size_human': '245 MB',
+        'backup_count': 7,
+        'total_size_human': '1.7 GB',
+        'usb_days_ago': 2,
+        'warnings': [],
+        'error': None
+    })
+    mock_bot.backup_manager.format_status_message = MagicMock(return_value="**Backup Status**\n\nHealthy")
+
+    await mock_bot.process_message("room1", "@user:test", "/backup-status")
+
+    mock_bot.backup_manager.get_status.assert_called_once()
+    mock_bot.backup_manager.format_status_message.assert_called_once()
+    mock_bot.client.room_send.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_process_message_help(mock_bot):
+    """Bot responds to /help with command list."""
+    await mock_bot.process_message("room1", "@user:test", "/help")
+
+    mock_bot.client.room_send.assert_called_once()
+    call_args = mock_bot.client.room_send.call_args
+    assert 'Memu Bot Commands' in call_args.kwargs['content']['body']

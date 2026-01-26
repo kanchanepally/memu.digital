@@ -1,0 +1,14 @@
+# =============================================================================
+# Memu USB Backup Detection Rules
+# =============================================================================
+# When a USB drive is inserted, this rule creates a marker file that the
+# Memu backup manager monitors. The backup is then copied to the USB drive.
+#
+# Installation:
+#   sudo cp 99-memu-usb.rules /etc/udev/rules.d/
+#   sudo udevadm control --reload-rules
+#
+# =============================================================================
+
+# Trigger on USB block devices being added
+ACTION=="add", SUBSYSTEM=="block", ENV{ID_USB_DRIVER}=="usb-storage", ENV{DEVTYPE}=="partition", RUN+="/opt/memu/scripts/usb-detected.sh %E{DEVNAME}"

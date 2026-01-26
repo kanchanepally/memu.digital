@@ -15,8 +15,7 @@
 - **Open source:** AGPLv3, all code public
 
 ### 🚨 Known Issues
-- **Network layer:** Cloudflare Tunnel violates ToS for video streaming
-- **No automated backups:** Manual script only
+- **Network layer:** Cloudflare Tunnel violates ToS for video streaming (use Tailscale instead)
 - **Alpha quality:** Might break, limited testing
 
 ---
@@ -86,8 +85,8 @@
 
 ### Stability Improvements
 - [ ] Network layer fully tested (new solution from Phase 1)
-- [ ] Automated backup system (nightly to external drive)
-- [ ] Health monitoring (alert if services down)
+- [x] Automated backup system (nightly to external drive)
+- [ ] Health monitoring dashboard (alert if services down)
 - [ ] Graceful failure recovery
 - [ ] Update mechanism that actually works
 
