@@ -56,6 +56,29 @@ services:
       - memu_net
     # NOTE: No ports exposed - cache is internal only
 
+    # === ADMIN / BOOTSTRAP SERVICE ===
+    # This runs the Setup Wizard and Admin Dashboard (app.py)
+  bootstrap:
+    container_name: memu_bootstrap
+    build:
+      context: ./bootstrap
+      dockerfile: Dockerfile
+    volumes:
+      # Mount code so edits are reflected (optional, but good for dev)
+      - ./bootstrap:/app
+      # Mount Docker socket so it can control other containers
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Mount project root to write config files (homeserver.yaml, etc)
+      - ./:/data_root
+    environment:
+      - WIZARD_PORT=8888
+      - PROJECT_ROOT=/data_root
+      - FLASK_ENV=production
+    networks:
+      - memu_net
+    ports:
+      - "8888:8888" # Exposed for local setup, but Nginx proxies to it internally
+    restart: unless-stopped
     # === CHAT SERVICES ===
 
   synapse:
