@@ -530,6 +530,15 @@ def api_health():
         ('tailscale', 'Network (Tailscale)', '🌐', None),  # Check via docker
     ]
     
+    # Service ID to Container Name mapping
+    container_map = {
+        'synapse': 'memu_synapse',
+        'immich_server': 'memu_photos',
+        'ollama': 'memu_brain',
+        'database': 'memu_postgres',
+        'tailscale': 'memu_tailscale'
+    }
+
     for service_id, name, icon, health_url in service_checks:
         status = 'unknown'
         
@@ -537,17 +546,22 @@ def api_health():
         if health_url:
             try:
                 resp = requests.get(health_url, timeout=3)
-                status = 'running' if resp.status_code == 200 else 'error'
+                status = 'running' if resp.status_code == 200 else 'stopped'
             except:
+                # If HTTP fails, fall back to Docker check
                 status = 'stopped'
-        else:
-            # Check via docker
-            result = run_cmd(['docker', 'ps', '--filter', f'name=memu_postgres', 
+
+        # If stopped or no URL, double check via Docker status
+        if not health_url or status == 'stopped':
+            container_name = container_map.get(service_id, f'memu_{service_id}')
+            result = run_cmd(['docker', 'ps', '--filter', f'name={container_name}', 
                             '--format', '{{.Status}}'], check=False)
             if 'Up' in result.stdout:
                 status = 'running'
             elif result.stdout.strip():
                 status = 'stopped'
+            else:
+                status = 'not_found'
             else:
                 status = 'not_found'
         
