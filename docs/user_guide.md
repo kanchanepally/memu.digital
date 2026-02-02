@@ -206,10 +206,17 @@ The bot is available to everyone in the family. Lists and memories are shared!
 
 ### Create Their Chat Account
 
-```bash
-sudo ./scripts/memu-admin.sh
-# Select "1. Create New Chat User"
-```
+### Add Members via Dashboard
+
+1.  Open your Admin Dashboard: `http://<device-ip>:8888/admin`
+    *   *Or click "Admin Dashboard" if you are already logged in.*
+2.  Click **"Add Family Member"**
+3.  Enter their:
+    *   **Name** (e.g., "Dad")
+    *   **Username** (e.g., "dad")
+4.  Click **"Create"**
+
+You will see a **QR Code** and a **Welcome Link**.
 
 ### Share These Instructions
 
