@@ -81,8 +81,9 @@ services:
       - memu_net
     # SECURITY: Port removed - access via Nginx proxy only
     # For local debugging: uncomment the line below
-    # ports:
-    #   - "127.0.0.1:8008:8008"
+    # SECURITY: Bound to localhost only - safe for internal usage
+    ports:
+      - "127.0.0.1:8008:8008"
 
   element:
     container_name: memu_element
