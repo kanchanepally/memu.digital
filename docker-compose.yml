@@ -61,7 +61,7 @@ services:
   synapse:
     container_name: memu_synapse
     # Updated from v1.98.0 to recent stable
-    image: matrixdotorg/synapse:v1.121.0
+    image: matrixdotorg/synapse:latest
     volumes:
       - ./synapse:/data
     environment:
