@@ -855,7 +855,7 @@ def run_setup(clean_slug, domain, admin_password, tailscale_key, server_ip, admi
             element_config = {
                 "default_server_config": {
                     "m.homeserver": {
-                        "base_url": f"http://{server_ip}:8008",
+                        "base_url": "/",
                         "server_name": domain
                     }
                 },
