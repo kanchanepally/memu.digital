@@ -442,11 +442,13 @@ def status():
 def configure():
     """Run initial configuration"""
     family_name = request.form.get('family_name', '').strip()
+    admin_name = request.form.get('admin_name', 'Admin').strip()
     admin_password = request.form.get('password', '').strip()
     tailscale_key = request.form.get('tailscale_key', '').strip()
     
     if not family_name or not admin_password:
         return "Missing family name or password", 400
+    
     if len(admin_password) < 8:
         return "Password must be at least 8 characters", 400
     
@@ -469,7 +471,7 @@ def configure():
     # Start setup thread
     thread = threading.Thread(
         target=run_setup,
-        args=(clean_slug, domain, admin_password, tailscale_key, server_ip, app.app_context),
+        args=(clean_slug, domain, admin_password, tailscale_key, server_ip, admin_name, app.app_context),
         daemon=True
     )
     thread.start()
@@ -491,10 +493,22 @@ def admin_dashboard():
         return redirect('/')
     
     config = load_sanctuary_config()
+    
+    # Get Admin Name
+    admin_name = "Admin"
+    try:
+        db = get_db()
+        user = db.execute("SELECT display_name FROM members WHERE username='admin'").fetchone()
+        if user:
+            admin_name = user['display_name']
+    except:
+        pass
+
     return render_template('admin-dashboard.html',
                           family_name=config.get('family_name', 'Family'),
                           domain=config.get('domain', 'memu.local'),
-                          tailscale_hostname=config.get('tailscale_hostname'))
+                          tailscale_hostname=config.get('tailscale_hostname'),
+                          admin_name=admin_name)
 
 
 @app.route('/api/sanctuary')
@@ -752,7 +766,7 @@ def update_state(stage, step, message, error=None, warning=None):
     print(f"[{stage}] Step {step}/12: {message}")
 
 
-def run_setup(clean_slug, domain, admin_password, tailscale_key, server_ip, app_context_provider):
+def run_setup(clean_slug, domain, admin_password, tailscale_key, server_ip, admin_name, app_context_provider):
     """Main setup process"""
     # Need new app context since this is a separate thread
     with app_context_provider():
@@ -819,7 +833,7 @@ def run_setup(clean_slug, domain, admin_password, tailscale_key, server_ip, app_
             # Persist admin in local DB
             try:
                 db.execute("INSERT OR REPLACE INTO members (username, display_name, password, user_id, is_admin, status) VALUES (?, ?, ?, ?, 1, 'online')",
-                           ('admin', 'Admin', admin_password, f'@admin:{domain}'))
+                           ('admin', admin_name, admin_password, f'@admin:{domain}'))
                 db.commit()
             except Exception as e:
                 print(f"Warning: Failed to persist admin: {e}")

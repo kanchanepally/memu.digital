@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Creating {{ family_name }} Sanctuary | Memu</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --color-deep: #1a1a2e;
@@ -20,7 +23,13 @@
             --font-family: 'Inter', -apple-system, sans-serif;
             --font-family-display: 'Plus Jakarta Sans', var(--font-family);
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             font-family: var(--font-family);
             background: linear-gradient(135deg, var(--color-deep) 0%, #2d2d4a 100%);
@@ -30,6 +39,7 @@
             justify-content: center;
             padding: 1.5rem;
         }
+
         .container {
             background: var(--color-surface);
             border-radius: 1.5rem;
@@ -39,6 +49,7 @@
             padding: 2.5rem;
             text-align: center;
         }
+
         .logo {
             width: 70px;
             height: 70px;
@@ -54,14 +65,26 @@
             margin: 0 auto 1.5rem;
             animation: gentle-pulse 2s ease-in-out infinite;
         }
+
         @keyframes gentle-pulse {
-            0%, 100% { transform: scale(1); box-shadow: 0 4px 20px rgba(233, 69, 96, 0.3); }
-            50% { transform: scale(1.05); box-shadow: 0 8px 30px rgba(233, 69, 96, 0.4); }
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: 0 4px 20px rgba(233, 69, 96, 0.3);
+            }
+
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 8px 30px rgba(233, 69, 96, 0.4);
+            }
         }
+
         .logo.complete {
             animation: none;
             background: linear-gradient(135deg, var(--color-success) 0%, #34d399 100%);
         }
+
         .title {
             font-family: var(--font-family-display);
             font-size: 1.5rem;
@@ -69,11 +92,13 @@
             color: var(--color-deep);
             margin-bottom: 0.5rem;
         }
+
         .subtitle {
             color: var(--color-text-secondary);
             font-size: 0.95rem;
             margin-bottom: 2rem;
         }
+
         .progress-bar {
             height: 8px;
             background: var(--color-border);
@@ -81,6 +106,7 @@
             overflow: hidden;
             margin-bottom: 0.75rem;
         }
+
         .progress-fill {
             height: 100%;
             background: linear-gradient(90deg, var(--color-accent) 0%, #ff6b6b 100%);
@@ -88,15 +114,22 @@
             transition: width 0.5s ease;
             width: 0%;
         }
+
         .progress-fill.complete {
             background: linear-gradient(90deg, var(--color-success) 0%, #34d399 100%);
         }
+
         .progress-text {
             font-size: 0.85rem;
             color: var(--color-text-secondary);
             margin-bottom: 2rem;
         }
-        .steps { text-align: left; margin-bottom: 2rem; }
+
+        .steps {
+            text-align: left;
+            margin-bottom: 2rem;
+        }
+
         .step {
             display: flex;
             align-items: center;
@@ -105,7 +138,11 @@
             border-bottom: 1px solid var(--color-border);
             color: var(--color-text-muted);
         }
-        .step:last-child { border-bottom: none; }
+
+        .step:last-child {
+            border-bottom: none;
+        }
+
         .step-icon {
             width: 28px;
             height: 28px;
@@ -117,18 +154,39 @@
             flex-shrink: 0;
             background: var(--color-border);
         }
-        .step.active { color: var(--color-accent); font-weight: 500; }
+
+        .step.active {
+            color: var(--color-accent);
+            font-weight: 500;
+        }
+
         .step.active .step-icon {
             background: var(--color-accent);
             color: white;
             animation: pulse-ring 1.5s ease infinite;
         }
+
         @keyframes pulse-ring {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(233, 69, 96, 0.4); }
-            50% { box-shadow: 0 0 0 8px rgba(233, 69, 96, 0); }
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(233, 69, 96, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 0 0 8px rgba(233, 69, 96, 0);
+            }
         }
-        .step.complete { color: var(--color-success); }
-        .step.complete .step-icon { background: var(--color-success); color: white; }
+
+        .step.complete {
+            color: var(--color-success);
+        }
+
+        .step.complete .step-icon {
+            background: var(--color-success);
+            color: white;
+        }
+
         .info-box {
             background: var(--color-bg);
             border-radius: 0.75rem;
@@ -137,8 +195,15 @@
             color: var(--color-text-secondary);
             text-align: left;
         }
-        .success-content { display: none; }
-        .success-content.show { display: block; }
+
+        .success-content {
+            display: none;
+        }
+
+        .success-content.show {
+            display: block;
+        }
+
         .cta-button {
             display: inline-block;
             background: linear-gradient(135deg, var(--color-accent) 0%, #ff6b6b 100%);
@@ -150,10 +215,12 @@
             margin-top: 1.5rem;
             transition: transform 0.2s, box-shadow 0.2s;
         }
+
         .cta-button:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 20px rgba(233, 69, 96, 0.3);
         }
+
         .error-box {
             background: #fef2f2;
             border: 1px solid #fecaca;
@@ -163,12 +230,33 @@
             font-size: 0.85rem;
             display: none;
         }
-        .error-box.show { display: block; }
+
+        .error-box.show {
+            display: block;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
-        <div class="logo" id="logo">M</div>
+        <div class="logo" id="logo" style="width: auto; height: auto; background: none; animation: none;">
+            <svg id="logoSvg" width="120" height="120" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="memuGradient1" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                <g id="circlesGroup" style="animation: gentle-pulse 2s ease-in-out infinite; transform-origin: center;">
+                    <circle cx="35" cy="60" r="22" fill="url(#memuGradient1)" opacity="0.9" />
+                    <circle cx="55" cy="60" r="22" fill="url(#memuGradient1)" opacity="0.85" />
+                    <circle cx="45" cy="42" r="22" fill="url(#memuGradient1)" />
+                </g>
+                <path id="checkMark" d="M30 50 L45 65 L70 35" fill="none" stroke="#10b981" stroke-width="8"
+                    stroke-linecap="round" stroke-linejoin="round"
+                    style="display: none; stroke-dasharray: 60; stroke-dashoffset: 60; transition: stroke-dashoffset 0.5s ease;" />
+            </svg>
+        </div>
         <h1 class="title" id="title">Creating Your Sanctuary</h1>
         <p class="subtitle" id="subtitle">Setting up a private space for the {{ family_name }} family...</p>
 
@@ -206,7 +294,8 @@
 
         <div class="info-box" id="infoBox">
             <strong>What's happening?</strong><br>
-            We're setting up your private family server with encrypted chat, photo backup, and an AI assistant. This usually takes 3-5 minutes.
+            We're setting up your private family server with encrypted chat, photo backup, and an AI assistant. This
+            usually takes 3-5 minutes.
         </div>
 
         <div class="error-box" id="errorBox"></div>
@@ -223,7 +312,7 @@
         function updateUI(data) {
             const { stage, step, message, error } = data;
             const progress = Math.min((step / 12) * 100, 100);
-            
+
             document.getElementById('progressFill').style.width = progress + '%';
             document.getElementById('progressText').textContent = message;
 
@@ -231,7 +320,7 @@
                 const min = parseInt(stepEl.dataset.min);
                 const max = parseInt(stepEl.dataset.max);
                 stepEl.classList.remove('active', 'complete');
-                
+
                 if (step > max) {
                     stepEl.classList.add('complete');
                     stepEl.querySelector('.step-icon').textContent = '✓';
@@ -251,15 +340,24 @@
 
         function showSuccess(data) {
             clearInterval(pollInterval);
-            document.getElementById('logo').classList.add('complete');
-            document.getElementById('logo').textContent = '✓';
+            // Stop pulsing
+            document.getElementById('circlesGroup').style.animation = 'none';
+            document.getElementById('circlesGroup').style.opacity = '0.1';
+
+            // Show checkmark
+            const check = document.getElementById('checkMark');
+            check.style.display = 'block';
+            // Force reflow
+            check.getBoundingClientRect();
+            check.style.strokeDashoffset = '0';
+
             document.getElementById('title').textContent = 'Welcome Home!';
             document.getElementById('subtitle').textContent = 'Your family sanctuary is ready.';
             document.getElementById('progressFill').classList.add('complete');
             document.getElementById('progressFill').style.width = '100%';
             document.getElementById('infoBox').style.display = 'none';
             document.getElementById('successContent').classList.add('show');
-            
+
             document.querySelectorAll('.step').forEach(stepEl => {
                 stepEl.classList.remove('active');
                 stepEl.classList.add('complete');
@@ -292,4 +390,5 @@
         pollStatus();
     </script>
 </body>
+
 </html>
