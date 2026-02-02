@@ -232,8 +232,7 @@ services:
       - NET_ADMIN
       - NET_RAW
     restart: unless-stopped
-    networks:
-      - memu_net
+    network_mode: host
     # NOTE: Tailscale creates its own encrypted tunnel - no ports needed
     # TODO (v1.0): Consider using Docker secrets for TS_AUTHKEY
 
