@@ -81,9 +81,9 @@ services:
       - memu_net
     # SECURITY: Port removed - access via Nginx proxy only
     # For local debugging: uncomment the line below
-    # SECURITY: Bound to localhost only - safe for internal usage
+    # SECURITY: Accessible via Tailscale
     ports:
-      - "127.0.0.1:8008:8008"
+      - "8008:8008"
 
   element:
     container_name: memu_element
@@ -129,11 +129,11 @@ services:
       start_period: 60s
     networks:
       - memu_net
-    # SECURITY: Bound to localhost only - not accessible from public internet
+    # SECURITY: Accessible via Tailscale
     # Access via Tailscale: http://memu-hub:2283
     # This port IS needed for Immich mobile apps to connect
     ports:
-      - "127.0.0.1:2283:3001"
+      - "2283:3001"
 
   immich_workers:
     container_name: memu_photos_workers
@@ -188,9 +188,9 @@ services:
       - memu_net
     # SECURITY: Bound to localhost only - not accessible from public internet
     # The intelligence service connects via internal Docker network
-    # SECURITY: Bound to localhost only - safe for internal usage
+    # SECURITY: Accessible via Tailscale
     ports:
-      - "127.0.0.1:11434:11434"
+      - "11434:11434"
 
   intelligence:
     container_name: memu_intelligence
