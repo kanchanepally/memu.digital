@@ -7,128 +7,69 @@ Memu OS is a **vertically integrated Private Cloud Appliance** designed to provi
 **Key Philosophies:**
 - **Tenant-Isolated:** One family, one physical device.
 - **Edge-Based Safety:** Safety scanning occurs locally on the NPU, not in the cloud.
-- **Network Agnostic:** Works behind any router via encrypted tunnels.
+- **Network Agnostic:** Works behind any router via encrypted tunnels (Tailscale).
 
 ## The Stack
 
 ### Hardware Layer
-- **Compute:** Raspberry Pi 5 (8GB RAM recommended).
+- **Compute:** Raspberry Pi 5 (8GB RAM recommended) or x86 NUC.
 - **Storage:** NVMe SSD (PCIe Gen 2) - Holds OS and User Data.
 - **AI Accelerator:** Raspberry Pi AI Kit (Hailo-8L NPU) - Offloads computer vision tasks.
-- **Boot:** SD Card (Bootloader only).
+- **Boot:** SD Card (Bootloader only) or NVMe.
 
 ### Routing Layer (The "Front Door")
-- **Ingress:** Cloudflare Tunnel (`cloudflared`). Zero-configuration remote access without open ports.
-- **Internal Proxy:** Nginx. Terminates SSL (internally), handles `/.well-known` discovery, and routes traffic to containers.
+- **Ingress:** **Tailscale** (Mesh VPN). Provides secure, encrypted remote access without opening public ports.
+- **DNS:** **MagicDNS**. Allows accessing services via friendly names (e.g., `http://memu-hub`) instead of IPs.
+- **Internal Proxy:** **Nginx**.
+    -   Listens on Port 80.
+    -   Routes traffic to internal containers based on URL paths (`/admin`, `/_matrix`, `/`).
+    -   Handles `/.well-known` discovery for Matrix federation.
 
 ### Application Layer (Docker Compose)
 
-The system runs as a cohesive suite of Docker containers:
+The system runs as a cohesive suite of Docker containers connected via numbers `memu_net` bridge network:
 
-#### Core Infrastructure
-- **Database:** `immich-postgres` (PostgreSQL 15 + `pgvecto.rs` extension). Unified database for Chat, Photos, and AI embeddings.
-- **Cache:** `redis` (Redis 6.2). Shared cache for Immich and other services.
+#### 1. Setup & Management (The "OS")
+-   **Service:** `bootstrap` (Containerized Python/Flask).
+-   **Function:**
+    -   Host of the **Setup Wizard** and **Admin Dashboard**.
+    -   Manages `memu.db` (SQLite) for user/family metadata.
+    -   Connects to Docker Socket (`/var/run/docker.sock`) to manage the stack.
+    -   Provides authentication (`/login`) for administrative tasks.
 
-#### Modules
-1.  **Memu Chat:**
-    -   **Backend:** `synapse` (Matrix Homeserver).
-    -   **Frontend:** `element` (Element Web, skinned for Memu).
-2.  **Memu Memories:**
-    -   **Server:** `immich-server`.
-    -   **Workers:** `immich-microservices`.
-# Memu OS Architecture
+#### 2. Core Infrastructure
+-   **Database:** `memu_postgres` (PostgreSQL 15 + `pgvecto.rs`). Unified database for Chat, Photos, and AI embeddings.
+-   **Cache:** `memu_redis` (Redis 6.2). Shared cache.
+-   **Network:** `memu_tailscale` (Tailscale). Runs in `host` network mode to provide connectivity to the entire stack.
 
-## System Overview
+#### 3. Memu Chat (Matrix)
+-   **Backend:** `synapse` (Matrix Homeserver).
+-   **Frontend:** `element` (Element Web, highly customized config).
+-   **Routing:** `/` -> Element, `/_matrix` -> Synapse.
 
-Memu OS is a **vertically integrated Private Cloud Appliance** designed to provide a "Digital Sanctuary" for families. It combines the convenience of modern cloud services with the sovereignty of local hosting.
+#### 4. Memu Memories (Immich)
+-   **Server:** `immich_server` (Monolithic container). Handles API, web, and microservices (v1.124+).
+-   **ML Engine:** `immich_ml` (Hardware accelerated via Hailo NPU where available).
+-   **Storage:** Photos stored in `./photos` (mapped to host).
 
-**Key Philosophies:**
-- **Tenant-Isolated:** One family, one physical device.
-- **Edge-Based Safety:** Safety scanning occurs locally on the NPU, not in the cloud.
-- **Network Agnostic:** Works behind any router via encrypted tunnels.
+#### 5. Memu Intelligence (AI)
+-   **LLM Server:** `ollama` (Running Llama 3.2 3B).
+-   **Service:** `intelligence` (Python bot).
+    -   Listens to Matrix chat events.
+    -   Orchestrates memory and RAG (Retrieval Augmented Generation).
 
-## The Stack
+## Data Flow
 
-### Hardware Layer
-- **Compute:** Raspberry Pi 5 (8GB RAM recommended).
-- **Storage:** NVMe SSD (PCIe Gen 2) - Holds OS and User Data.
-- **AI Accelerator:** Raspberry Pi AI Kit (Hailo-8L NPU) - Offloads computer vision tasks.
-- **Boot:** SD Card (Bootloader only).
+### User Access (Remote or Local)
+1.  **User Device** (Phone/Laptop on Tailscale) requests `http://memu-hub` (MagicDNS).
+2.  **Tailscale Tunnel** accepts traffic and forwards to Host Port 80.
+3.  **Nginx (Proxy)** receives request:
+    -   Path `/admin` -> Proxies to `bootstrap:8888`.
+    -   Path `/` -> Proxies to `element:80`.
+    -   Path `/photos` (or Port 2283) -> Proxies to `immich_server:2283`.
+4.  **Service** processes request and queries `postgres` or `redis`.
 
-### Routing Layer (The "Front Door")
-- **Ingress:** Cloudflare Tunnel (`cloudflared`). Zero-configuration remote access without open ports.
-- **Internal Proxy:** Nginx. Terminates SSL (internally), handles `/.well-known` discovery, and routes traffic to containers.
-
-### Application Layer (Docker Compose)
-
-The system runs as a cohesive suite of Docker containers:
-
-#### Core Infrastructure
-- **Database:** `immich-postgres` (PostgreSQL 15 + `pgvecto.rs` extension). Unified database for Chat, Photos, and AI embeddings.
-- **Cache:** `redis` (Redis 6.2). Shared cache for Immich and other services.
-
-#### Modules
-1.  **Memu Chat:**
-    -   **Backend:** `synapse` (Matrix Homeserver).
-    -   **Frontend:** `element` (Element Web, skinned for Memu).
-2.  **Memu Memories:**
-    -   **Server:** `immich-server`.
-    -   **Workers:** `immich-microservices`.
-    -   **ML Engine:** `immich-machine-learning` (Hardware accelerated via Hailo NPU).
-3.  **Memu Intelligence:**
-    -   **LLM Server:** `ollama` (Running Llama 3.2 3B).
-# Memu OS Architecture
-
-## System Overview
-
-Memu OS is a **vertically integrated Private Cloud Appliance** designed to provide a "Digital Sanctuary" for families. It combines the convenience of modern cloud services with the sovereignty of local hosting.
-
-**Key Philosophies:**
-- **Tenant-Isolated:** One family, one physical device.
-- **Edge-Based Safety:** Safety scanning occurs locally on the NPU, not in the cloud.
-- **Network Agnostic:** Works behind any router via encrypted tunnels.
-
-## The Stack
-
-### Hardware Layer
-- **Compute:** Raspberry Pi 5 (8GB RAM recommended).
-- **Storage:** NVMe SSD (PCIe Gen 2) - Holds OS and User Data.
-- **AI Accelerator:** Raspberry Pi AI Kit (Hailo-8L NPU) - Offloads computer vision tasks.
-- **Boot:** SD Card (Bootloader only).
-
-### Routing Layer (The "Front Door")
-- **Ingress:** Cloudflare Tunnel (`cloudflared`). Zero-configuration remote access without open ports.
-- **Internal Proxy:** Nginx. Terminates SSL (internally), handles `/.well-known` discovery, and routes traffic to containers.
-
-### Application Layer (Docker Compose)
-
-The system runs as a cohesive suite of Docker containers:
-
-#### Core Infrastructure
-- **Database:** `immich-postgres` (PostgreSQL 15 + `pgvecto.rs` extension). Unified database for Chat, Photos, and AI embeddings.
-- **Cache:** `redis` (Redis 6.2). Shared cache for Immich and other services.
-
-#### Modules
-1.  **Memu Chat:**
-    -   **Backend:** `synapse` (Matrix Homeserver).
-    -   **Frontend:** `element` (Element Web, skinned for Memu).
-2.  **Memu Memories:**
-    -   **Server:** `immich-server`.
-    -   **Workers:** `immich-microservices`.
-    -   **ML Engine:** `immich-machine-learning` (Hardware accelerated via Hailo NPU).
-3.  **Memu Intelligence:**
-    -   **LLM Server:** `ollama` (Running Llama 3.2 3B).
-    -   **Safety:** Local Nudity/CSAM scanning at the edge.
-#### Setup & Management
--   **Bootstrap:** Python/Flask application for initial "Day 0" configuration (Web UI).
--   **Location:** `/var/lib/docker/volumes/` (Mapped to NVMe).
--   **Format:** Standard Linux filesystems (ext4). Photos stored as standard files, not blobs.
-
-### 1. Setup Mode (Day 0)
--   **Discovery:** mDNS broadcasts `memu.local`.
--   **Flow:** User Phone -> `http://memu.local:80` -> Nginx -> Bootstrap App.
--   **Action:** User enters Family Name -> System generates `.env` & secrets -> Registers Matrix Users -> Launches Production Stack.
-### Backup Protocol (3-2-1)
--   **Live:** PostgreSQL WAL (Write Ahead Log).
--   **Nightly:** `pg_dump` to local compressed archive.
--   **Offsite:** Encrypted backup to User's Cloud Storage (Rclone) or Physical USB (Future).
+### Backup Protocol
+-   **Database:** Periodic dumps of `memu_postgres`.
+-   **Files:** `./photos` directory.
+-   **Config:** `.env` and `docker-compose.yml`.
