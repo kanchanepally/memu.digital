@@ -562,8 +562,6 @@ def api_health():
                 status = 'stopped'
             else:
                 status = 'not_found'
-            else:
-                status = 'not_found'
         
         services.append({
             'id': service_id,
