@@ -103,7 +103,7 @@ services:
     container_name: memu_photos
     # Updated to recent stable
     image: ghcr.io/immich-app/immich-server:v1.124.0
-    command: [ "start.sh", "immich" ]
+    # command: [ "start.sh", "immich" ] # Deprecated, using default
     restart: unless-stopped
     volumes:
       - ${UPLOAD_LOCATION:-./photos}:/usr/src/app/upload
@@ -133,29 +133,29 @@ services:
     ports:
       - "2283:3001"
 
-  immich_workers:
-    container_name: memu_photos_workers
-    # Updated to match immich_server version
-    image: ghcr.io/immich-app/immich-server:v1.124.0
-    command: [ "start.sh", "microservices" ]
-    restart: unless-stopped
-    volumes:
-      - ${UPLOAD_LOCATION:-./photos}:/usr/src/app/upload
-      - /etc/localtime:/etc/localtime:ro
-    environment:
-      - DB_HOSTNAME=database
-      - DB_USERNAME=${DB_USER:-memu_user}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_DATABASE_NAME=${DB_NAME:-immich}
-      - REDIS_HOSTNAME=cache
-    depends_on:
-      database:
-        condition: service_healthy
-      cache:
-        condition: service_healthy
-    networks:
-      - memu_net
-    # NOTE: No ports - workers are internal only
+  # immich_workers:
+  #   container_name: memu_photos_workers
+  #   # Updated to match immich_server version
+  #   image: ghcr.io/immich-app/immich-server:v1.124.0
+  #   command: [ "start.sh", "microservices" ]
+  #   restart: unless-stopped
+  #   volumes:
+  #     - ${UPLOAD_LOCATION:-./photos}:/usr/src/app/upload
+  #     - /etc/localtime:/etc/localtime:ro
+  #   environment:
+  #     - DB_HOSTNAME=database
+  #     - DB_USERNAME=${DB_USER:-memu_user}
+  #     - DB_PASSWORD=${DB_PASSWORD}
+  #     - DB_DATABASE_NAME=${DB_NAME:-immich}
+  #     - REDIS_HOSTNAME=cache
+  #   depends_on:
+  #     database:
+  #       condition: service_healthy
+  #     cache:
+  #       condition: service_healthy
+  #   networks:
+  #     - memu_net
+  #   # NOTE: No ports - workers are internal only
 
   immich_ml:
     container_name: memu_photos_ml
