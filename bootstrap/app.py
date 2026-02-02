@@ -296,7 +296,7 @@ def get_base_url():
     # Try Tailscale hostname first
     ts_hostname = config.get('tailscale_hostname') or get_tailscale_hostname()
     if ts_hostname:
-        return f"https://{ts_hostname}"
+        return f"http://{ts_hostname}"
     
     # Fallback to local IP
     try:
@@ -734,8 +734,8 @@ def welcome_page(username):
     # Determine URLs
     ts_hostname = get_tailscale_hostname()
     if ts_hostname:
-        chat_url = f'https://{ts_hostname}'
-        photos_url = f'https://{ts_hostname}:8443'
+        chat_url = f'http://{ts_hostname}'
+        photos_url = f'http://{ts_hostname}:2283'
     else:
         chat_url = f'http://{request.host.split(":")[0]}'
         photos_url = f'http://{request.host.split(":")[0]}:2283'
@@ -938,6 +938,16 @@ def generate_nginx_config(domain):
     listen 80;
     server_name localhost;
     resolver 127.0.0.11 valid=30s;
+
+    # === Admin & Setup Routes (Bootstrap Service) ===
+    # These need to go to the bootstrap container on port 8888
+    location ~ ^/(admin|login|logout|welcome|api|status|static) {{
+        set $upstream_bootstrap http://bootstrap:8888;
+        proxy_pass $upstream_bootstrap;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host $host;
+    }}
 
     location ~ ^/(_matrix|_synapse/client) {{
         set $upstream_synapse http://synapse:8008;
