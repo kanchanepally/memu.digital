@@ -94,11 +94,9 @@ services:
     restart: unless-stopped
     networks:
       - memu_net
-    # SECURITY: Port removed - access via Nginx proxy only
-    # For local debugging: uncomment the line below
-    # ports:
-    #   - "127.0.0.1:8080:80"
-
+    # SECURITY: Accessible via Tailscale
+    ports:
+      - "8080:80"
     # === PHOTO SERVICES (IMMICH) ===
 
   immich_server:
