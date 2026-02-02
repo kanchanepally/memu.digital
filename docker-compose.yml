@@ -103,7 +103,6 @@ services:
     container_name: memu_photos
     # Updated to recent stable
     image: ghcr.io/immich-app/immich-server:v1.124.0
-    command: [ "start.sh", "immich" ]
     restart: unless-stopped
     volumes:
       - ${UPLOAD_LOCATION:-./photos}:/usr/src/app/upload
@@ -137,7 +136,6 @@ services:
     container_name: memu_photos_workers
     # Updated to match immich_server version
     image: ghcr.io/immich-app/immich-server:v1.124.0
-    command: [ "start.sh", "microservices" ]
     restart: unless-stopped
     volumes:
       - ${UPLOAD_LOCATION:-./photos}:/usr/src/app/upload
