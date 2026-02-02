@@ -542,7 +542,7 @@ def api_health():
                 status = 'stopped'
         else:
             # Check via docker
-            result = run_cmd(['docker', 'ps', '--filter', f'name=memu_{service_id}', 
+            result = run_cmd(['docker', 'ps', '--filter', f'name=memu_postgres', 
                             '--format', '{{.Status}}'], check=False)
             if 'Up' in result.stdout:
                 status = 'running'

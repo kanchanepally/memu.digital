@@ -188,9 +188,9 @@ services:
       - memu_net
     # SECURITY: Bound to localhost only - not accessible from public internet
     # The intelligence service connects via internal Docker network
-    # For local debugging: uncomment to access Ollama API directly
-    # ports:
-    #   - "127.0.0.1:11434:11434"
+    # SECURITY: Bound to localhost only - safe for internal usage
+    ports:
+      - "127.0.0.1:11434:11434"
 
   intelligence:
     container_name: memu_intelligence
