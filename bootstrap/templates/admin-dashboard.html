@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ family_name }} Sanctuary | Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-deep: #1a1a2e;
+            --color-primary: #16213e;
+            --color-accent: #e94560;
+            --color-accent-hover: #d63850;
+            --color-success: #10b981;
+            --color-success-soft: #ecfdf5;
+            --color-warning: #f59e0b;
+            --color-warning-soft: #fffbeb;
+            --color-error: #ef4444;
+            --color-error-soft: #fef2f2;
+            --color-bg: #f8fafc;
+            --color-surface: #ffffff;
+            --color-border: #e2e8f0;
+            --color-text: #1e293b;
+            --color-text-secondary: #64748b;
+            --color-text-muted: #94a3b8;
+            --font-family: 'Inter', -apple-system, sans-serif;
+            --font-family-display: 'Plus Jakarta Sans', var(--font-family);
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: var(--font-family);
+            background: var(--color-bg);
+            min-height: 100vh;
+            color: var(--color-text);
+        }
+
+        .layout { display: flex; min-height: 100vh; }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: var(--color-deep);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-logo-mark {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--color-accent) 0%, #ff6b6b 100%);
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-family-display);
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .sidebar-logo-text {
+            color: white;
+            font-family: var(--font-family-display);
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .nav-section { margin-bottom: 1.5rem; }
+
+        .nav-section-title {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 0.75rem;
+            padding: 0 0.75rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            margin-bottom: 0.25rem;
+        }
+
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: var(--color-accent); color: white; }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sanctuary-info {
+            padding: 0.75rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .sanctuary-name { color: white; font-weight: 600; margin-bottom: 0.25rem; }
+        .sanctuary-url { color: rgba(255,255,255,0.5); font-family: monospace; font-size: 0.7rem; word-break: break-all; }
+
+        /* Main */
+        .main { flex: 1; margin-left: 260px; padding: 2rem; }
+
+        .page-header { margin-bottom: 2rem; }
+        .page-title {
+            font-family: var(--font-family-display);
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--color-deep);
+            margin-bottom: 0.5rem;
+        }
+        .page-subtitle { color: var(--color-text-secondary); font-size: 0.95rem; }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--color-surface);
+            border-radius: var(--radius-xl);
+            padding: 1.25rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            border: 1px solid var(--color-border);
+        }
+
+        .stat-icon { font-size: 1.5rem; margin-bottom: 0.75rem; }
+        .stat-value {
+            font-family: var(--font-family-display);
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--color-deep);
+        }
+        .stat-label { font-size: 0.85rem; color: var(--color-text-secondary); }
+
+        .stat-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            margin-top: 0.5rem;
+        }
+
+        .stat-status.healthy { background: var(--color-success-soft); color: var(--color-success); }
+        .stat-status.warning { background: var(--color-warning-soft); color: var(--color-warning); }
+        .stat-status.error { background: var(--color-error-soft); color: var(--color-error); }
+
+        /* Section */
+        .section {
+            background: var(--color-surface);
+            border-radius: var(--radius-xl);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            border: 1px solid var(--color-border);
+            margin-bottom: 1.5rem;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .section-title {
+            font-family: var(--font-family-display);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--color-deep);
+        }
+
+        .section-body { padding: 1.5rem; }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            font-family: var(--font-family);
+            font-size: 0.875rem;
+            font-weight: 600;
+            border-radius: var(--radius-lg);
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-primary { background: var(--color-accent); color: white; }
+        .btn-primary:hover { background: var(--color-accent-hover); transform: translateY(-1px); }
+        .btn-secondary { background: var(--color-bg); color: var(--color-text); border: 1px solid var(--color-border); }
+        .btn-secondary:hover { background: var(--color-border); }
+        .btn-sm { padding: 0.5rem 0.75rem; font-size: 0.8rem; }
+
+        /* Table */
+        .members-table { width: 100%; border-collapse: collapse; }
+        .members-table th {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-text-muted);
+            border-bottom: 1px solid var(--color-border);
+        }
+        .members-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--color-border);
+            vertical-align: middle;
+        }
+        .members-table tr:last-child td { border-bottom: none; }
+
+        .member-info { display: flex; align-items: center; gap: 0.75rem; }
+        .member-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--color-accent) 0%, #ff6b6b 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .member-name { font-weight: 600; color: var(--color-text); }
+        .member-username { font-size: 0.8rem; color: var(--color-text-muted); font-family: monospace; }
+        .member-status { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.8rem; font-weight: 500; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .status-dot.online { background: var(--color-success); }
+        .status-dot.offline { background: var(--color-text-muted); }
+        .status-dot.invited { background: var(--color-warning); }
+        .member-actions { display: flex; gap: 0.5rem; }
+
+        /* Services */
+        .services-list { display: flex; flex-direction: column; gap: 0.75rem; }
+        .service-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: var(--color-bg);
+            border-radius: var(--radius-lg);
+        }
+        .service-info { display: flex; align-items: center; gap: 0.75rem; }
+        .service-icon { font-size: 1.25rem; }
+        .service-name { font-weight: 600; color: var(--color-text); }
+        .service-desc { font-size: 0.8rem; color: var(--color-text-muted); }
+        .service-status { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 500; }
+        .service-status.running { color: var(--color-success); }
+        .service-status.stopped { color: var(--color-error); }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s;
+        }
+        .modal-overlay.show { opacity: 1; visibility: visible; }
+
+        .modal {
+            background: var(--color-surface);
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 480px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: translateY(20px);
+            transition: transform 0.2s;
+        }
+        .modal-overlay.show .modal { transform: translateY(0); }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--color-border);
+        }
+        .modal-title { font-family: var(--font-family-display); font-size: 1.25rem; font-weight: 600; }
+        .modal-close { background: none; border: none; font-size: 1.5rem; color: var(--color-text-muted); cursor: pointer; }
+        .modal-body { padding: 1.5rem; }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            padding: 1.25rem 1.5rem;
+            border-top: 1px solid var(--color-border);
+            background: var(--color-bg);
+        }
+
+        /* Form */
+        .form-group { margin-bottom: 1.25rem; }
+        .form-label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; }
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            font-family: var(--font-family);
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            background: var(--color-surface);
+            color: var(--color-text);
+            transition: border-color 0.2s;
+        }
+        .form-input:focus { outline: none; border-color: var(--color-accent); }
+        .form-hint { font-size: 0.8rem; color: var(--color-text-muted); margin-top: 0.5rem; }
+
+        /* QR Display */
+        .qr-display { text-align: center; padding: 1.5rem; }
+        .qr-code {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 1rem;
+            background: var(--color-bg);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+        .qr-code img { width: 100%; height: 100%; }
+        .qr-instructions { font-size: 0.9rem; color: var(--color-text-secondary); margin-bottom: 1rem; }
+        .qr-url {
+            background: var(--color-bg);
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: var(--color-text-secondary);
+            word-break: break-all;
+            margin-bottom: 1rem;
+        }
+        .qr-actions { display: flex; gap: 0.75rem; justify-content: center; }
+
+        .credentials-box {
+            background: var(--color-bg);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        .credentials-box h4 { font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 0.5rem; }
+        .credential-row { display: flex; justify-content: space-between; padding: 0.5rem 0; }
+        .credential-label { color: var(--color-text-secondary); }
+        .credential-value { font-family: monospace; font-weight: 600; }
+
+        /* Loading */
+        .loading { opacity: 0.5; pointer-events: none; }
+
+        @media (max-width: 900px) {
+            .sidebar { width: 100%; height: auto; position: relative; }
+            .main { margin-left: 0; }
+            .layout { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <div class="sidebar-logo-mark">M</div>
+                <span class="sidebar-logo-text">Memu</span>
+            </div>
+
+            <nav>
+                <div class="nav-section">
+                    <div class="nav-section-title">Overview</div>
+                    <a href="#" class="nav-item active">
+                        <span>🏠</span> Dashboard
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Family</div>
+                    <a href="#" class="nav-item">
+                        <span>👨‍👩‍👧‍👦</span> Members
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Services</div>
+                    <a href="#" class="nav-item">
+                        <span>📷</span> Photos
+                    </a>
+                    <a href="#" class="nav-item">
+                        <span>🤖</span> AI Assistant
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">System</div>
+                    <a href="#" class="nav-item">
+                        <span>💾</span> Backups
+                    </a>
+                    <a href="#" class="nav-item">
+                        <span>⚙️</span> Settings
+                    </a>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="sanctuary-info">
+                    <div class="sanctuary-name">{{ family_name }} Sanctuary</div>
+                    <div class="sanctuary-url" id="sanctuaryUrl">{{ tailscale_hostname or domain }}</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div class="page-header">
+                <h1 class="page-title">Welcome back 👋</h1>
+                <p class="page-subtitle">Here's what's happening in your family's sanctuary.</p>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-icon">👨‍👩‍👧‍👦</div>
+                    <div class="stat-value" id="memberCount">-</div>
+                    <div class="stat-label">Family Members</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📷</div>
+                    <div class="stat-value">-</div>
+                    <div class="stat-label">Photos</div>
+                    <div class="stat-status healthy"><span>●</span> Syncing</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💬</div>
+                    <div class="stat-value">-</div>
+                    <div class="stat-label">Messages</div>
+                    <div class="stat-status healthy"><span>●</span> Connected</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🤖</div>
+                    <div class="stat-value">-</div>
+                    <div class="stat-label">AI Requests</div>
+                    <div class="stat-status healthy"><span>●</span> Ready</div>
+                </div>
+            </div>
+
+            <!-- Family Members -->
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Family Members</h2>
+                    <button class="btn btn-primary" onclick="openAddMemberModal()">
+                        <span>+</span> Add Member
+                    </button>
+                </div>
+                <div class="section-body" style="padding: 0;">
+                    <table class="members-table">
+                        <thead>
+                            <tr>
+                                <th>Member</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="membersTableBody">
+                            <tr>
+                                <td colspan="3" style="text-align: center; color: var(--color-text-muted);">
+                                    Loading...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Services -->
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Services</h2>
+                    <button class="btn btn-secondary btn-sm" onclick="refreshHealth()">Refresh</button>
+                </div>
+                <div class="section-body">
+                    <div class="services-list" id="servicesList">
+                        <div style="text-align: center; color: var(--color-text-muted);">Loading...</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Member Modal -->
+    <div class="modal-overlay" id="addMemberModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Add Family Member</h3>
+                <button class="modal-close" onclick="closeModal('addMember')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addMemberForm" onsubmit="createMember(event)">
+                    <div class="form-group">
+                        <label class="form-label">Display Name</label>
+                        <input type="text" class="form-input" id="memberName" placeholder="e.g., Alice, Dad, Grandma" required>
+                        <p class="form-hint">How they'll appear in chat and photos.</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="form-input" id="memberUsername" placeholder="e.g., alice" pattern="[a-z0-9_]+">
+                        <p class="form-hint">Lowercase letters, numbers, underscores only. Auto-generated if blank.</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password (optional)</label>
+                        <input type="text" class="form-input" id="memberPassword" placeholder="Leave blank to auto-generate">
+                        <p class="form-hint">They'll see this on their welcome page.</p>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('addMember')">Cancel</button>
+                <button class="btn btn-primary" type="submit" form="addMemberForm">Create & Get QR</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR Code Modal -->
+    <div class="modal-overlay" id="qrCodeModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Welcome Card for <span id="qrMemberName">Member</span></h3>
+                <button class="modal-close" onclick="closeModal('qrCode')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="qr-display">
+                    <div class="qr-code">
+                        <img id="qrCodeImage" src="" alt="QR Code">
+                    </div>
+                    <p class="qr-instructions">
+                        Have <strong id="qrMemberName2">them</strong> scan this code with their phone camera.
+                    </p>
+                    <div class="qr-url" id="qrUrl"></div>
+                    
+                    <div class="credentials-box" id="credentialsBox" style="display: none;">
+                        <h4>Chat Login Credentials</h4>
+                        <div class="credential-row">
+                            <span class="credential-label">Username</span>
+                            <span class="credential-value" id="credUsername"></span>
+                        </div>
+                        <div class="credential-row">
+                            <span class="credential-label">Password</span>
+                            <span class="credential-value" id="credPassword"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="qr-actions">
+                        <button class="btn btn-secondary" onclick="copyWelcomeLink()">📋 Copy Link</button>
+                        <button class="btn btn-primary" onclick="printCard()">🖨️ Print Card</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let currentQRData = {};
+
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadMembers();
+            loadHealth();
+        });
+
+        // API Calls
+        async function loadMembers() {
+            try {
+                const resp = await fetch('/api/family/members');
+                const data = await resp.json();
+                renderMembers(data.members || []);
+                document.getElementById('memberCount').textContent = data.members?.length || 0;
+            } catch (e) {
+                console.error('Failed to load members:', e);
+            }
+        }
+
+        async function loadHealth() {
+            try {
+                const resp = await fetch('/api/health');
+                const data = await resp.json();
+                renderServices(data.services || []);
+            } catch (e) {
+                console.error('Failed to load health:', e);
+            }
+        }
+
+        function refreshHealth() {
+            document.getElementById('servicesList').innerHTML = '<div style="text-align: center;">Refreshing...</div>';
+            loadHealth();
+        }
+
+        // Render functions
+        function renderMembers(members) {
+            const tbody = document.getElementById('membersTableBody');
+            
+            if (members.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: var(--color-text-muted); padding: 2rem;">
+                            No family members yet. Click "Add Member" to invite someone.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = members.map(m => `
+                <tr>
+                    <td>
+                        <div class="member-info">
+                            <div class="member-avatar" style="background: linear-gradient(135deg, ${getAvatarColor(m.username)});">
+                                ${(m.display_name || m.username)[0].toUpperCase()}
+                            </div>
+                            <div>
+                                <div class="member-name">${m.display_name || m.username}${m.is_admin ? ' (You)' : ''}</div>
+                                <div class="member-username">@${m.username}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="member-status">
+                            <span class="status-dot ${m.status || 'offline'}"></span>
+                            ${capitalizeFirst(m.status || 'offline')}
+                        </div>
+                    </td>
+                    <td>
+                        ${m.is_admin ? 
+                            '<span style="color: var(--color-text-muted); font-size: 0.8rem;">Admin</span>' :
+                            `<button class="btn btn-secondary btn-sm" onclick="showQRCode('${m.username}', '${m.display_name || m.username}', '${m.password || ''}')">📱 QR</button>`
+                        }
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderServices(services) {
+            const container = document.getElementById('servicesList');
+            
+            container.innerHTML = services.map(s => `
+                <div class="service-item">
+                    <div class="service-info">
+                        <span class="service-icon">${s.icon}</span>
+                        <div>
+                            <div class="service-name">${s.name}</div>
+                        </div>
+                    </div>
+                    <div class="service-status ${s.status === 'running' ? 'running' : 'stopped'}">
+                        <span>●</span> ${capitalizeFirst(s.status)}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Modal functions
+        function openAddMemberModal() {
+            document.getElementById('addMemberModal').classList.add('show');
+            document.getElementById('memberName').focus();
+        }
+
+        function closeModal(type) {
+            document.getElementById(type === 'addMember' ? 'addMemberModal' : 'qrCodeModal').classList.remove('show');
+        }
+
+        async function createMember(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('memberName').value.trim();
+            const username = document.getElementById('memberUsername').value.trim().toLowerCase();
+            const password = document.getElementById('memberPassword').value.trim();
+            
+            const btn = event.target.querySelector('button[type="submit"]') || document.querySelector('#addMemberModal .btn-primary');
+            btn.textContent = 'Creating...';
+            btn.disabled = true;
+            
+            try {
+                const resp = await fetch('/api/family/members', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        display_name: name,
+                        username: username || undefined,
+                        password: password || undefined
+                    })
+                });
+                
+                const data = await resp.json();
+                
+                if (data.success) {
+                    closeModal('addMember');
+                    document.getElementById('addMemberForm').reset();
+                    
+                    // Show QR code
+                    showQRCode(data.member.username, data.member.display_name, data.member.password);
+                    
+                    // Refresh member list
+                    loadMembers();
+                } else {
+                    alert(data.error || 'Failed to create member');
+                }
+            } catch (e) {
+                alert('Error creating member: ' + e.message);
+            } finally {
+                btn.textContent = 'Create & Get QR';
+                btn.disabled = false;
+            }
+        }
+
+        function showQRCode(username, displayName, password) {
+            currentQRData = { username, displayName, password };
+            
+            document.getElementById('qrMemberName').textContent = displayName;
+            document.getElementById('qrMemberName2').textContent = displayName;
+            document.getElementById('qrCodeImage').src = `/api/family/members/${username}/qr`;
+            
+            // Get welcome URL from sanctuary info
+            fetch('/api/sanctuary').then(r => r.json()).then(data => {
+                const welcomeUrl = `${data.base_url}/welcome/${username}`;
+                document.getElementById('qrUrl').textContent = welcomeUrl;
+            });
+            
+            // Show credentials if available
+            if (password) {
+                document.getElementById('credentialsBox').style.display = 'block';
+                document.getElementById('credUsername').textContent = username;
+                document.getElementById('credPassword').textContent = password;
+            } else {
+                document.getElementById('credentialsBox').style.display = 'none';
+            }
+            
+            document.getElementById('qrCodeModal').classList.add('show');
+        }
+
+        function copyWelcomeLink() {
+            const url = document.getElementById('qrUrl').textContent;
+            navigator.clipboard.writeText(url).then(() => {
+                alert('Link copied!');
+            });
+        }
+
+        function printCard() {
+            // Open printable card in new window
+            window.open(`/api/family/members/${currentQRData.username}/card?print=1`, '_blank');
+        }
+
+        // Utilities
+        function capitalizeFirst(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        function getAvatarColor(username) {
+            const colors = [
+                '#e94560, #ff6b6b',
+                '#8b5cf6, #a78bfa',
+                '#06b6d4, #22d3ee',
+                '#10b981, #34d399',
+                '#f59e0b, #fbbf24',
+                '#ec4899, #f472b6'
+            ];
+            const index = username.charCodeAt(0) % colors.length;
+            return colors[index];
+        }
+
+        // Close modal on overlay click
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) overlay.classList.remove('show');
+            });
+        });
+
+        // Auto-generate username from name
+        document.getElementById('memberName')?.addEventListener('input', (e) => {
+            const usernameField = document.getElementById('memberUsername');
+            if (!usernameField.dataset.manual) {
+                usernameField.value = e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 20);
+            }
+        });
+
+        document.getElementById('memberUsername')?.addEventListener('input', function() {
+            this.dataset.manual = 'true';
+        });
+    </script>
+</body>
+</html>

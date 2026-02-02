@@ -206,6 +206,7 @@ services:
       - MATRIX_HOMESERVER_URL=http://synapse:8008
       - MATRIX_BOT_TOKEN=${MATRIX_BOT_TOKEN}
       - MATRIX_BOT_USERNAME=${MATRIX_BOT_USERNAME}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-ministral:3b}
     depends_on:
       database:
         condition: service_healthy

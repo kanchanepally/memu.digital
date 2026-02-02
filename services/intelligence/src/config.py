@@ -17,7 +17,8 @@ class Config:
 
     # AI Configuration
     OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://ollama:11434")
-    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2")
+    # Ministral-3B recommended by community for better quality at similar resource cost
+    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "ministral:3b")
     AI_ENABLED = os.getenv("AI_ENABLED", "true").lower() == "true"
     AI_TIMEOUT = int(os.getenv("AI_TIMEOUT", "30"))
 

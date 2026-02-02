@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome Card - {{ display_name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-deep: #1a1a2e;
+            --color-accent: #e94560;
+            --color-success: #10b981;
+            --color-bg: #f9fafb;
+            --color-surface: #ffffff;
+            --color-border: #e5e7eb;
+            --color-text: #1f2937;
+            --color-text-secondary: #6b7280;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--color-bg);
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+        }
+        .card {
+            background: var(--color-surface);
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            max-width: 400px;
+            overflow: hidden;
+        }
+        .card-header {
+            background: linear-gradient(135deg, var(--color-deep) 0%, #2d2d4a 100%);
+            padding: 1.5rem;
+            text-align: center;
+            color: white;
+        }
+        .logo {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--color-accent) 0%, #ff6b6b 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0 auto 0.75rem;
+        }
+        .welcome-to { font-size: 0.8rem; opacity: 0.8; }
+        .family-name {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+        .card-body { padding: 1.5rem; }
+        .greeting {
+            text-align: center;
+            font-size: 1.1rem;
+            color: var(--color-text);
+            margin-bottom: 1.5rem;
+        }
+        .greeting strong { color: var(--color-accent); }
+        .qr-section { text-align: center; margin-bottom: 1.5rem; }
+        .qr-code {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 0.75rem;
+            background: var(--color-bg);
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+        .qr-code img { width: 100%; height: 100%; }
+        .qr-instruction {
+            font-size: 0.8rem;
+            color: var(--color-text-secondary);
+        }
+        .credentials {
+            background: var(--color-bg);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .credentials-title {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-text-secondary);
+            margin-bottom: 0.5rem;
+        }
+        .credential-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.4rem 0;
+            font-size: 0.9rem;
+        }
+        .credential-label { color: var(--color-text-secondary); }
+        .credential-value {
+            font-family: 'SF Mono', Monaco, monospace;
+            font-weight: 600;
+            color: var(--color-text);
+        }
+        .quick-start {
+            font-size: 0.8rem;
+            color: var(--color-text-secondary);
+            border-top: 1px solid var(--color-border);
+            padding-top: 1rem;
+        }
+        .quick-start-title {
+            font-weight: 600;
+            color: var(--color-text);
+            margin-bottom: 0.5rem;
+        }
+        .quick-start ol {
+            margin-left: 1.25rem;
+            line-height: 1.6;
+        }
+        .card-footer {
+            background: var(--color-bg);
+            padding: 0.75rem;
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--color-text-secondary);
+        }
+        .card-footer a { color: var(--color-accent); text-decoration: none; }
+        
+        /* Print styles */
+        @media print {
+            body { background: white; padding: 0; }
+            .card { box-shadow: none; border: 1px solid #ddd; }
+            .no-print { display: none !important; }
+        }
+        
+        /* Preview controls */
+        .preview-controls {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+        .preview-btn {
+            background: var(--color-deep);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .preview-btn:hover { opacity: 0.9; }
+    </style>
+</head>
+<body>
+    <div class="preview-controls no-print">
+        <button class="preview-btn" onclick="window.print()">🖨️ Print Card</button>
+        <button class="preview-btn" onclick="window.close()">✕ Close</button>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="logo">M</div>
+            <div class="welcome-to">Welcome to</div>
+            <div class="family-name">The {{ family_name }}</div>
+        </div>
+        
+        <div class="card-body">
+            <p class="greeting">
+                Hi <strong>{{ display_name }}</strong>! 👋
+            </p>
+            
+            <div class="qr-section">
+                <div class="qr-code">
+                    {% if qr_base64 %}
+                    <img src="data:image/png;base64,{{ qr_base64 }}" alt="QR Code">
+                    {% else %}
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ welcome_url }}" alt="QR Code">
+                    {% endif %}
+                </div>
+                <p class="qr-instruction">Scan with your phone camera</p>
+            </div>
+            
+            <div class="credentials">
+                <div class="credentials-title">Your Chat Login</div>
+                <div class="credential-row">
+                    <span class="credential-label">Username</span>
+                    <span class="credential-value">{{ username }}</span>
+                </div>
+                <div class="credential-row">
+                    <span class="credential-label">Password</span>
+                    <span class="credential-value">{{ password }}</span>
+                </div>
+            </div>
+            
+            <div class="quick-start">
+                <div class="quick-start-title">Quick Start</div>
+                <ol>
+                    <li>Scan the QR code above</li>
+                    <li>Install Tailscale, Element & Immich</li>
+                    <li>Use the credentials above for Element</li>
+                    <li>Start chatting with your family!</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="card-footer">
+            Need help? <a href="https://memu.digital/help">memu.digital/help</a>
+        </div>
+    </div>
+
+    <script>
+        // Auto-print if requested
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('print') === '1') {
+            setTimeout(() => window.print(), 500);
+        }
+    </script>
+</body>
+</html>

@@ -4,9 +4,8 @@ from nio import AsyncClient, MatrixRoom, RoomMessageText, InviteMemberEvent
 from config import Config
 from brain import Brain
 from memory import MemoryStore
-from backup_manager import BackupManager
 import dateparser
-from datetime import datetime, timedelta
+from datetime import datetime
 
 logger = logging.getLogger("memu.bot")
 
@@ -19,8 +18,6 @@ class MemuBot:
         self.client.access_token = Config.MATRIX_BOT_TOKEN
         self.brain = Brain()
         self.memory = MemoryStore()
-        self.backup_manager = BackupManager(self.memory)
-        self._last_usb_reminder_sent = None  # Track when we last sent USB reminder
 
     async def start(self):
         logger.info("Starting MemuBot...")
@@ -33,9 +30,6 @@ class MemuBot:
 
         # Start reminder checker loop in background
         asyncio.create_task(self.check_reminders_loop())
-
-        # Start backup notification checker loop
-        asyncio.create_task(self.check_backup_notifications_loop())
 
         try:
             # Sync forever
@@ -88,16 +82,13 @@ class MemuBot:
             await self.handle_mark_done(room_id, content)
         elif content.startswith('/summarize'):
             await self.handle_summarize(room_id)
-        elif content.startswith('/backup-status') or content.startswith('/backupstatus'):
-            await self.handle_backup_status(room_id)
         elif content.startswith('/help'):
             await self.handle_help(room_id)
         else:
-            # Implicit check
+            # Implicit check for future ambient context features
             intent = await self.brain.analyze_intent(content)
             if intent == 'LIST':
-                 # Try to extract items
-                 pass
+                pass  # Future: auto-extract list items
 
     async def handle_remember(self, room_id: str, sender: str, content: str):
         fact = content.replace('/remember', '').strip()
@@ -109,25 +100,66 @@ class MemuBot:
         await self.send_text(room_id, f"✓ Remembered: {fact}")
 
     async def handle_recall(self, room_id: str, content: str):
+        """
+        Enhanced recall: searches both saved facts AND chat history.
+        """
         query = content.replace('/recall', '').strip()
         if not query:
             await self.send_text(room_id, "❌ Usage: /recall [query]")
             return
 
-        facts = await self.memory.recall_facts(room_id, query)
-        if not facts:
-            await self.send_text(room_id, f"🤔 I don't remember anything about '{query}'")
+        # Use unified recall to search facts + chat history
+        results = await self.memory.unified_recall(room_id, query)
+        facts = results.get("facts", [])
+        chat_results = results.get("chat", [])
+
+        # No results anywhere
+        if not facts and not chat_results:
+            await self.send_text(room_id, f"🤔 I couldn't find anything about '{query}'")
             return
 
-        response = f"💡 Here's what I remember about '{query}':\n\n"
-        for fact in facts:
-            # Handle timestamp (bigint ms or datetime)
-            ts = fact['created_at']
-            if isinstance(ts, int):
-                dt = datetime.fromtimestamp(ts / 1000)
-            else:
-                dt = ts
-            response += f"• {fact['fact']} (saved {dt.strftime('%Y-%m-%d')})\n"
+        # Build response
+        response_parts = []
+
+        # Saved facts (explicit /remember)
+        if facts:
+            response_parts.append(f"💾 **Saved Facts** about '{query}':\n")
+            for fact in facts:
+                ts = fact['created_at']
+                if isinstance(ts, int):
+                    dt = datetime.fromtimestamp(ts / 1000)
+                else:
+                    dt = ts
+                response_parts.append(f"• {fact['fact']} (saved {dt.strftime('%Y-%m-%d')})\n")
+
+        # Chat history matches
+        if chat_results:
+            if facts:
+                response_parts.append("\n")  # Separator
+            response_parts.append(f"💬 **From chat history** about '{query}':\n")
+            for msg in chat_results:
+                ts = msg['timestamp']
+                if isinstance(ts, int) and ts > 0:
+                    dt = datetime.fromtimestamp(ts / 1000)
+                    date_str = dt.strftime('%b %d')
+                else:
+                    date_str = "recently"
+                
+                # Truncate long messages
+                body = msg['body']
+                if len(body) > 100:
+                    body = body[:100] + "..."
+                
+                # Extract username from @user:domain format
+                sender = msg['sender'].split(':')[0].replace('@', '')
+                response_parts.append(f"• {sender}: \"{body}\" ({date_str})\n")
+
+        response = "".join(response_parts)
+        
+        # If response is very long, ask AI to summarise
+        if len(response) > 1500:
+            summary = await self.brain.summarize_recall_results(query, response)
+            response = f"📋 Here's what I found about '{query}':\n\n{summary}"
 
         await self.send_text(room_id, response)
 
@@ -184,11 +216,11 @@ class MemuBot:
 
         # Fallback
         if not dt:
-             # Remove "me to"
-             clean = raw
-             if clean.lower().startswith('me to '):
-                 clean = clean[6:]
-             dt = dateparser.parse(clean, settings={'PREFER_DATES_FROM': 'future'})
+            # Remove "me to"
+            clean = raw
+            if clean.lower().startswith('me to '):
+                clean = clean[6:]
+            dt = dateparser.parse(clean, settings={'PREFER_DATES_FROM': 'future'})
 
         if not dt or dt < datetime.now():
             await self.send_text(room_id, "❌ I couldn't understand the time or it is in the past.")
@@ -198,34 +230,24 @@ class MemuBot:
         await self.send_text(room_id, f"⏰ Reminder set for {dt.strftime('%Y-%m-%d %H:%M')}: \"{task}\"")
 
     async def handle_summarize(self, room_id: str):
-        # Fix: Need to use sync token or context.
-        # Using client.room_messages with a start token.
-        # Since we don't persist tokens, we can try to use client.room_context which is easier,
-        # or use the last synced batch.
-        # However, client.next_batch is updated on sync.
-
         if not self.client.next_batch:
-            # If we haven't synced yet, we can't fetch back.
             await self.send_text(room_id, "⚠️ I need to sync first before summarizing history.")
             return
 
         resp = await self.client.room_messages(
             room_id,
             start=self.client.next_batch,
-            direction='b', # Backwards from now
+            direction='b',
             limit=50
         )
 
-        if isinstance(resp, str): # Error in some matrix-nio versions, or RoomMessagesError
-             logger.error(f"Failed to fetch history: {resp}")
-             await self.send_text(room_id, "❌ Failed to fetch history.")
-             return
+        if isinstance(resp, str):
+            logger.error(f"Failed to fetch history: {resp}")
+            await self.send_text(room_id, "❌ Failed to fetch history.")
+            return
 
         if hasattr(resp, 'chunk'):
             msgs = []
-            # Chunk is reversed in time usually (newest first for 'b'?) No, matrix-nio returns them in order usually?
-            # Actually, standard CS API returns them in reverse chronological order if dir='b'.
-            # Let's reverse them to be chronological.
             for event in reversed(resp.chunk):
                 if isinstance(event, RoomMessageText):
                     msgs.append(f"{event.sender}: {event.body}")
@@ -240,37 +262,29 @@ class MemuBot:
         else:
             await self.send_text(room_id, "❌ Failed to fetch history (API error).")
 
-    async def handle_backup_status(self, room_id: str):
-        """Show backup status to the user."""
-        try:
-            status = await self.backup_manager.get_status()
-            message = self.backup_manager.format_status_message(status)
-            await self.send_text(room_id, message)
-        except Exception as e:
-            logger.error(f"Error getting backup status: {e}")
-            await self.send_text(room_id, "Failed to get backup status. Please check system logs.")
-
     async def handle_help(self, room_id: str):
         """Show available commands."""
-        help_text = """**Memu Bot Commands**
+        help_text = """🤖 **Memu Bot Commands**
 
 **Memory**
-/remember [fact] - Save a fact
-/recall [query] - Search saved facts
+• `/remember [fact]` - Save something to remember
+• `/recall [query]` - Search saved facts AND chat history
 
 **Lists**
-/addtolist item1, item2 - Add items to shopping list
-/showlist - Show the shopping list
-/done [item] - Mark item as complete
+• `/addtolist item1, item2` - Add items to shared list
+• `/showlist` - Show current list
+• `/done [item]` - Mark item complete
 
 **Reminders**
-/remind [task] [time] - Set a reminder
+• `/remind [task] [time]` - Set a reminder
+  Example: `/remind call mom tomorrow 3pm`
 
-**Utilities**
-/summarize - Summarize recent chat
-/backup-status - Check backup health
-/help - Show this help"""
+**Other**
+• `/summarize` - AI summary of recent chat
+• `/help` - Show this message
 
+💡 Tip: `/recall` now searches your actual conversations, not just saved facts!
+"""
         await self.send_text(room_id, help_text)
 
     async def check_reminders_loop(self):
@@ -284,74 +298,3 @@ class MemuBot:
                 logger.error(f"Error checking reminders: {e}")
 
             await asyncio.sleep(10)
-
-    async def check_backup_notifications_loop(self):
-        """Check for backup failures, USB events, and send notifications."""
-        # Wait for initial sync to complete
-        await asyncio.sleep(30)
-
-        while True:
-            try:
-                # Check for unnotified backup failures
-                failures = await self.backup_manager.get_unnotified_failures()
-
-                for failure in failures:
-                    message = self.backup_manager.format_failure_message(failure)
-                    await self._broadcast_to_rooms(message)
-                    await self.backup_manager.mark_notification_sent(failure['id'])
-                    logger.info(f"Sent backup failure notification for {failure['filename']}")
-
-                # Check for USB drive detection
-                if await self.backup_manager.check_usb_detected():
-                    logger.info("USB drive detected, initiating backup copy...")
-                    result = await self.backup_manager.handle_usb_backup()
-
-                    if result:
-                        if result.get('status') == 'success':
-                            message = self.backup_manager.format_usb_success_message(result)
-                        else:
-                            message = self.backup_manager.format_usb_error_message(result)
-                        await self._broadcast_to_rooms(message)
-
-                # Check for weekly USB reminder (Sunday between 9-11am)
-                await self._check_weekly_usb_reminder()
-
-            except Exception as e:
-                logger.error(f"Error checking backup notifications: {e}")
-
-            # Check every 30 seconds for USB, 5 minutes overall is too slow for USB detection
-            await asyncio.sleep(30)
-
-    async def _check_weekly_usb_reminder(self):
-        """Send weekly USB backup reminder on Sunday mornings if overdue."""
-        now = datetime.now()
-
-        # Only send on Sunday (weekday 6) between 9am and 11am
-        if now.weekday() != 6 or now.hour < 9 or now.hour >= 11:
-            return
-
-        # Don't send more than once per day
-        if self._last_usb_reminder_sent:
-            if (now - self._last_usb_reminder_sent).days < 1:
-                return
-
-        # Check if USB reminder should be sent
-        if await self.backup_manager.should_send_usb_reminder():
-            status = await self.backup_manager.get_status()
-            message = self.backup_manager.format_usb_reminder_message(status)
-            await self._broadcast_to_rooms(message)
-            self._last_usb_reminder_sent = now
-            logger.info("Sent weekly USB backup reminder")
-
-    async def _broadcast_to_rooms(self, message: str):
-        """Send a message to all joined rooms.
-
-        Args:
-            message: Message text to send
-        """
-        if hasattr(self.client, 'rooms') and self.client.rooms:
-            for room_id in self.client.rooms:
-                try:
-                    await self.send_text(room_id, message)
-                except Exception as e:
-                    logger.error(f"Failed to send message to {room_id}: {e}")

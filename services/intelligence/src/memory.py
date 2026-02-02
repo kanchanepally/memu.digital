@@ -1,5 +1,6 @@
 import logging
 import asyncpg
+import aiohttp
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from config import Config
@@ -66,20 +67,6 @@ class MemoryStore:
             processed BOOLEAN DEFAULT FALSE
         );
         CREATE INDEX IF NOT EXISTS idx_reminders_due_processed ON reminders(due_at, processed);
-
-        -- 4. Backup History
-        CREATE TABLE IF NOT EXISTS backup_history (
-            id SERIAL PRIMARY KEY,
-            filename TEXT NOT NULL,
-            size_bytes BIGINT NOT NULL,
-            status TEXT NOT NULL,
-            error TEXT,
-            duration_seconds INT,
-            usb_copied_at TIMESTAMP,
-            notification_sent BOOLEAN DEFAULT FALSE,
-            created_at TIMESTAMP DEFAULT NOW()
-        );
-        CREATE INDEX IF NOT EXISTS idx_backup_created ON backup_history(created_at DESC);
         """
         try:
             async with self.pool.acquire() as conn:
@@ -88,6 +75,10 @@ class MemoryStore:
         except Exception as e:
             logger.error(f"Failed to initialize database: {e}")
             raise
+
+    # =========================================================================
+    # REMINDERS
+    # =========================================================================
 
     async def add_reminder(self, room_id: str, user_id: str, content: str, due_at: datetime):
         async with self.pool.acquire() as conn:
@@ -109,13 +100,12 @@ class MemoryStore:
         async with self.pool.acquire() as conn:
             await conn.execute("UPDATE reminders SET processed = TRUE WHERE id = $1", reminder_id)
 
+    # =========================================================================
+    # FACTS (Explicit /remember)
+    # =========================================================================
+
     async def remember_fact(self, room_id: str, sender: str, fact: str):
         async with self.pool.acquire() as conn:
-            # Note: timestamp is bigint in the original schema (setup_ai_bridge.sql)
-            # but usually it's better to be timestamp. I will stick to original schema compatibility if possible
-            # or update it. The original `setup_ai_bridge.sql` used BIGINT for created_at.
-            # I will assume we can use current timestamp or pass it.
-            # Let's check schema again. `created_at BIGINT`.
             ts = int(datetime.now().timestamp() * 1000)
             await conn.execute("""
                 INSERT INTO household_memory (room_id, fact, created_by, created_at)
@@ -123,6 +113,7 @@ class MemoryStore:
             """, room_id, fact, sender, ts)
 
     async def recall_facts(self, room_id: str, query: str) -> List[Dict]:
+        """Search explicitly saved facts."""
         async with self.pool.acquire() as conn:
             rows = await conn.fetch("""
                 SELECT fact, created_at, created_by
@@ -133,6 +124,165 @@ class MemoryStore:
                 LIMIT 5
             """, room_id, f'%{query}%')
             return [dict(r) for r in rows]
+
+    # =========================================================================
+    # MATRIX CHAT HISTORY SEARCH (NEW)
+    # =========================================================================
+
+    async def search_chat_history(self, room_id: str, query: str, limit: int = 10) -> List[Dict]:
+        """
+        Search Matrix chat history using Synapse's search API.
+        This searches actual conversation messages, not just /remember facts.
+        
+        Uses the Matrix Client-Server API:
+        POST /_matrix/client/v3/search
+        """
+        if not Config.MATRIX_BOT_TOKEN:
+            logger.warning("No bot token configured, cannot search chat history")
+            return []
+
+        search_url = f"{Config.MATRIX_HOMESERVER_URL}/_matrix/client/v3/search"
+        
+        headers = {
+            "Authorization": f"Bearer {Config.MATRIX_BOT_TOKEN}",
+            "Content-Type": "application/json"
+        }
+        
+        # Matrix search request body
+        search_body = {
+            "search_categories": {
+                "room_events": {
+                    "search_term": query,
+                    "filter": {
+                        "rooms": [room_id]
+                    },
+                    "order_by": "recent",
+                    "event_context": {
+                        "before_limit": 1,
+                        "after_limit": 1,
+                        "include_profile": True
+                    }
+                }
+            }
+        }
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(search_url, json=search_body, headers=headers, timeout=10) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        return self._parse_matrix_search_results(data, limit)
+                    elif resp.status == 404:
+                        # Search endpoint might not be available, try fallback
+                        logger.info("Matrix search API not available, using message fetch fallback")
+                        return await self._fallback_message_search(room_id, query, limit)
+                    else:
+                        error_text = await resp.text()
+                        logger.error(f"Matrix search failed ({resp.status}): {error_text}")
+                        return []
+        except Exception as e:
+            logger.error(f"Matrix search error: {e}")
+            return []
+
+    def _parse_matrix_search_results(self, data: Dict, limit: int) -> List[Dict]:
+        """Parse Matrix search API response into simple result list."""
+        results = []
+        
+        try:
+            room_events = data.get("search_categories", {}).get("room_events", {})
+            hits = room_events.get("results", [])
+            
+            for hit in hits[:limit]:
+                event = hit.get("result", {})
+                content = event.get("content", {})
+                
+                # Only include text messages
+                if content.get("msgtype") == "m.text":
+                    results.append({
+                        "sender": event.get("sender", "unknown"),
+                        "body": content.get("body", ""),
+                        "timestamp": event.get("origin_server_ts", 0),
+                        "event_id": event.get("event_id", ""),
+                        "source": "chat"  # Mark as from chat history
+                    })
+        except Exception as e:
+            logger.error(f"Error parsing Matrix search results: {e}")
+        
+        return results
+
+    async def _fallback_message_search(self, room_id: str, query: str, limit: int) -> List[Dict]:
+        """
+        Fallback: Fetch recent messages and search locally.
+        Used when Matrix search API is not available.
+        """
+        messages_url = f"{Config.MATRIX_HOMESERVER_URL}/_matrix/client/v3/rooms/{room_id}/messages"
+        
+        headers = {
+            "Authorization": f"Bearer {Config.MATRIX_BOT_TOKEN}"
+        }
+        
+        params = {
+            "dir": "b",  # Backwards from most recent
+            "limit": 100  # Fetch last 100 messages to search
+        }
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(messages_url, params=params, headers=headers, timeout=10) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        return self._local_search_messages(data.get("chunk", []), query, limit)
+                    else:
+                        logger.error(f"Message fetch failed ({resp.status})")
+                        return []
+        except Exception as e:
+            logger.error(f"Message fetch error: {e}")
+            return []
+
+    def _local_search_messages(self, messages: List[Dict], query: str, limit: int) -> List[Dict]:
+        """Search through fetched messages locally (case-insensitive)."""
+        results = []
+        query_lower = query.lower()
+        
+        for msg in messages:
+            content = msg.get("content", {})
+            if content.get("msgtype") != "m.text":
+                continue
+                
+            body = content.get("body", "")
+            if query_lower in body.lower():
+                results.append({
+                    "sender": msg.get("sender", "unknown"),
+                    "body": body,
+                    "timestamp": msg.get("origin_server_ts", 0),
+                    "event_id": msg.get("event_id", ""),
+                    "source": "chat"
+                })
+                
+                if len(results) >= limit:
+                    break
+        
+        return results
+
+    async def unified_recall(self, room_id: str, query: str) -> Dict[str, List[Dict]]:
+        """
+        Unified recall: searches both saved facts AND chat history.
+        Returns results grouped by source.
+        """
+        # Search saved facts (explicit /remember)
+        facts = await self.recall_facts(room_id, query)
+        
+        # Search chat history (actual conversations)
+        chat_results = await self.search_chat_history(room_id, query, limit=5)
+        
+        return {
+            "facts": facts,
+            "chat": chat_results
+        }
+
+    # =========================================================================
+    # SHARED LISTS
+    # =========================================================================
 
     async def add_to_list(self, room_id: str, sender: str, items: List[str]):
         ts = int(datetime.now().timestamp() * 1000)
@@ -167,132 +317,3 @@ class MemoryStore:
                 RETURNING item
             """, room_id, f'%{item_name}%')
             return row['item'] if row else None
-
-    # =========================================================================
-    # Backup History Methods
-    # =========================================================================
-
-    async def record_backup(
-        self,
-        filename: str,
-        size_bytes: int,
-        status: str,
-        duration_seconds: int,
-        error: Optional[str] = None
-    ):
-        """Record a backup attempt in the database.
-
-        Args:
-            filename: Name of the backup archive file
-            size_bytes: Size of the backup in bytes
-            status: 'success', 'failed', or 'in_progress'
-            duration_seconds: How long the backup took
-            error: Error message if backup failed
-        """
-        async with self.pool.acquire() as conn:
-            await conn.execute("""
-                INSERT INTO backup_history
-                (filename, size_bytes, status, duration_seconds, error)
-                VALUES ($1, $2, $3, $4, $5)
-            """, filename, size_bytes, status, duration_seconds, error)
-        logger.info(f"Recorded backup: {filename} ({status})")
-
-    async def get_latest_backup(self) -> Optional[Dict[str, Any]]:
-        """Get the most recent backup record.
-
-        Returns:
-            Dictionary with backup details, or None if no backups exist
-        """
-        async with self.pool.acquire() as conn:
-            row = await conn.fetchrow("""
-                SELECT id, filename, size_bytes, status, error,
-                       duration_seconds, usb_copied_at, notification_sent, created_at
-                FROM backup_history
-                ORDER BY created_at DESC
-                LIMIT 1
-            """)
-            return dict(row) if row else None
-
-    async def get_backup_count(self) -> int:
-        """Get the total number of successful backups stored locally.
-
-        Returns:
-            Number of successful backup records
-        """
-        async with self.pool.acquire() as conn:
-            count = await conn.fetchval("""
-                SELECT COUNT(*) FROM backup_history
-                WHERE status = 'success'
-            """)
-            return count or 0
-
-    async def get_total_backup_size(self) -> int:
-        """Get the total size of all successful backups.
-
-        Returns:
-            Total size in bytes, or 0 if no backups
-        """
-        async with self.pool.acquire() as conn:
-            total = await conn.fetchval("""
-                SELECT SUM(size_bytes) FROM backup_history
-                WHERE status = 'success'
-            """)
-            return total or 0
-
-    async def mark_usb_copied(self, backup_id: int):
-        """Mark a backup as copied to USB drive.
-
-        Args:
-            backup_id: ID of the backup record to update
-        """
-        async with self.pool.acquire() as conn:
-            await conn.execute("""
-                UPDATE backup_history
-                SET usb_copied_at = NOW()
-                WHERE id = $1
-            """, backup_id)
-        logger.info(f"Marked backup {backup_id} as copied to USB")
-
-    async def get_unnotified_failures(self) -> List[Dict[str, Any]]:
-        """Get failed backups that haven't been notified yet.
-
-        Returns:
-            List of failed backup records needing notification
-        """
-        async with self.pool.acquire() as conn:
-            rows = await conn.fetch("""
-                SELECT id, filename, error, created_at
-                FROM backup_history
-                WHERE status = 'failed'
-                AND notification_sent = FALSE
-                ORDER BY created_at DESC
-            """)
-            return [dict(r) for r in rows]
-
-    async def mark_notification_sent(self, backup_id: int):
-        """Mark a backup's failure notification as sent.
-
-        Args:
-            backup_id: ID of the backup record to update
-        """
-        async with self.pool.acquire() as conn:
-            await conn.execute("""
-                UPDATE backup_history
-                SET notification_sent = TRUE
-                WHERE id = $1
-            """, backup_id)
-        logger.info(f"Marked notification sent for backup {backup_id}")
-
-    async def get_last_usb_backup_time(self) -> Optional[datetime]:
-        """Get the timestamp of the most recent USB backup.
-
-        Returns:
-            Datetime of last USB backup, or None if never backed up to USB
-        """
-        async with self.pool.acquire() as conn:
-            result = await conn.fetchval("""
-                SELECT MAX(usb_copied_at)
-                FROM backup_history
-                WHERE usb_copied_at IS NOT NULL
-            """)
-            return result
