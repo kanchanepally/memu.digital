@@ -120,7 +120,7 @@ services:
       cache:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:3001/api/server-info/ping" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:2283/api/server-info/ping" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -131,7 +131,7 @@ services:
     # Access via Tailscale: http://memu-hub:2283
     # This port IS needed for Immich mobile apps to connect
     ports:
-      - "2283:3001"
+      - "2283:2283"
 
   # immich_workers:
   #   container_name: memu_photos_workers
