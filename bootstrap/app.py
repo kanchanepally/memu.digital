@@ -853,7 +853,7 @@ def run_setup(clean_slug, domain, admin_password, tailscale_key, server_ip, admi
             (PROJECT_ROOT / 'nginx' / 'conf.d' / 'default.conf').write_text(nginx_config)
 
             # Generate Element config for browser access
-            element_config = generate_element_config(domain, full_url=f"http://{domain}")
+            element_config = generate_element_config(domain)
             (PROJECT_ROOT / 'element-config.json').write_text(element_config)
             
             time.sleep(1)
@@ -914,23 +914,8 @@ def run_setup(clean_slug, domain, admin_password, tailscale_key, server_ip, admi
             # Step 10: Start remaining services (tailscale already running since step 2)
             update_state('services', 10, 'Starting all services...')
 
-            element_config = {
-                "default_server_config": {
-                    "m.homeserver": {
-                        "base_url": f"http://{domain}",
-                        "server_name": domain
-                    }
-                },
-                "brand": "Memu",
-                "default_theme": "light",
-                "branding": {
-                    "auth_header_logo_url": "/assets/logo-concept-1-circles.svg",
-                    "auth_footer_links": [
-                        {"text": "Powered by Memu", "url": "https://memu.digital"}
-                    ]
-                }
-            }
-            (PROJECT_ROOT / 'element-config.json').write_text(json.dumps(element_config, indent=2))
+            # Rewrite element config with "/" base_url (works for any access method)
+            (PROJECT_ROOT / 'element-config.json').write_text(generate_element_config(domain))
 
             # Start services except bootstrap (systemd handles it) and tailscale (already up)
             services_to_start = [
@@ -1122,11 +1107,14 @@ server {{
     return config
 
 
-def generate_element_config(domain, full_url):
+def generate_element_config(domain):
+    # base_url "/" means "API is at the same origin as Element".
+    # This works for all access methods (Tailscale HTTPS, local IP, etc.)
+    # because nginx proxies both Element and Matrix on the same host.
     return json.dumps({
         "default_server_config": {
             "m.homeserver": {
-                "base_url": full_url,
+                "base_url": "/",
                 "server_name": domain
             }
         },
@@ -1242,24 +1230,8 @@ def configure_tailscale(domain, server_ip):
             nginx_config = generate_nginx_config(domain, https_domain=ts_hostname)
             (PROJECT_ROOT / 'nginx' / 'conf.d' / 'default.conf').write_text(nginx_config)
 
-            # 4. Regenerate element-config.json with https base_url
-            element_config = {
-                "default_server_config": {
-                    "m.homeserver": {
-                        "base_url": f"https://{ts_hostname}",
-                        "server_name": domain
-                    }
-                },
-                "brand": "Memu",
-                "default_theme": "light",
-                "branding": {
-                    "auth_header_logo_url": "/assets/logo-concept-1-circles.svg",
-                    "auth_footer_links": [
-                        {"text": "Powered by Memu", "url": "https://memu.digital"}
-                    ]
-                }
-            }
-            (PROJECT_ROOT / 'element-config.json').write_text(json.dumps(element_config, indent=2))
+            # 4. Regenerate element-config.json (base_url "/" works with HTTPS too)
+            (PROJECT_ROOT / 'element-config.json').write_text(generate_element_config(domain))
 
             # 5. Reload nginx to pick up new certs and config
             run_cmd(['docker', 'exec', 'memu_proxy', 'nginx', '-s', 'reload'], check=False)
