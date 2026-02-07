@@ -215,6 +215,7 @@ cat > /etc/systemd/system/memu-production.service << EOF
 Description=Memu OS Production Stack
 After=docker.service network-online.target
 Requires=docker.service
+Conflicts=memu-setup.service
 
 [Service]
 Type=oneshot

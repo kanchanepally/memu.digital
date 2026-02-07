@@ -556,8 +556,12 @@ def api_health():
         'immich_server': 'memu_photos',
         'ollama': 'memu_brain',
         'database': 'memu_postgres',
-        'tailscale': 'memu_tailscale'
+        'tailscale': 'memu_tailscale',
+        'calendar': 'memu_calendar'
     }
+
+    # Add Calendar to checks
+    service_checks.append(('calendar', 'Calendar (Baikal)', '📅', 'http://localhost:8008/.well-known/caldav'))
 
     for service_id, name, icon, health_url in service_checks:
         status = 'unknown'
