@@ -5,23 +5,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ family_name }} Sanctuary | Login</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700&display=swap"
-        rel="stylesheet">
     <style>
         :root {
             --color-deep: #1a1a2e;
-            --color-primary: #16213e;
-            --color-accent: #e94560;
-            --color-accent-hover: #d63850;
+            --color-accent: #667eea;
+            --color-accent-end: #764ba2;
+            --color-accent-hover: #5568d3;
             --color-bg: #f8fafc;
             --color-surface: #ffffff;
             --color-border: #e2e8f0;
             --color-text: #1e293b;
             --color-text-secondary: #64748b;
-            --font-family: 'Inter', -apple-system, sans-serif;
-            --font-family-display: 'Plus Jakarta Sans', var(--font-family);
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             --radius-lg: 0.75rem;
             --radius-xl: 1rem;
         }
@@ -59,7 +54,6 @@
 
         h1 {
             text-align: center;
-            font-family: var(--font-family-display);
             font-size: 1.5rem;
             font-weight: 700;
             color: var(--color-deep);
@@ -93,7 +87,7 @@
             outline: none;
             border-color: var(--color-accent);
             background: var(--color-surface);
-            box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.1);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
         .btn {
@@ -106,14 +100,15 @@
             border: none;
             cursor: pointer;
             transition: all 0.2s;
-            background: var(--color-accent);
+            background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-end) 100%);
             color: white;
             margin-top: 0.5rem;
         }
 
         .btn:hover {
-            background: var(--color-accent-hover);
+            opacity: 0.9;
             transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
         }
 
         .alert {

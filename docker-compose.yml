@@ -287,6 +287,7 @@ services:
       - TS_EXTRA_ARGS=--accept-dns=true
     volumes:
       - tailscale_data:/var/lib/tailscale
+      - tls_certs:/certs
       - /dev/net/tun:/dev/net/tun
     cap_add:
       - NET_ADMIN
@@ -304,6 +305,7 @@ services:
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - ./assets:/usr/share/nginx/assets:ro
+      - tls_certs:/etc/nginx/certs:ro
     depends_on:
       - element
       - synapse
@@ -319,6 +321,7 @@ services:
     # All HTTP traffic enters through Nginx and is routed internally
     ports:
       - "80:80"
+      - "443:443"
 
 networks:
   memu_net:
@@ -332,5 +335,6 @@ volumes:
   tailscale_data:
   baikal_config:
   baikal_data:
+  tls_certs:
 
 

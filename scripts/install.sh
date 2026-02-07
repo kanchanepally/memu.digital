@@ -82,8 +82,9 @@ fi
 # -----------------------------------------------------------------------------
 log "Creating directory structure..."
 
-mkdir -p synapse photos backups nginx/conf.d bootstrap/templates
+mkdir -p synapse photos backups nginx/conf.d bootstrap/templates certs
 chmod 777 synapse/
+chmod +x scripts/renew-certs.sh 2>/dev/null || true
 chown -R $REAL_USER:$REAL_USER synapse photos backups nginx 2>/dev/null || true
 
 # -----------------------------------------------------------------------------
@@ -262,10 +263,47 @@ Persistent=true
 WantedBy=timers.target
 EOF
 
+# Certificate renewal service (renews Tailscale HTTPS certs)
+cat > /etc/systemd/system/memu-cert-renew.service << EOF
+[Unit]
+Description=Memu TLS Certificate Renewal
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=${PROJECT_ROOT}
+ExecStart=${PROJECT_ROOT}/scripts/renew-certs.sh
+StandardOutput=journal
+StandardError=journal
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Certificate renewal timer (runs weekly)
+cat > /etc/systemd/system/memu-cert-renew.timer << EOF
+[Unit]
+Description=Weekly Memu TLS Certificate Renewal
+
+[Timer]
+OnCalendar=weekly
+RandomizedDelaySec=3600
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+
 systemctl daemon-reload
 
 # Enable backup timer (will start on next boot, or manually)
 systemctl enable memu-backup.timer 2>/dev/null || true
+
+# Enable cert renewal timer
+systemctl enable memu-cert-renew.timer 2>/dev/null || true
 
 # -----------------------------------------------------------------------------
 # START WIZARD

@@ -296,20 +296,30 @@ def get_tailscale_hostname():
 
 
 def get_base_url():
-    """Get the base URL for the sanctuary"""
+    """Get the base URL for the sanctuary (HTTPS if Tailscale certs exist)"""
     config = load_sanctuary_config()
-    
+
     # Try Tailscale hostname first
     ts_hostname = config.get('tailscale_hostname') or get_tailscale_hostname()
     if ts_hostname:
+        # Check if TLS certs exist (HTTPS available)
+        try:
+            cert_check = run_cmd([
+                'docker', 'exec', 'memu_tailscale',
+                'test', '-f', f'/certs/{ts_hostname}.crt'
+            ], check=False)
+            if cert_check.returncode == 0:
+                return f"https://{ts_hostname}"
+        except:
+            pass
         return f"http://{ts_hostname}"
-    
+
     # Fallback to local IP
     try:
         host_ip = request.host.split(':')[0]
     except:
         host_ip = SERVER_IP
-        
+
     return f"http://{host_ip}"
 
 
@@ -953,12 +963,9 @@ signing_key_path: "/data/{domain}.signing.key"
 """
 
 
-def generate_nginx_config(domain):
-    return f"""server {{
-    listen 80;
-    server_name localhost;
-    resolver 127.0.0.11 valid=30s;
-
+def generate_nginx_config(domain, https_domain=None):
+    # Shared location blocks used in both HTTP and HTTPS server blocks
+    location_blocks = f"""
     # === Static Assets (Logo, Images) ===
     location /assets/ {{
         alias /usr/share/nginx/assets/;
@@ -967,7 +974,6 @@ def generate_nginx_config(domain):
     }}
 
     # === Admin & Setup Routes (Bootstrap Service) ===
-    # These need to go to the bootstrap container on port 8888
     location ~ ^/(admin|login|logout|welcome|api|status|static) {{
         set $upstream_bootstrap http://bootstrap:8888;
         proxy_pass $upstream_bootstrap;
@@ -1013,16 +1019,42 @@ def generate_nginx_config(domain):
     }}
 
     location /.well-known/matrix/server {{
-        return 200 '{{"m.server": "{domain}:443"}}';
+        return 200 '{{"m.server": "{https_domain or domain}:443"}}';
         add_header Content-Type application/json;
     }}
 
     location /.well-known/matrix/client {{
-        return 200 '{{"m.homeserver": {{"base_url": "https://{domain}"}}}}';
+        return 200 '{{"m.homeserver": {{"base_url": "https://{https_domain or domain}"}}}}';
         add_header Content-Type application/json;
         add_header Access-Control-Allow-Origin *;
-    }}
+    }}"""
+
+    # HTTP server block (always present)
+    config = f"""server {{
+    listen 80;
+    server_name localhost;
+    resolver 127.0.0.11 valid=30s;
+{location_blocks}
 }}"""
+
+    # HTTPS server block (only when Tailscale certs are available)
+    if https_domain:
+        config += f"""
+
+server {{
+    listen 443 ssl;
+    server_name {https_domain};
+    resolver 127.0.0.11 valid=30s;
+
+    ssl_certificate /etc/nginx/certs/{https_domain}.crt;
+    ssl_certificate_key /etc/nginx/certs/{https_domain}.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+{location_blocks}
+}}"""
+
+    return config
 
 
 def generate_element_config(domain, full_url):
@@ -1116,10 +1148,68 @@ def get_user_token_with_retry(username, password, retries=5):
 
 
 def configure_tailscale(domain, server_ip):
-    """Configure Tailscale settings"""
-    # 1. Advertise routes if needed (skip for now, default is usually fine for simple setup)
-    # 2. Get cert is handled by Tailscale automatically for the domain
-    pass
+    """Configure Tailscale: discover FQDN, generate TLS certs, update nginx for HTTPS"""
+    global setup_state
+
+    # 1. Discover Tailscale FQDN
+    ts_hostname = get_tailscale_hostname()
+    if not ts_hostname:
+        print("Warning: Could not discover Tailscale hostname")
+        return
+
+    setup_state['tailscale_hostname'] = ts_hostname
+    print(f"Tailscale FQDN: {ts_hostname}")
+
+    # 2. Generate TLS certificate via Tailscale
+    try:
+        cert_result = run_cmd([
+            'docker', 'exec', 'memu_tailscale',
+            'tailscale', 'cert',
+            '--cert-file', f'/certs/{ts_hostname}.crt',
+            '--key-file', f'/certs/{ts_hostname}.key',
+            ts_hostname
+        ], check=False)
+
+        if cert_result.returncode == 0:
+            print(f"TLS certificate generated for {ts_hostname}")
+
+            # 3. Regenerate nginx config with HTTPS
+            nginx_config = generate_nginx_config(domain, https_domain=ts_hostname)
+            (PROJECT_ROOT / 'nginx' / 'conf.d' / 'default.conf').write_text(nginx_config)
+
+            # 4. Regenerate element-config.json with https base_url
+            element_config = {
+                "default_server_config": {
+                    "m.homeserver": {
+                        "base_url": f"https://{ts_hostname}",
+                        "server_name": domain
+                    }
+                },
+                "brand": "Memu",
+                "default_theme": "light",
+                "branding": {
+                    "auth_header_logo_url": "/assets/logo-concept-1-circles.svg",
+                    "auth_footer_links": [
+                        {"text": "Powered by Memu", "url": "https://memu.digital"}
+                    ]
+                }
+            }
+            (PROJECT_ROOT / 'element-config.json').write_text(json.dumps(element_config, indent=2))
+
+            # 5. Reload nginx to pick up new certs and config
+            run_cmd(['docker', 'exec', 'memu_proxy', 'nginx', '-s', 'reload'], check=False)
+
+            # 6. Restart element to pick up new config
+            run_cmd(['docker', 'compose', 'restart', 'element'], check=False)
+
+            print(f"HTTPS enabled: https://{ts_hostname}")
+        else:
+            print(f"Warning: TLS cert generation failed: {cert_result.stderr}")
+            print("HTTPS not enabled. Element Web may require HTTPS for crypto features.")
+            print("Enable HTTPS in Tailscale admin console and re-run setup, or manually run:")
+            print(f"  docker exec memu_tailscale tailscale cert --cert-file /certs/{ts_hostname}.crt --key-file /certs/{ts_hostname}.key {ts_hostname}")
+    except Exception as e:
+        print(f"Warning: Tailscale cert setup failed: {e}")
 
 if __name__ == '__main__':
     # Initialize DB
