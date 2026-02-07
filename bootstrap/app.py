@@ -1017,7 +1017,8 @@ def generate_nginx_config(domain, https_domain=None):
     # Shared location blocks used in both HTTP and HTTPS server blocks
     location_blocks = f"""
     # === Static Assets (Logo, Images) ===
-    location /assets/ {{
+    # Path is /memu-assets/ to avoid collision with Cinny's /assets/ bundle
+    location /memu-assets/ {{
         alias /usr/share/nginx/assets/;
         expires 7d;
         add_header Cache-Control "public, immutable";
