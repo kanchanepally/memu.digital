@@ -193,6 +193,8 @@ def load_sanctuary_config():
 
 def is_configured():
     """Check if initial setup has been completed"""
+    if (PROJECT_ROOT / '.setup_complete').exists():
+        return True
     config = load_sanctuary_config()
     return config['configured']
 
@@ -292,6 +294,17 @@ def get_tailscale_hostname():
     except Exception as e:
         print(f"Could not get Tailscale hostname: {e}")
     
+    return None
+
+
+def wait_for_tailscale(max_wait=90):
+    """Wait for Tailscale to connect and return its FQDN, or None on timeout."""
+    start = time.time()
+    while time.time() - start < max_wait:
+        hostname = get_tailscale_hostname()
+        if hostname:
+            return hostname
+        time.sleep(5)
     return None
 
 
@@ -444,7 +457,12 @@ def logout():
 def index():
     """Main entry point"""
     if is_configured():
-        return redirect('/admin') # Will redirect to login if needed via login_required logic on /admin
+        return redirect('/admin')
+    # If setup failed, show the progress page with the error still visible
+    if setup_state.get('stage') == 'error':
+        return render_template('creating-sanctuary.html',
+                               family_name=setup_state.get('family_name', ''),
+                               domain=setup_state.get('domain', ''))
     return render_template('setup.html')
 
 
@@ -492,9 +510,24 @@ def configure():
     )
     thread.start()
     
-    return render_template('creating-sanctuary.html', 
+    return render_template('creating-sanctuary.html',
                           family_name=family_name.title(),
                           domain=domain)
+
+
+@app.route('/reset-setup', methods=['POST'])
+def reset_setup():
+    """Reset setup state so the wizard can be retried after a failure"""
+    global setup_state
+    setup_state = {
+        'stage': 'idle', 'step': 0, 'total_steps': 12,
+        'message': '', 'error': None, 'warnings': [],
+        'tailscale_hostname': None, 'configured': False,
+        'family_name': None, 'domain': None
+    }
+    # Clean up partial .env state
+    update_env_var('SETUP_DOMAIN', '')
+    return redirect('/')
 
 
 # =============================================================================
@@ -804,8 +837,10 @@ def run_setup(clean_slug, domain, admin_password, tailscale_key, server_ip, admi
 
             # Step 1: Generate configs
             update_state('config', 1, 'Preparing your private space...')
-            
-            update_env_var('SERVER_NAME', domain)
+
+            # Write domain as SETUP_DOMAIN temporarily; SERVER_NAME only set on success
+            # This prevents is_configured() returning True if setup fails partway through
+            update_env_var('SETUP_DOMAIN', domain)
             update_env_var('DB_PASSWORD', db_password)
             update_env_var('MATRIX_BOT_USERNAME', f'@memu_bot:{domain}')
             if final_ts_key:
@@ -823,9 +858,12 @@ def run_setup(clean_slug, domain, admin_password, tailscale_key, server_ip, admi
             
             time.sleep(1)
             
-            # Step 2-4: Database
+            # Step 2-4: Database + Tailscale (start Tailscale early so it has time to connect)
             update_state('database', 2, 'Setting up the foundation...')
-            run_cmd(['docker', 'compose', 'up', '-d', 'database'])
+            if final_ts_key:
+                run_cmd(['docker', 'compose', 'up', '-d', 'database', 'tailscale'])
+            else:
+                run_cmd(['docker', 'compose', 'up', '-d', 'database'])
             
             update_state('database', 3, 'Waiting for database...')
             if not wait_for_database(max_wait=60):
@@ -873,9 +911,9 @@ def run_setup(clean_slug, domain, admin_password, tailscale_key, server_ip, admi
             if bot_token:
                 update_env_var('MATRIX_BOT_TOKEN', bot_token)
             
-            # Step 10-11: Services
+            # Step 10: Start remaining services (tailscale already running since step 2)
             update_state('services', 10, 'Starting all services...')
-            
+
             element_config = {
                 "default_server_config": {
                     "m.homeserver": {
@@ -893,35 +931,57 @@ def run_setup(clean_slug, domain, admin_password, tailscale_key, server_ip, admi
                 }
             }
             (PROJECT_ROOT / 'element-config.json').write_text(json.dumps(element_config, indent=2))
-            
-            update_state('services', 11, 'Bringing everything online...')
-            # Start all services EXCEPT bootstrap - it's already running as a systemd service
-            # on port 8888. Starting the Docker bootstrap container would cause a port conflict.
-            run_cmd(['docker', 'compose', 'up', '-d',
-                     'database', 'cache', 'synapse', 'element',
-                     'immich_server', 'immich_ml', 'ollama',
-                     'intelligence', 'calendar', 'tailscale', 'proxy'])
+
+            # Start services except bootstrap (systemd handles it) and tailscale (already up)
+            services_to_start = [
+                'database', 'cache', 'synapse', 'element',
+                'immich_server', 'immich_ml', 'ollama',
+                'intelligence', 'calendar', 'proxy'
+            ]
+            run_cmd(['docker', 'compose', 'up', '-d'] + services_to_start)
             time.sleep(5)
-            
+
             if bot_token:
                 run_cmd(['docker', 'compose', 'up', '-d', '--force-recreate', 'intelligence'], check=False)
-            
-            # Step 12: Network
+
+            # Step 11: Wait for Tailscale (started at step 2, so ~3-4 min head start)
             if final_ts_key:
-                update_state('network', 12, 'Connecting to your private network...')
-                configure_tailscale(domain, server_ip)
+                update_state('network', 11, 'Connecting to your private network...')
+                ts_hostname = wait_for_tailscale(max_wait=90)
+                if ts_hostname:
+                    setup_state['tailscale_hostname'] = ts_hostname
+                    configure_tailscale(domain, server_ip)
+                else:
+                    update_state('network', 11, 'Tailscale not ready yet, continuing with HTTP...',
+                                 warning='Tailscale did not connect in time. HTTPS not enabled. '
+                                         'Run setup again or manually configure Tailscale later.')
             else:
-                update_state('network', 12, 'Finalizing...')
+                update_state('network', 11, 'Finalizing...')
+
+            # Step 12: Finalize
+            update_state('complete', 12, 'Finalizing setup...')
             
-            # Done
+            # Done - NOW mark as fully configured
             ts_hostname = setup_state.get('tailscale_hostname')
             setup_state['configured'] = True
-            
+
+            # Write SERVER_NAME only on success (this is what is_configured() checks)
+            update_env_var('SERVER_NAME', domain)
+            (PROJECT_ROOT / '.setup_complete').write_text(domain)
+
             if ts_hostname:
                 update_env_var('TAILSCALE_HOSTNAME', ts_hostname)
-                update_state('complete', 12, f'Welcome home! Your sanctuary is ready.')
-            else:
-                update_state('complete', 12, f'Welcome home! Your sanctuary is ready.')
+
+            # Start Docker bootstrap container (no port conflict since port mapping removed)
+            run_cmd(['docker', 'compose', 'up', '-d', 'bootstrap'], check=False)
+
+            # Enable production service for future reboots, disable setup service
+            subprocess.run(['systemctl', 'enable', 'memu-production.service'],
+                           capture_output=True, check=False)
+            subprocess.run(['systemctl', 'disable', 'memu-setup.service'],
+                           capture_output=True, check=False)
+
+            update_state('complete', 12, 'Welcome home! Your sanctuary is ready.')
             
         except Exception as e:
             update_state('error', setup_state['step'], str(e), error=str(e))

@@ -76,8 +76,8 @@ services:
       - FLASK_ENV=production
     networks:
       - memu_net
-    ports:
-      - "8888:8888" # Exposed for local setup, but Nginx proxies to it internally
+    # No external port - nginx proxies to bootstrap:8888 via Docker network.
+    # During initial setup, the systemd service runs Flask on the host.
     restart: unless-stopped
     # === CHAT SERVICES ===
 

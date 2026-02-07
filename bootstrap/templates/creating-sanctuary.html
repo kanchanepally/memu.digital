@@ -343,7 +343,11 @@
         function showError(error) {
             clearInterval(pollInterval);
             const errorBox = document.getElementById('errorBox');
-            errorBox.innerHTML = `<strong>Something went wrong:</strong><br>${error}<br><br>Check the logs with: <code>docker compose logs</code>`;
+            errorBox.innerHTML = `<strong>Something went wrong:</strong><br>${error}<br><br>
+                <form method="POST" action="/reset-setup" style="margin-top:1rem;">
+                    <button type="submit" class="cta-button" style="background:#667eea;border:none;cursor:pointer;font-size:0.95rem;">Retry Setup</button>
+                </form>
+                <br>Or check logs: <code>docker compose logs</code>`;
             errorBox.classList.add('show');
         }
 
