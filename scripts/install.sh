@@ -37,7 +37,11 @@ echo "║   v5.3 (Chief of Staff)                                        ║"
 echo "╚═══════════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
 
-PROJECT_ROOT=$(pwd)
+# Resolve project root relative to this script's location (works even if
+# the user runs `./install.sh` from inside the scripts/ directory).
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$PROJECT_ROOT"
 REAL_USER="${SUDO_USER:-$(whoami)}"
 WIZARD_PORT=8888
 
