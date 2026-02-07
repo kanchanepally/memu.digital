@@ -1025,7 +1025,7 @@ def generate_nginx_config(domain, https_domain=None):
     }}
 
     # === Admin & Setup Routes (Bootstrap Service) ===
-    location ~ ^/(admin|login|logout|welcome|api|status|static) {{
+    location ~ ^/(admin|setup|logout|welcome|api/|status) {{
         set $upstream_bootstrap http://bootstrap:8888;
         proxy_pass $upstream_bootstrap;
         proxy_set_header X-Forwarded-For $remote_addr;
@@ -1047,6 +1047,7 @@ def generate_nginx_config(domain, https_domain=None):
         set $upstream_calendar http://calendar:80;
         rewrite ^/calendar(/.*)$ $1 break;
         proxy_pass $upstream_calendar;
+        proxy_redirect ~^(https?://[^/]+)/(.*) $1/calendar/$2;
         proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header Host $host;

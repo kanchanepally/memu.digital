@@ -38,6 +38,7 @@ LOCATIONS = """
         set $upstream_calendar http://calendar:80;
         rewrite ^/calendar(/.*)$ $1 break;
         proxy_pass $upstream_calendar;
+        proxy_redirect ~^(https?://[^/]+)/(.*) $1/calendar/$2;
         proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header Host $host;
