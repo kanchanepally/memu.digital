@@ -96,21 +96,16 @@ chown -R $REAL_USER:$REAL_USER synapse photos backups nginx 2>/dev/null || true
 # -----------------------------------------------------------------------------
 log "Checking configuration files..."
 
-# Element config - Only create if missing (don't overwrite working config)
+# Cinny config - Only create if missing (don't overwrite working config)
 if [ ! -f element-config.json ]; then
     cat > element-config.json << 'EOF'
 {
-    "default_server_config": {
-        "m.homeserver": {
-            "base_url": "http://localhost:8008",
-            "server_name": "memu.local"
-        }
-    },
-    "brand": "Memu",
-    "default_theme": "light"
+    "defaultHomeserver": 0,
+    "homeserverList": ["memu.local"],
+    "allowCustomHomeservers": true
 }
 EOF
-    log "Created placeholder element-config.json"
+    log "Created placeholder Cinny config"
 fi
 
 # Nginx placeholder - Only create if missing

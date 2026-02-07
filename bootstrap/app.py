@@ -12,7 +12,7 @@ CHANGELOG v5.3:
 - Added Calendar (Baikal CalDAV) integration
 - Added Morning Briefings scheduler
 - Consistent SVG branding across all components
-- Element branding configuration
+- Cinny Matrix client configuration (replaced Element Web)
 
 CHANGELOG v5.1:
 - Added SQLite persistence (memu.db)
@@ -852,7 +852,7 @@ def run_setup(clean_slug, domain, admin_password, tailscale_key, server_ip, admi
             nginx_config = generate_nginx_config(domain)
             (PROJECT_ROOT / 'nginx' / 'conf.d' / 'default.conf').write_text(nginx_config)
 
-            # Generate Element config for browser access
+            # Generate Cinny config for browser-based Matrix chat
             element_config = generate_element_config(domain)
             (PROJECT_ROOT / 'element-config.json').write_text(element_config)
             
@@ -914,7 +914,7 @@ def run_setup(clean_slug, domain, admin_password, tailscale_key, server_ip, admi
             # Step 10: Start remaining services (tailscale already running since step 2)
             update_state('services', 10, 'Starting all services...')
 
-            # Rewrite element config with "/" base_url (works for any access method)
+            # Write Cinny config (homeserver discovery via .well-known)
             (PROJECT_ROOT / 'element-config.json').write_text(generate_element_config(domain))
 
             # Start services except bootstrap (systemd handles it) and tailscale (already up)
@@ -1074,7 +1074,7 @@ def generate_nginx_config(domain, https_domain=None):
     }}
 
     location /.well-known/matrix/client {{
-        return 200 '{{"m.homeserver": {{"base_url": "https://{https_domain or domain}"}}}}';
+        return 200 '{{"m.homeserver": {{"base_url": "$scheme://$host"}}}}';
         add_header Content-Type application/json;
         add_header Access-Control-Allow-Origin *;
     }}"""
@@ -1107,20 +1107,21 @@ server {{
     return config
 
 
-def generate_element_config(domain):
-    # base_url "/" means "API is at the same origin as Element".
-    # This works for all access methods (Tailscale HTTPS, local IP, etc.)
-    # because nginx proxies both Element and Matrix on the same host.
+def generate_cinny_config(domain):
+    """Generate Cinny Matrix client config.
+
+    Cinny discovers the homeserver via .well-known/matrix/client served by nginx.
+    We list the domain so Cinny knows which server to connect to.
+    """
     return json.dumps({
-        "default_server_config": {
-            "m.homeserver": {
-                "base_url": "/",
-                "server_name": domain
-            }
-        },
-        "brand": "Memu",
-        "default_theme": "light"
+        "defaultHomeserver": 0,
+        "homeserverList": [domain],
+        "allowCustomHomeservers": True
     }, indent=4)
+
+
+# Keep backward-compatible alias
+generate_element_config = generate_cinny_config
 
 
 def wait_for_database(max_wait=60):
@@ -1230,19 +1231,19 @@ def configure_tailscale(domain, server_ip):
             nginx_config = generate_nginx_config(domain, https_domain=ts_hostname)
             (PROJECT_ROOT / 'nginx' / 'conf.d' / 'default.conf').write_text(nginx_config)
 
-            # 4. Regenerate element-config.json (base_url "/" works with HTTPS too)
+            # 4. Regenerate Cinny config with domain
             (PROJECT_ROOT / 'element-config.json').write_text(generate_element_config(domain))
 
             # 5. Reload nginx to pick up new certs and config
             run_cmd(['docker', 'exec', 'memu_proxy', 'nginx', '-s', 'reload'], check=False)
 
-            # 6. Restart element to pick up new config
+            # 6. Restart Cinny to pick up new config
             run_cmd(['docker', 'compose', 'restart', 'element'], check=False)
 
             print(f"HTTPS enabled: https://{ts_hostname}")
         else:
             print(f"Warning: TLS cert generation failed: {cert_result.stderr}")
-            print("HTTPS not enabled. Element Web may require HTTPS for crypto features.")
+            print("HTTPS not enabled. Chat will work over HTTP but E2E encryption requires HTTPS.")
             print("Enable HTTPS in Tailscale admin console and re-run setup, or manually run:")
             print(f"  docker exec memu_tailscale tailscale cert --cert-file /certs/{ts_hostname}.crt --key-file /certs/{ts_hostname}.key {ts_hostname}")
     except Exception as e:

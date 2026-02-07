@@ -110,8 +110,8 @@ services:
 
   element:
     container_name: memu_element
-    # v1.11.85 has a circular-dependency crash in WidgetStore init
-    image: vectorim/element-web:v1.11.78
+    # Cinny: lightweight Matrix client (Element v1.11.85 has WidgetStore crash)
+    image: ghcr.io/cinnyapp/cinny:v4.2.3
     volumes:
       - ./element-config.json:/app/config.json:ro
     restart: unless-stopped
