@@ -39,16 +39,16 @@ ENDPOINTS:
 """
 
 import os
-import subprocess
+import io
+import base64
+import sqlite3
+import logging
 import secrets
 import time
 import json
 import requests
 import threading
-import io
-import base64
-import sqlite3
-import logging
+import subprocess
 from pathlib import Path
 from datetime import datetime, timedelta
 from functools import wraps
@@ -806,6 +806,10 @@ def run_setup(clean_slug, domain, admin_password, tailscale_key, server_ip, admi
             
             nginx_config = generate_nginx_config(domain)
             (PROJECT_ROOT / 'nginx' / 'conf.d' / 'default.conf').write_text(nginx_config)
+
+            # Generate Element config for browser access
+            element_config = generate_element_config(domain, full_url=f"http://{domain}" if not final_ts_key else f"https://{domain}")
+            (PROJECT_ROOT / 'element-config.json').write_text(element_config)
             
             time.sleep(1)
             
@@ -1018,8 +1022,20 @@ def generate_nginx_config(domain):
         add_header Content-Type application/json;
         add_header Access-Control-Allow-Origin *;
     }}
-}}
-"""
+}}"""
+
+
+def generate_element_config(domain, full_url):
+    return json.dumps({
+        "default_server_config": {
+            "m.homeserver": {
+                "base_url": full_url,
+                "server_name": domain
+            }
+        },
+        "brand": "Memu",
+        "default_theme": "light"
+    }, indent=4)
 
 
 def wait_for_database(max_wait=60):
