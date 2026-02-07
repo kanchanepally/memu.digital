@@ -895,7 +895,12 @@ def run_setup(clean_slug, domain, admin_password, tailscale_key, server_ip, admi
             (PROJECT_ROOT / 'element-config.json').write_text(json.dumps(element_config, indent=2))
             
             update_state('services', 11, 'Bringing everything online...')
-            run_cmd(['docker', 'compose', 'up', '-d'])
+            # Start all services EXCEPT bootstrap - it's already running as a systemd service
+            # on port 8888. Starting the Docker bootstrap container would cause a port conflict.
+            run_cmd(['docker', 'compose', 'up', '-d',
+                     'database', 'cache', 'synapse', 'element',
+                     'immich_server', 'immich_ml', 'ollama',
+                     'intelligence', 'calendar', 'tailscale', 'proxy'])
             time.sleep(5)
             
             if bot_token:
