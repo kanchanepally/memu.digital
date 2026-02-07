@@ -14,3 +14,5 @@ backups/
 _legacy_archive/
 systemd/
 __pycache__/
+*.pyc
+nul

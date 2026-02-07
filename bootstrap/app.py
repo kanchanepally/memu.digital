@@ -1070,11 +1070,17 @@ def generate_nginx_config(domain, https_domain=None):
         return 301 $scheme://$host/calendar/dav.php;
     }}
 
+    # Chat UI (Cinny) with Memu branding
     location / {{
         set $upstream_element http://element:80;
         proxy_pass $upstream_element;
         proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header Host $host;
+        proxy_set_header Accept-Encoding "";
+        sub_filter '<title>Cinny</title>' '<title>Memu Chat</title>';
+        sub_filter 'content="Cinny"' 'content="Memu Chat"';
+        sub_filter_once off;
+        sub_filter_types text/html;
     }}
 
     location /.well-known/matrix/server {{

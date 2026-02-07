@@ -10,10 +10,10 @@ Memu gives your family four things, all running on hardware you own:
 
 | Service | What It Does | App to Download |
 |---------|--------------|-----------------|
-| **Chat** | Private family messaging | Element |
+| **Chat** | Private family messaging | Any Matrix app (Element, FluffyChat) |
 | **Photos** | Automatic photo backup | Immich |
 | **Calendar** | Shared family schedule | iOS/Android built-in |
-| **AI Assistant** | Shopping lists, reminders, briefings | Built into Element |
+| **AI Assistant** | Shopping lists, reminders, briefings | Built into chat |
 
 Everything stays on your device. No company can see your data.
 
@@ -87,8 +87,8 @@ Click **"Create My Family Server"** and wait 3-5 minutes.
 When finished, you'll see your server addresses:
 
 ```
-Chat:   https://memu-hub.xxxxx.ts.net
-Photos: https://memu-hub.xxxxx.ts.net:8443
+Chat:   http://memu-hub  (or https://memu-hub.xxxxx.ts.net)
+Photos: http://memu-hub:2283
 ```
 
 **Save these URLs** — you'll need them once to set up each app, then you can forget them.
@@ -109,20 +109,21 @@ Each family member's phone/laptop needs Tailscale:
 
 ---
 
-### Step 2: Set Up Chat (Element)
+### Step 2: Set Up Chat
 
-**Download:** Element ([iOS](https://apps.apple.com/app/element-messenger/id1083446067) / [Android](https://play.google.com/store/apps/details?id=im.vector.app))
+**Web (built-in):** Open `http://memu-hub` in any browser — Memu Chat is ready to use.
+
+**Mobile apps:** Download any Matrix-compatible chat app:
+- **iOS:** [Element](https://apps.apple.com/app/element-messenger/id1083446067), [FluffyChat](https://apps.apple.com/app/fluffychat/id1551469600), or [SchildiChat](https://apps.apple.com/app/schildichat/id1634437512)
+- **Android:** [Element](https://play.google.com/store/apps/details?id=im.vector.app) or [FluffyChat](https://play.google.com/store/apps/details?id=chat.fluffy.fluffychat)
 
 **One-time setup:**
-1. Open Element
+1. Open your chosen app
 2. Tap **"Sign in"**
-3. Tap **"Edit"** next to the server
-4. Enter your server URL: `https://memu-hub.xxxxx.ts.net`
-5. Sign in:
-   - Username: `admin`
-   - Password: [your password]
+3. Set the homeserver to: `https://memu-hub.xxxxx.ts.net`
+4. Sign in with your username and password
 
-**Done!** The app remembers everything. Just open Element to chat.
+**Done!** The app remembers everything. Just open it to chat.
 
 ---
 
@@ -132,7 +133,7 @@ Each family member's phone/laptop needs Tailscale:
 
 **One-time setup:**
 1. Open Immich
-2. Enter server URL: `https://memu-hub.xxxxx.ts.net:8443`
+2. Enter server URL: `http://memu-hub:2283`
 3. Tap **"Create account"** 
 4. Create your photo account (any email/password)
 
@@ -184,7 +185,7 @@ This is where the magic happens. The **Memu Bot** lives in your chat and helps y
 
 ### Find the Bot
 
-1. Open **Element**
+1. Open your Matrix chat app
 2. Tap **+** to start a new chat
 3. Search for: `@memu_bot:yourfamily.memu.digital`
    *(replace "yourfamily" with your actual family name)*
@@ -287,18 +288,19 @@ Send this to each family member:
 
 2. Install these apps:
    • Tailscale (required)
-   • Element (for chat)
+   • A Matrix chat app (Element or FluffyChat)
    • Immich (for photos)
 
-3. In Element:
-   → Server: https://memu-hub.xxxxx.ts.net
+3. For chat:
+   → Web: http://memu-hub
+   → Mobile: set homeserver to https://memu-hub.xxxxx.ts.net
    → Ask me for your username & password
 
 4. In Immich:
-   → Server: https://memu-hub.xxxxx.ts.net:8443
+   → Server: http://memu-hub:2283
    → Create your own account
 
-5. Find the family bot in Element:
+5. Find the family bot in your chat app:
    → Search: @memu_bot:ourname.memu.digital
    → Try: /showlist
 
@@ -312,9 +314,9 @@ Send this to each family member:
 ### You Don't Need to Remember URLs
 
 Once the apps are set up:
-- **Chat:** Just open Element
+- **Chat:** Open `http://memu-hub` or your Matrix app
 - **Photos:** Just open Immich (auto-syncs in background)
-- **Shopping list:** Message the bot in Element
+- **Shopping list:** Message the bot in chat
 
 ### Works Everywhere
 
@@ -342,7 +344,7 @@ Your family's data is precious. Memu automatically backs up everything:
 
 Memu runs automatic backups every night at 2am. You don't need to do anything!
 
-To check backup status, message the bot in Element:
+To check backup status, message the bot in chat:
 ```
 /backup-status
 ```
@@ -389,11 +391,11 @@ This will show available backups and guide you through restoration.
 │                                                 │
 │  APPS TO INSTALL:                               │
 │    • Tailscale (required for connection)        │
-│    • Element (chat)                             │
-│    • Immich (photos)                            │
+│    • Matrix chat app (Element/FluffyChat)        │
+│    • Immich (photos)                             │
 │    • DAVx⁵ (Android calendar sync, optional)    │
 │                                                 │
-│  AI BOT IN ELEMENT:                             │
+│  AI BOT IN CHAT:                                 │
 │    @memu_bot:yourfamily.memu.digital            │
 │                                                 │
 │  CALENDAR COMMANDS:                             │

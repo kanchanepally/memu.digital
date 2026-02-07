@@ -128,9 +128,12 @@ The setup wizard shows your server URLs when complete. You'll enter them once, t
 
 1. **Tailscale** ([iOS](https://apps.apple.com/app/tailscale/id1470499037) / [Android](https://play.google.com/store/apps/details?id=com.tailscale.ipn)) — Creates your family's private network
 
-2. **Element** ([iOS](https://apps.apple.com/app/element-messenger/id1083446067) / [Android](https://play.google.com/store/apps/details?id=im.vector.app)) — For chat
-   - Server: `https://memu-hub.xxxxx.ts.net` (shown after setup)
-   - Sign in with `admin` + your password
+2. **Any Matrix chat app** — For chat
+   - **iOS:** [Element](https://apps.apple.com/app/element-messenger/id1083446067), [FluffyChat](https://apps.apple.com/app/fluffychat/id1551469600), or [SchildiChat](https://apps.apple.com/app/schildichat/id1634437512)
+   - **Android:** [Element](https://play.google.com/store/apps/details?id=im.vector.app) or [FluffyChat](https://play.google.com/store/apps/details?id=chat.fluffy.fluffychat)
+   - **Web:** `http://memu-hub` (built into your server)
+   - Homeserver: `https://memu-hub.xxxxx.ts.net` (shown after setup)
+   - Sign in with your admin credentials
 
 3. **Immich** ([iOS](https://apps.apple.com/app/immich/id1613945652) / [Android](https://play.google.com/store/apps/details?id=app.alextran.immich)) — For photos
    - Server: `https://memu-hub.xxxxx.ts.net:8443` (shown after setup)
@@ -176,7 +179,7 @@ The setup wizard shows your server URLs when complete. You'll enter them once, t
 
 ## The AI Assistant
 
-The bot lives in your family chat. Find it by searching for `@memu_bot:yourfamily.memu.digital` in Element.
+The bot lives in your family chat. Find it by searching for `@memu_bot:yourfamily.memu.digital` in your Matrix app.
 
 | Command | What It Does |
 |---------|--------------|
@@ -215,13 +218,13 @@ The bot lives in your family chat. Find it by searching for `@memu_bot:yourfamil
 ├─────────────────────────────────────────────────┤
 │                                                 │
 │  APPS TO INSTALL:                               │
-│    • Tailscale (required)                       │
-│    • Element (chat)                             │
-│    • Immich (photos)                            │
+│    • Tailscale (required)                        │
+│    • Matrix chat app (Element/FluffyChat)        │
+│    • Immich (photos)                             │
 │                                                 │
-│  SERVER URLS: (shown after setup)               │
-│    • Chat:   https://memu-hub.xxxxx.ts.net      │
-│    • Photos: https://memu-hub.xxxxx.ts.net:8443 │
+│  SERVER URLS: (shown after setup)                │
+│    • Chat:   http://memu-hub (or HTTPS FQDN)    │
+│    • Photos: http://memu-hub:2283                │
 │                                                 │
 │  AI BOT:                                        │
 │    @memu_bot:yourfamily.memu.digital            │
