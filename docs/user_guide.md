@@ -6,13 +6,14 @@ Welcome to your family's **Digital Sanctuary**. This guide will help you set up 
 
 ## What You're Setting Up
 
-Memu gives your family three things, all running on hardware you own:
+Memu gives your family four things, all running on hardware you own:
 
 | Service | What It Does | App to Download |
 |---------|--------------|-----------------|
 | **Chat** | Private family messaging | Element |
 | **Photos** | Automatic photo backup | Immich |
-| **AI Assistant** | Shopping lists, reminders, family memory | Built into Element |
+| **Calendar** | Shared family schedule | iOS/Android built-in |
+| **AI Assistant** | Shopping lists, reminders, briefings | Built into Element |
 
 Everything stays on your device. No company can see your data.
 
@@ -145,12 +146,40 @@ Each family member's phone/laptop needs Tailscale:
 
 ---
 
+### Step 4: Set Up Calendar (CalDAV)
+
+Your family calendar syncs with the built-in calendar on your phone — no extra app needed!
+
+**On iPhone/iPad:**
+1. Go to **Settings → Calendar → Accounts → Add Account**
+2. Tap **"Other"** → **"Add CalDAV Account"**
+3. Enter:
+   - Server: `https://memu-hub.xxxxx.ts.net/calendar/dav.php`
+   - User Name: `memu` (or your configured username)
+   - Password: [your calendar password from .env]
+4. Tap **"Next"** and allow access
+
+**On Android:**
+1. Install **DAVx⁵** from Play Store (free, open source)
+2. Add account → **"Login with URL and username"**
+3. Enter:
+   - Base URL: `https://memu-hub.xxxxx.ts.net/calendar/dav.php`
+   - User name: `memu`
+   - Password: [your calendar password]
+4. Select your calendar and sync
+
+**Done!** Family events now appear in your phone's calendar app. Add events from your phone or via the bot!
+
+---
+
 ## Part 5: Meet the AI Assistant 🤖
 
 This is where the magic happens. The **Memu Bot** lives in your chat and helps your family:
+- Manage the family calendar
 - Keep a shared shopping list
 - Remember important information
 - Set reminders
+- Deliver morning briefings
 - Summarize busy chat days
 
 ### Find the Bot
@@ -165,6 +194,10 @@ This is where the magic happens. The **Memu Bot** lives in your chat and helps y
 
 | Command | What It Does | Try It! |
 |---------|--------------|---------|
+| `/schedule` | Add to family calendar | `/schedule Soccer Tuesday 5pm` |
+| `/calendar` | See today's schedule | `/calendar` |
+| `/calendar week` | See this week | `/calendar week` |
+| `/briefing` | Get a family briefing now | `/briefing` |
 | `/showlist` | See the shopping list | `/showlist` |
 | `/addtolist` | Add items | `/addtolist milk, eggs, bread` |
 | `/done` | Mark item bought | `/done milk` |
@@ -192,6 +225,29 @@ This is where the magic happens. The **Memu Bot** lives in your chat and helps y
 > 🤖 ⏰ Reminder set for today 3:00 PM
 
 The bot is available to everyone in the family. Lists and memories are shared!
+
+### Morning Briefings ☀️
+
+Every morning at 7am, the bot sends a briefing to your family chat:
+
+```
+🌅 Morning Briefing
+
+Good morning, family! Today is Saturday, March 15th.
+You have 3 events on the calendar - the big one is Emma's
+soccer practice at 3pm. Weather looks lovely at 18°C.
+We found 5 photo memories from this day! Have a great day! 💪
+```
+
+The briefing includes:
+- Today's calendar events
+- Current weather (if configured)
+- "On This Day" photo memories
+- Shopping list status
+
+**Configure the time:** Set `BRIEFING_TIME=07:00` in your `.env` file.
+
+**Get one now:** Type `/briefing` in any chat with the bot.
 
 ---
 
@@ -335,19 +391,29 @@ This will show available backups and guide you through restoration.
 │    • Tailscale (required for connection)        │
 │    • Element (chat)                             │
 │    • Immich (photos)                            │
+│    • DAVx⁵ (Android calendar sync, optional)    │
 │                                                 │
 │  AI BOT IN ELEMENT:                             │
 │    @memu_bot:yourfamily.memu.digital            │
 │                                                 │
-│  USEFUL COMMANDS:                               │
+│  CALENDAR COMMANDS:                             │
+│    /schedule      - add event to calendar       │
+│    /calendar      - see today's events          │
+│    /calendar week - see this week               │
+│    /briefing      - get a family briefing       │
+│                                                 │
+│  LIST & MEMORY COMMANDS:                        │
 │    /showlist      - see shopping list           │
 │    /addtolist     - add items                   │
 │    /done          - mark item complete          │
 │    /remember      - store a fact                │
 │    /recall        - find a fact                 │
 │    /remind        - set a reminder              │
-│    /backup-status - check backup health         │
+│    /summarize     - summarize chat              │
 │    /help          - show all commands           │
+│                                                 │
+│  AUTOMATIC:                                     │
+│    ☀️ Morning briefing at 7am daily             │
 │                                                 │
 │  NOT CONNECTING?                                │
 │    → Check Tailscale app is running             │

@@ -1,12 +1,17 @@
 #!/bin/bash
 # =============================================================================
-# Memu OS - Silent Installer (v4.1)
+# Memu OS - Silent Installer (v5.3)
 # =============================================================================
 #
 # TESTED: January 18, 2026 on DigitalOcean (8GB Ubuntu 24.04)
 # 
 # This script is 100% SILENT - no prompts, no user input.
 # All configuration happens in the Web Wizard.
+#
+# CHANGES v5.3:
+# - Added Calendar (Baikal CalDAV) support
+# - Added Morning Briefings scheduler
+# - Consistent branding across all components
 #
 # FIXES FROM v4.0:
 # - Removed all `read -p` prompts (unattended install)
@@ -28,7 +33,7 @@ warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 echo -e "${BLUE}"
 echo "╔═══════════════════════════════════════════════════════════════╗"
 echo "║   Memu OS - The Private Family Cloud                          ║"
-echo "║   v4.1 (Silent Install)                                       ║"
+echo "║   v5.3 (Chief of Staff)                                        ║"
 echo "╚═══════════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
 
@@ -155,7 +160,7 @@ if [ -f .env ]; then
 fi
 
 cat > .env << EOF
-# Memu Configuration (v4.1)
+# Memu Configuration (v5.3)
 # Generated: $(date '+%Y-%m-%d %H:%M:%S')
 
 SERVER_NAME=memu.local

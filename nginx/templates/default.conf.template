@@ -3,6 +3,13 @@ server {
     listen [::]:80;
     server_name ${SERVER_NAME};
 
+    # Static Assets (Logo, Images)
+    location /assets/ {
+        alias /usr/share/nginx/assets/;
+        expires 7d;
+        add_header Cache-Control "public, immutable";
+    }
+
     # Matrix Client API
     location /_matrix {
         proxy_pass http://synapse:8008;
@@ -19,6 +26,25 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header Host $host;
         client_max_body_size 50M;
+    }
+
+    # Calendar (Baikal CalDAV)
+    location /calendar/ {
+        rewrite ^/calendar(/.*)$ $1 break;
+        proxy_pass http://calendar:80;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host $host;
+        client_max_body_size 50M;
+    }
+
+    # CalDAV/CardDAV discovery
+    location /.well-known/caldav {
+        return 301 $scheme://$host/calendar/dav.php;
+    }
+
+    location /.well-known/carddav {
+        return 301 $scheme://$host/calendar/dav.php;
     }
 
     # Element Web (Chat UI)

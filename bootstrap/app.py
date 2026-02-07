@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
 """
-Memu Bootstrap & Admin Server (v5.1)
+Memu Bootstrap & Admin Server (v5.3)
 
 This combines:
 1. Initial setup wizard (existing functionality)
 2. Admin dashboard API (new)
 3. Family member management (new)
 4. QR code generation (new)
+
+CHANGELOG v5.3:
+- Added Calendar (Baikal CalDAV) integration
+- Added Morning Briefings scheduler
+- Consistent SVG branding across all components
+- Element branding configuration
 
 CHANGELOG v5.1:
 - Added SQLite persistence (memu.db)
@@ -860,7 +866,13 @@ def run_setup(clean_slug, domain, admin_password, tailscale_key, server_ip, admi
                     }
                 },
                 "brand": "Memu",
-                "default_theme": "light"
+                "default_theme": "light",
+                "branding": {
+                    "auth_header_logo_url": "/assets/logo-concept-1-circles.svg",
+                    "auth_footer_links": [
+                        {"text": "Powered by Memu", "url": "https://memu.digital"}
+                    ]
+                }
             }
             (PROJECT_ROOT / 'element-config.json').write_text(json.dumps(element_config, indent=2))
             
@@ -939,6 +951,13 @@ def generate_nginx_config(domain):
     server_name localhost;
     resolver 127.0.0.11 valid=30s;
 
+    # === Static Assets (Logo, Images) ===
+    location /assets/ {{
+        alias /usr/share/nginx/assets/;
+        expires 7d;
+        add_header Cache-Control "public, immutable";
+    }}
+
     # === Admin & Setup Routes (Bootstrap Service) ===
     # These need to go to the bootstrap container on port 8888
     location ~ ^/(admin|login|logout|welcome|api|status|static) {{
@@ -956,6 +975,26 @@ def generate_nginx_config(domain):
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header Host $host;
         client_max_body_size 50M;
+    }}
+
+    # === Calendar (Baikal CalDAV) ===
+    location /calendar/ {{
+        set $upstream_calendar http://calendar:80;
+        rewrite ^/calendar(/.*)$ $1 break;
+        proxy_pass $upstream_calendar;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host $host;
+        client_max_body_size 50M;
+    }}
+
+    # CalDAV/CardDAV discovery (iOS, macOS, Thunderbird)
+    location /.well-known/caldav {{
+        return 301 $scheme://$host/calendar/dav.php;
+    }}
+
+    location /.well-known/carddav {{
+        return 301 $scheme://$host/calendar/dav.php;
     }}
 
     location / {{

@@ -4,8 +4,9 @@ from nio import AsyncClient, MatrixRoom, RoomMessageText, InviteMemberEvent
 from config import Config
 from brain import Brain
 from memory import MemoryStore
+from tools.calendar_tool import CalendarManager
 import dateparser
-from datetime import datetime
+from datetime import datetime, timedelta
 
 logger = logging.getLogger("memu.bot")
 
@@ -18,6 +19,7 @@ class MemuBot:
         self.client.access_token = Config.MATRIX_BOT_TOKEN
         self.brain = Brain()
         self.memory = MemoryStore()
+        self.calendar = CalendarManager()
 
     async def start(self):
         logger.info("Starting MemuBot...")
@@ -82,6 +84,12 @@ class MemuBot:
             await self.handle_mark_done(room_id, content)
         elif content.startswith('/summarize'):
             await self.handle_summarize(room_id)
+        elif content.startswith('/schedule'):
+            await self.handle_schedule(room_id, sender, content)
+        elif content.startswith('/calendar'):
+            await self.handle_calendar(room_id, content)
+        elif content.startswith('/briefing'):
+            await self.handle_briefing(room_id, content)
         elif content.startswith('/help'):
             await self.handle_help(room_id)
         else:
@@ -262,9 +270,186 @@ class MemuBot:
         else:
             await self.send_text(room_id, "❌ Failed to fetch history (API error).")
 
+    async def handle_schedule(self, room_id: str, sender: str, content: str):
+        """
+        Add an event to the family calendar.
+        Example: /schedule Soccer practice Tuesday at 5pm
+        """
+        raw = content.replace('/schedule', '').strip()
+        if not raw:
+            await self.send_text(room_id, "❌ Usage: /schedule [event] [time]\nExample: /schedule Soccer practice Tuesday 5pm")
+            return
+
+        # Check if calendar is available
+        if not await self.calendar.is_available():
+            await self.send_text(room_id, "❌ Calendar service is not available. Please try again later.")
+            return
+
+        # Use AI to extract event details
+        data = await self.brain.extract_calendar_event(raw)
+
+        summary = data.get('summary', raw.split(' at ')[0] if ' at ' in raw else raw[:50])
+        date_str = data.get('date', '')
+        time_str = data.get('time', '')
+        location = data.get('location', '')
+        duration_str = data.get('duration')
+
+        # Parse the date and time
+        datetime_str = f"{date_str} {time_str}".strip() if date_str or time_str else raw
+
+        dt_start = dateparser.parse(
+            datetime_str,
+            settings={
+                'PREFER_DATES_FROM': 'future',
+                'PREFER_DAY_OF_MONTH': 'first',
+                'RETURN_AS_TIMEZONE_AWARE': True,
+                'TIMEZONE': Config.TIMEZONE
+            }
+        )
+
+        if not dt_start:
+            # Fallback: try to parse just from raw input
+            dt_start = dateparser.parse(raw, settings={'PREFER_DATES_FROM': 'future'})
+
+        if not dt_start:
+            await self.send_text(room_id, "❌ I couldn't understand the date/time. Try: /schedule Soccer Tuesday 5pm")
+            return
+
+        if dt_start < datetime.now(dt_start.tzinfo):
+            await self.send_text(room_id, "❌ That time is in the past. Please specify a future time.")
+            return
+
+        # Parse duration
+        dt_end = None
+        if duration_str:
+            duration_parsed = dateparser.parse(f"in {duration_str}")
+            if duration_parsed:
+                duration = duration_parsed - datetime.now()
+                dt_end = dt_start + duration
+
+        if dt_end is None:
+            dt_end = dt_start + timedelta(hours=1)  # Default 1 hour
+
+        # Create the event
+        uid = await self.calendar.add_event(
+            summary=summary,
+            dt_start=dt_start,
+            dt_end=dt_end,
+            location=location or ""
+        )
+
+        if uid:
+            time_display = dt_start.strftime('%A, %B %d at %H:%M')
+            location_display = f" at {location}" if location else ""
+            await self.send_text(
+                room_id,
+                f"📅 Added to calendar: **{summary}**{location_display}\n"
+                f"⏰ {time_display}"
+            )
+        else:
+            await self.send_text(room_id, "❌ Failed to add event to calendar. Please try again.")
+
+    async def handle_calendar(self, room_id: str, content: str):
+        """
+        Show calendar events.
+        /calendar - Today's events
+        /calendar week - This week's events
+        /calendar tomorrow - Tomorrow's events
+        """
+        arg = content.replace('/calendar', '').strip().lower()
+
+        # Check if calendar is available
+        if not await self.calendar.is_available():
+            await self.send_text(room_id, "❌ Calendar service is not available. Please try again later.")
+            return
+
+        if arg == 'week':
+            events = await self.calendar.get_upcoming_events(days=7)
+            header = "📅 **This Week's Schedule**"
+        elif arg == 'tomorrow':
+            tomorrow = datetime.now() + timedelta(days=1)
+            start = tomorrow.replace(hour=0, minute=0, second=0, microsecond=0)
+            end = start + timedelta(days=1)
+            events = await self.calendar.get_events(start, end)
+            header = "📅 **Tomorrow's Schedule**"
+        else:
+            events = await self.calendar.get_today_events()
+            header = "📅 **Today's Schedule**"
+
+        if not events:
+            await self.send_text(room_id, f"{header}\n\nNo events scheduled! Time to relax? 😊")
+            return
+
+        formatted = self.calendar.format_events_list(events)
+        await self.send_text(room_id, f"{header}\n{formatted}")
+
+    async def handle_briefing(self, room_id: str, content: str = ""):
+        """
+        Generate and send a briefing on-demand.
+        /briefing - Generate full AI briefing
+        /briefing debug - Show raw data gathered for debugging
+        """
+        import json
+        from agents.briefing import MorningBriefingAgent
+
+        arg = content.replace('/briefing', '').strip().lower()
+
+        try:
+            agent = MorningBriefingAgent(self)
+
+            if arg == 'debug':
+                # Debug mode: show raw gathered data
+                await self.send_text(room_id, "🔍 Gathering briefing data (debug mode)...")
+                data = await agent.gather_all()
+
+                debug_output = "**📊 Briefing Debug Data**\n\n"
+
+                # Calendar
+                cal = data.get('calendar', {})
+                debug_output += f"**📅 Calendar:** {'✅' if cal.get('available') else '❌'} {cal.get('count', 0)} events\n"
+                for evt in cal.get('events', [])[:5]:
+                    start = evt.get('start')
+                    time_str = start.strftime('%H:%M') if hasattr(start, 'strftime') else str(start)
+                    debug_output += f"  • {evt.get('summary', 'No title')} at {time_str}\n"
+
+                # Weather
+                weather = data.get('weather', {})
+                if weather.get('available'):
+                    debug_output += f"\n**🌤️ Weather:** {weather.get('icon', '')} {weather.get('temp', '?')}°C, {weather.get('description', 'N/A')}\n"
+                else:
+                    debug_output += f"\n**🌤️ Weather:** ❌ Not available (API key: {'set' if Config.WEATHER_API_KEY else 'not set'})\n"
+
+                # Shopping List
+                shopping = data.get('shopping', {})
+                debug_output += f"\n**🛒 Shopping List:** {'✅' if shopping.get('available') else '❌'} {shopping.get('active_count', 0)} items\n"
+
+                # Memories
+                memories = data.get('memories', {})
+                if memories.get('available'):
+                    debug_output += f"\n**📸 Photo Memories:** {memories.get('total_count', 0)} from this day\n"
+                else:
+                    debug_output += f"\n**📸 Photo Memories:** ❌ Not available (API key: {'set' if Config.IMMICH_API_KEY else 'not set'})\n"
+
+                await self.send_text(room_id, debug_output)
+            else:
+                # Normal mode: generate full briefing
+                await self.send_text(room_id, "🌅 Generating briefing...")
+                await agent.deliver(room_id)
+
+        except Exception as e:
+            logger.error(f"Failed to generate briefing: {e}")
+            await self.send_text(room_id, "❌ Failed to generate briefing. Check the logs for details.")
+
     async def handle_help(self, room_id: str):
         """Show available commands."""
         help_text = """🤖 **Memu Bot Commands**
+
+**Calendar**
+• `/schedule [event] [time]` - Add to family calendar
+  Example: `/schedule Soccer practice Tuesday 5pm`
+• `/calendar` - Show today's events
+• `/calendar week` - Show this week's events
+• `/calendar tomorrow` - Show tomorrow's events
 
 **Memory**
 • `/remember [fact]` - Save something to remember
@@ -279,11 +464,17 @@ class MemuBot:
 • `/remind [task] [time]` - Set a reminder
   Example: `/remind call mom tomorrow 3pm`
 
+**Briefings**
+• `/briefing` - Get an on-demand family briefing
+• `/briefing debug` - Show raw data sources (for troubleshooting)
+
 **Other**
 • `/summarize` - AI summary of recent chat
 • `/help` - Show this message
 
-💡 Tip: `/recall` now searches your actual conversations, not just saved facts!
+💡 Tips:
+• Sync the family calendar to your phone via CalDAV!
+• Morning briefings are sent automatically at 7am
 """
         await self.send_text(room_id, help_text)
 

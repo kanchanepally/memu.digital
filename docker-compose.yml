@@ -229,15 +229,50 @@ services:
       - MATRIX_BOT_TOKEN=${MATRIX_BOT_TOKEN}
       - MATRIX_BOT_USERNAME=${MATRIX_BOT_USERNAME}
       - OLLAMA_MODEL=${OLLAMA_MODEL:-ministral:3b}
+      - CALDAV_URL=http://calendar/dav.php
+      - CALDAV_USERNAME=${CALDAV_USERNAME:-memu}
+      - CALDAV_PASSWORD=${CALDAV_PASSWORD:-}
+      - TIMEZONE=${TIMEZONE:-Europe/London}
+      - BRIEFING_ENABLED=${BRIEFING_ENABLED:-true}
+      - BRIEFING_TIME=${BRIEFING_TIME:-07:00}
+      - PRIMARY_ROOM_ID=${PRIMARY_ROOM_ID:-}
+      - WEATHER_API_KEY=${WEATHER_API_KEY:-}
+      - WEATHER_CITY=${WEATHER_CITY:-London}
+      - WEATHER_COUNTRY=${WEATHER_COUNTRY:-UK}
+      - IMMICH_API_URL=http://immich_server:2283
+      - IMMICH_API_KEY=${IMMICH_API_KEY:-}
     depends_on:
       database:
         condition: service_healthy
       synapse:
         condition: service_healthy
+      calendar:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - memu_net
     # NOTE: No ports - bot communicates via Matrix protocol
+
+    # === CALENDAR SERVICE (BAIKAL) ===
+
+  calendar:
+    container_name: memu_calendar
+    image: ckulka/baikal:0.9.5-apache
+    restart: unless-stopped
+    volumes:
+      - baikal_config:/var/www/baikal/config
+      - baikal_data:/var/www/baikal/Specific
+    environment:
+      - TZ=${TIMEZONE:-Europe/London}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - memu_net
+    # NOTE: No ports exposed - accessible via Nginx proxy only
 
     # === NETWORK (TAILSCALE) ===
 
@@ -268,6 +303,7 @@ services:
     image: nginx:1.27-alpine
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./assets:/usr/share/nginx/assets:ro
     depends_on:
       - element
       - synapse
@@ -294,5 +330,7 @@ volumes:
   model_cache:
   ollama_data:
   tailscale_data:
+  baikal_config:
+  baikal_data:
 
 

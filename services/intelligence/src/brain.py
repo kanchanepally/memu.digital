@@ -116,6 +116,38 @@ Provide a brief, helpful summary (2-4 sentences) answering what the user wanted 
 
         return await self.generate(prompt, system_prompt=system_prompt)
 
+    async def extract_calendar_event(self, content: str) -> Dict[str, Any]:
+        """
+        Extract event details from a natural language calendar request.
+
+        Returns dict with keys: summary, date, time, duration, location
+        """
+        prompt = f"""Extract calendar event details from this request.
+Request: "{content}"
+
+Respond ONLY with valid JSON in this format:
+{{
+    "summary": "short event title",
+    "date": "the date mentioned (e.g., 'Tuesday', 'tomorrow', 'March 15')",
+    "time": "the time mentioned (e.g., '5pm', '14:00', 'noon')",
+    "duration": "duration if mentioned (e.g., '1 hour', '30 minutes'), or null",
+    "location": "location if mentioned, or null"
+}}
+"""
+        response = await self.generate(prompt, json_mode=True)
+        try:
+            # Clean up potential markdown
+            if response.startswith('```json'):
+                response = response[7:]
+            if response.startswith('```'):
+                response = response[3:]
+            if response.endswith('```'):
+                response = response[:-3]
+            return json.loads(response.strip())
+        except json.JSONDecodeError:
+            logger.error(f"Failed to parse AI response for calendar event: {response}")
+            return {}
+
     async def is_model_available(self) -> bool:
         """
         Check if the configured model is available in Ollama.
