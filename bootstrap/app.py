@@ -808,7 +808,7 @@ def run_setup(clean_slug, domain, admin_password, tailscale_key, server_ip, admi
             (PROJECT_ROOT / 'nginx' / 'conf.d' / 'default.conf').write_text(nginx_config)
 
             # Generate Element config for browser access
-            element_config = generate_element_config(domain, full_url=f"http://{domain}" if not final_ts_key else f"https://{domain}")
+            element_config = generate_element_config(domain, full_url=f"http://{domain}")
             (PROJECT_ROOT / 'element-config.json').write_text(element_config)
             
             time.sleep(1)
@@ -869,7 +869,7 @@ def run_setup(clean_slug, domain, admin_password, tailscale_key, server_ip, admi
             element_config = {
                 "default_server_config": {
                     "m.homeserver": {
-                        "base_url": "/",
+                        "base_url": f"http://{domain}",
                         "server_name": domain
                     }
                 },
