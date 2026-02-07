@@ -39,6 +39,13 @@ LOCATIONS = """
         rewrite ^/calendar(/.*)$ $1 break;
         proxy_pass $upstream_calendar;
         proxy_redirect ~^(https?://[^/]+)/(.*) $1/calendar/$2;
+        proxy_redirect / /calendar/;
+        sub_filter 'href="/' 'href="/calendar/';
+        sub_filter 'src="/' 'src="/calendar/';
+        sub_filter 'action="/' 'action="/calendar/';
+        sub_filter_once off;
+        sub_filter_types text/html;
+        proxy_set_header Accept-Encoding "";
         proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header Host $host;
