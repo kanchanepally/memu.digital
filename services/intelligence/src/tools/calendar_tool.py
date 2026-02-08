@@ -55,13 +55,29 @@ class CalendarManager:
 
         try:
             client = self._get_client()
-            principal = client.principal()
+            logger.info(f"Connecting to CalDAV: {self.caldav_url} as {self.username}")
+            
+            principal = None
+            try:
+                principal = client.principal()
+            except Exception as e:
+                logger.warning(f"Auto-discovery failed: {e}. Trying direct principal path...")
+            
+            # Fallback for Baikal if auto-discovery fails
+            if not principal:
+                # Construct explicit principal URL for Baikal
+                # Format: /calendar/dav.php/principals/users/USERNAME/
+                base = self.caldav_url.rstrip('/')
+                principal_url = f"{base}/principals/users/{self.username}/"
+                logger.info(f"Attempting direct principal URL: {principal_url}")
+                principal = client.principal(principal_url)
+
             calendars = principal.calendars()
 
             if calendars:
                 # Use the first calendar (typically "default" or "Family")
                 self._calendar = calendars[0]
-                logger.info(f"Using calendar: {self._calendar.name}")
+                logger.info(f"Using calendar: {self._calendar.name} (URL: {self._calendar.url})")
             else:
                 # Create a new calendar
                 self._calendar = principal.make_calendar(name="Family")
