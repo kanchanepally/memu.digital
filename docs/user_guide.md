@@ -120,31 +120,28 @@ Each family member's phone/laptop needs Tailscale:
 
 ### Step 2: Set Up Chat
 
-**Web (built-in):** Open `http://memu-hub` in any browser — Memu Chat is ready to use.
+**Web (Laptop/Desktop):** Open `http://test15.memu.digital` in your browser.
 
-**Mobile apps:** Download any Matrix-compatible chat app:
-- **iOS:** [Element](https://apps.apple.com/app/element-messenger/id1083446067), [FluffyChat](https://apps.apple.com/app/fluffychat/id1551469600), or [SchildiChat](https://apps.apple.com/app/schildichat/id1634437512)
-- **Android:** [Element](https://play.google.com/store/apps/details?id=im.vector.app) or [FluffyChat](https://play.google.com/store/apps/details?id=chat.fluffy.fluffychat)
+**Mobile Apps (Important):**
+Mobile apps block "insecure" connections. You must use your **Tailscale IP**.
 
-**One-time setup:**
-1. Open your chosen app
-2. Tap **"Sign in"**
-3. Set the homeserver to: `https://memu-hub.xxxxx.ts.net`
-4. Sign in with your username and password
-
-**Done!** The app remembers everything. Just open it to chat.
+1.  Open **Tailscale** on your phone and activate it.
+2.  Open **Element/FluffyChat**.
+3.  Set Homeserver URL: `http://100.80.252.43`
+    *(Do NOT use the .digital address here)*
+4.  Log in with your username (`@admin:test15.memu.digital`) and password.
 
 ---
 
 ### Step 3: Set Up Photos (Immich)
 
-**Download:** Immich ([iOS](https://apps.apple.com/app/immich/id1613945652) / [Android](https://play.google.com/store/apps/details?id=app.alextran.immich))
+**Web:** `http://test15.memu.digital:2283`
 
-**One-time setup:**
-1. Open Immich
-2. Enter server URL: `http://memu-hub:2283`
-3. Tap **"Create account"** 
-4. Create your photo account (any email/password)
+**Mobile App:**
+1.  Open **Tailscale** and activate it.
+2.  Open **Immich**.
+3.  Set Server URL: `http://100.80.252.43:2283`
+4.  Log in.
 
 **Enable automatic backup:**
 1. Go to Settings → Backup
