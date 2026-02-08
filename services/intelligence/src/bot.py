@@ -59,6 +59,13 @@ class MemuBot:
         is_dm = room.member_count == 2
         is_slash = content.startswith('/')
 
+        # Prevent processing old messages on startup (older than 60 seconds)
+        # Matrix timestamps are in milliseconds
+        event_age = datetime.now().timestamp() * 1000 - event.server_timestamp
+        if event_age > 60000:
+            logger.info(f"Skipping old message (age: {event_age}ms): {content}")
+            return
+
         # In group rooms, only respond to slash commands or @mentions
         bot_display = 'memu'
         bot_mentioned = bot_display.lower() in content.lower() or (
