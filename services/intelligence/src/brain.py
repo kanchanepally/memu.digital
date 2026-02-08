@@ -147,6 +147,34 @@ Provide a brief, helpful summary (2-4 sentences) answering what the user wanted 
 
         return await self.generate(prompt, system_prompt=system_prompt)
 
+    async def synthesise_cross_silo(self, query: str, context: str) -> str:
+        """
+        Synthesise cross-silo search results into an insightful, unified response.
+        This is the 'Chief of Staff' intelligence that connects dots across data sources.
+        """
+        system_prompt = (
+            "You are the family's Chief of Staff -- an AI that knows the family's chat history, "
+            "calendar, saved facts, and photo library. When given search results from multiple sources, "
+            "synthesise them into a brief, insightful response that connects the dots.\n\n"
+            "Rules:\n"
+            "- Be concise (3-5 sentences max)\n"
+            "- Connect information across sources when possible\n"
+            "- Highlight actionable insights (upcoming deadlines, patterns, suggestions)\n"
+            "- Use a warm, helpful tone\n"
+            "- If results are sparse, say what you found without over-interpreting\n"
+            "- Never invent information not present in the data"
+        )
+
+        prompt = f"""The family asked: "{query}"
+
+Here's what I found across their data:
+
+{context}
+
+Synthesise this into a brief, insightful response that connects the dots across these sources:"""
+
+        return await self.generate(prompt, system_prompt=system_prompt)
+
     async def extract_calendar_event(self, content: str) -> Dict[str, Any]:
         """
         Extract event details from a natural language calendar request.

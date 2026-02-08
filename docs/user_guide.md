@@ -15,14 +15,22 @@ Memu gives your family four things, all running on hardware you own:
 | **Calendar** | Shared family schedule | iOS/Android built-in |
 | **AI Assistant** | Shopping lists, reminders, briefings | Built into chat |
 
+
 Everything stays on your device. No company can see your data.
+
+## 🚀 Quick Start (For the Impatient)
+
+1.  **Plug in** your Mini PC/Pi (Ethernet + Power).
+2.  **Get a specific key** from [Tailscale](https://login.tailscale.com/admin/settings/keys).
+3.  **Run** `sudo ./scripts/install.sh` on the device.
+4.  **Visit** `http://<device-ip>:8888` to finish setup.
 
 ---
 
 ## Part 1: Hardware Setup
 
 ### What You Need
-- Mini PC (Intel N100 recommended) or Raspberry Pi 5
+- Mini PC (Intel N100 recommended for 4K video) or Raspberry Pi 5
 - 1TB+ SSD storage
 - Power adapter
 - Ethernet cable
@@ -71,6 +79,7 @@ On a phone or laptop connected to the **same network**:
 
 1. Open a browser
 2. Go to: `http://<device-ip>:8888`
+   *(Tip: Check your router's admin page to find the IP address of the new device)*
 
 ### Fill In Your Details
 
@@ -176,6 +185,7 @@ Your family calendar syncs with the built-in calendar on your phone — no extra
 ## Part 5: Meet the AI Assistant 🤖
 
 This is where the magic happens. The **Memu Bot** lives in your chat and helps your family:
+- **Cross-silo search** — ask one question, get answers from chat, calendar, photos AND saved facts
 - Manage the family calendar
 - Keep a shared shopping list
 - Remember important information
@@ -203,26 +213,53 @@ This is where the magic happens. The **Memu Bot** lives in your chat and helps y
 | `/addtolist` | Add items | `/addtolist milk, eggs, bread` |
 | `/done` | Mark item bought | `/done milk` |
 | `/remember` | Store a fact | `/remember WiFi is sunshine123` |
-| `/recall` | Find a fact | `/recall WiFi` |
+| `/recall` | Cross-silo search | `/recall sailing` |
 | `/remind` | Set a reminder | `/remind call mom tomorrow 3pm` |
 | `/summarize` | Summarize today's chat | `/summarize` |
+
+### Cross-Silo Search — The Magic Feature
+
+This is what makes Memu different from any other assistant. When you ask a question with `/recall` (or just ask naturally), the bot searches **everywhere at once**:
+
+- 💾 **Saved facts** (things you told it to remember)
+- 💬 **Chat history** (actual conversations)
+- 📅 **Calendar events** (past and upcoming)
+- 📸 **Photos** (using Immich's smart search)
+
+When results come from multiple sources, the AI **connects the dots** and gives you an insightful answer — not just raw search results.
+
+**Examples:**
+
+> 🧑 "What have we been doing on Saturdays?"
+> 🤖 🔍 **Cross-silo search** (💾💬 📅 📸):
+> Your Saturdays have been busy! The calendar shows sailing sessions most weeks since September. You have 15 photos from the harbour across those sessions. In chat, you mentioned needing a new life jacket in December — worth checking if that's sorted before next week's session.
+
+> 👩 `/recall dentist`
+> 🤖 🔍 **Cross-silo search** (💬 📅):
+> The last dentist appointment was September 12th. In chat, the hygienist recommended coming back in six months — that's now overdue. Your calendar shows Thursday afternoon is free.
+
+> 🧑 `/recall WiFi`
+> 🤖 💾 **Saved Facts** about 'WiFi':
+> • WiFi password is sunshine123 (saved 2025-12-01)
+
+Simple queries that only match one source still work fast, without AI synthesis. The cross-silo intelligence kicks in when there's data across multiple sources to connect.
 
 ### How Families Use the Bot
 
 **Shopping:**
-> 🧑 `/addtolist milk, bread, cheese`  
-> 🤖 ✓ Added 3 items to the list  
-> 👩 `/done milk`  
+> 🧑 `/addtolist milk, bread, cheese`
+> 🤖 ✓ Added 3 items to the list
+> 👩 `/done milk`
 > 🤖 ✓ Marked as done: milk
 
 **Family Memory:**
-> 🧑 `/remember Grandma's birthday is March 15`  
-> 🤖 ✓ Remembered: Grandma's birthday is March 15  
-> 👩 `/recall grandma birthday`  
-> 🤖 💡 Grandma's birthday is March 15
+> 🧑 `/remember Grandma's birthday is March 15`
+> 🤖 ✓ Remembered: Grandma's birthday is March 15
+> 👩 `/recall grandma birthday`
+> 🤖 💾 Grandma's birthday is March 15
 
 **Reminders:**
-> 🧑 `/remind pick up kids at 3pm`  
+> 🧑 `/remind pick up kids at 3pm`
 > 🤖 ⏰ Reminder set for today 3:00 PM
 
 The bot is available to everyone in the family. Lists and memories are shared!
@@ -277,7 +314,9 @@ You will see a **QR Code** and a **Welcome Link**.
 
 ### Share These Instructions
 
-Send this to each family member:
+### Share These Instructions
+
+Copy and paste this message to your family group chat:
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -409,7 +448,7 @@ This will show available backups and guide you through restoration.
 │    /addtolist     - add items                   │
 │    /done          - mark item complete          │
 │    /remember      - store a fact                │
-│    /recall        - find a fact                 │
+│    /recall        - CROSS-SILO SEARCH (all data)│
 │    /remind        - set a reminder              │
 │    /summarize     - summarize chat              │
 │    /help          - show all commands           │

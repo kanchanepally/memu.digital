@@ -48,12 +48,10 @@ Surface Immich "on this day" photos in morning briefings and as a standalone com
 - **Dependencies:** Immich API key in config
 - **Files:** `services/intelligence/src/agents/briefing.py`, new photo memory tool
 
-### 3. Cross-silo recall ⭐ KEY DIFFERENTIATOR
-When user asks "What should I get Sarah for her birthday?", search chat history AND calendar events AND saved facts AND photo metadata. Synthesise a unified, insightful response -- not just retrieval, but intelligence across data sources.
-- **Effort:** 3 sessions
-- **Dependencies:** Calendar tool + memory store + Immich API + brain summarization
-- **Files:** `services/intelligence/src/memory.py` (add calendar + photo search), `bot.py` (enhanced recall)
-- **Why this is #3:** This is the feature that makes the demo video. No other product connects family chat + photos + calendar + AI into a single query. This is the purchase decision.
+### 3. Cross-silo recall ⭐ KEY DIFFERENTIATOR ✅ DONE
+`/recall` (or natural language) now searches 4 silos in parallel: saved facts, chat history, calendar events, and Immich photo metadata. When 2+ silos return results, the LLM synthesises a unified "Chief of Staff" response connecting the dots. Single-silo queries still display fast formatted results without synthesis overhead.
+- **Implementation:** `calendar_tool.py` (search_events), `bot.py` (_cross_silo_search, _search_calendar, _search_photos, _format_cross_silo_context), `brain.py` (synthesise_cross_silo)
+- **Why this matters:** This is the feature that makes the demo video. No other product connects family chat + photos + calendar + AI into a single query. This is the purchase decision.
 
 ### 4. Memu Guardian ⭐ SELF-MAINTAINING APPLIANCE
 A watchdog service that makes Memu self-maintaining. The principle: **after install.sh, the user never opens a terminal again.**

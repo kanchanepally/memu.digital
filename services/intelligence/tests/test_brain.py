@@ -48,3 +48,51 @@ async def test_extract_reminder_json_with_markdown():
     result = await brain.extract_reminder("sleep now")
     assert result['task'] == "sleep"
     assert result['time'] == "now"
+
+    result = await brain.extract_reminder("sleep now")
+    assert result['task'] == "sleep"
+    assert result['time'] == "now"
+
+
+@pytest.mark.asyncio
+async def test_analyze_intent_parsing():
+    """Test parsing of valid intent JSON."""
+    brain = Brain()
+    # Mock successful JSON response
+    brain.generate = AsyncMock(return_value='{"intent": "CALENDAR", "content": "soccer practice"}')
+    
+    result = await brain.analyze_intent("Is there soccer practice?")
+    
+    assert result['intent'] == "CALENDAR"
+    assert result['content'] == "soccer practice"
+
+
+@pytest.mark.asyncio
+async def test_analyze_intent_malformed():
+    """Test handling of invalid JSON response from LLM."""
+    brain = Brain()
+    # Mock broken JSON
+    brain.generate = AsyncMock(return_value='Not JSON at all')
+    
+    result = await brain.analyze_intent("Some query")
+    
+    # Should fallback to NONE and original content
+    assert result['intent'] == "NONE"
+    assert result['content'] == "Some query"
+
+
+@pytest.mark.asyncio
+async def test_synthesise_cross_silo():
+    """Test that synthesis calls generate with correct context."""
+    brain = Brain()
+    brain.generate = AsyncMock(return_value="Integrated answer")
+    
+    await brain.synthesise_cross_silo("query", "Context extracted from silos")
+    
+    brain.generate.assert_called_once()
+    args = brain.generate.call_args
+    prompt = args[0][0]
+    system = args.kwargs['system_prompt']
+    
+    assert "Context extracted from silos" in prompt
+    assert "Chief of Staff" in system

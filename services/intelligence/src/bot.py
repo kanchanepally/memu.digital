@@ -1,5 +1,6 @@
 import logging
 import asyncio
+import httpx
 from nio import AsyncClient, MatrixRoom, RoomMessageText, InviteMemberEvent
 from config import Config
 from brain import Brain
@@ -148,27 +149,54 @@ class MemuBot:
 
     async def handle_recall(self, room_id: str, content: str):
         """
-        Enhanced recall: searches both saved facts AND chat history.
+        Cross-silo recall: searches saved facts, chat history, calendar events,
+        and photo metadata. Synthesises results when multiple sources match.
         """
         query = content.replace('/recall', '').strip()
         if not query:
-            await self.send_text(room_id, "❌ Usage: /recall [query]")
+            await self.send_text(room_id, "❌ Usage: /recall [query]\nExample: /recall sailing")
             return
 
-        # Use unified recall to search facts + chat history
-        results = await self.memory.unified_recall(room_id, query)
-        facts = results.get("facts", [])
-        chat_results = results.get("chat", [])
+        # Search all silos in parallel
+        results = await self._cross_silo_search(room_id, query)
+        facts = results["facts"]
+        chat_results = results["chat"]
+        calendar_results = results["calendar"]
+        photo_results = results["photos"]
 
-        # No results anywhere
-        if not facts and not chat_results:
+        has_facts_chat = bool(facts or chat_results)
+        has_calendar = bool(calendar_results)
+        has_photos = bool(photo_results)
+
+        silo_count = sum([has_facts_chat, has_calendar, has_photos])
+
+        if silo_count == 0:
             await self.send_text(room_id, f"🤔 I couldn't find anything about '{query}'")
             return
 
-        # Build response
+        # Multiple silos - use LLM synthesis for cross-silo intelligence
+        if silo_count >= 2:
+            context = self._format_cross_silo_context(query, results)
+            synthesis = await self.brain.synthesise_cross_silo(query, context)
+            if synthesis:
+                source_icons = []
+                if has_facts_chat:
+                    source_icons.append("💾💬")
+                if has_calendar:
+                    source_icons.append("📅")
+                if has_photos:
+                    source_icons.append("📸")
+                sources = " ".join(source_icons)
+                await self.send_text(
+                    room_id,
+                    f"🔍 **Cross-silo search** for '{query}' ({sources}):\n\n{synthesis}"
+                )
+                return
+            # Fall through to formatted display if synthesis fails
+
+        # Single silo or synthesis failed - format directly
         response_parts = []
 
-        # Saved facts (explicit /remember)
         if facts:
             response_parts.append(f"💾 **Saved Facts** about '{query}':\n")
             for fact in facts:
@@ -179,10 +207,9 @@ class MemuBot:
                     dt = ts
                 response_parts.append(f"• {fact['fact']} (saved {dt.strftime('%Y-%m-%d')})\n")
 
-        # Chat history matches
         if chat_results:
             if facts:
-                response_parts.append("\n")  # Separator
+                response_parts.append("\n")
             response_parts.append(f"💬 **From chat history** about '{query}':\n")
             for msg in chat_results:
                 ts = msg['timestamp']
@@ -191,24 +218,191 @@ class MemuBot:
                     date_str = dt.strftime('%b %d')
                 else:
                     date_str = "recently"
-                
-                # Truncate long messages
                 body = msg['body']
                 if len(body) > 100:
                     body = body[:100] + "..."
-                
-                # Extract username from @user:domain format
                 sender = msg['sender'].split(':')[0].replace('@', '')
                 response_parts.append(f"• {sender}: \"{body}\" ({date_str})\n")
 
+        if calendar_results:
+            if response_parts:
+                response_parts.append("\n")
+            response_parts.append(f"📅 **Calendar events** matching '{query}':\n")
+            for event in calendar_results[:5]:
+                date_str = event['start'].strftime('%b %d') if event.get('start') else ''
+                time_str = ""
+                if event.get('start') and not event.get('all_day'):
+                    time_str = event['start'].strftime('%H:%M')
+                else:
+                    time_str = "All day"
+                location = f" @ {event['location']}" if event.get('location') else ""
+                response_parts.append(f"• {event['summary']} ({date_str} {time_str}){location}\n")
+
+        if photo_results:
+            if response_parts:
+                response_parts.append("\n")
+            response_parts.append(f"📸 **Photos** matching '{query}':\n")
+            count = len(photo_results)
+            if count == 1:
+                p = photo_results[0]
+                date_str = p['date'][:10] if p.get('date') else ''
+                city = f" in {p['city']}" if p.get('city') else ''
+                response_parts.append(f"• 1 photo{city} ({date_str})\n")
+            else:
+                cities = set(p['city'] for p in photo_results if p.get('city'))
+                dates = [p['date'][:10] for p in photo_results if p.get('date')]
+                date_range = f" from {min(dates)} to {max(dates)}" if dates else ""
+                location_str = f" in {', '.join(cities)}" if cities else ""
+                response_parts.append(f"• {count} photos{location_str}{date_range}\n")
+
         response = "".join(response_parts)
-        
+
         # If response is very long, ask AI to summarise
         if len(response) > 1500:
             summary = await self.brain.summarize_recall_results(query, response)
             response = f"📋 Here's what I found about '{query}':\n\n{summary}"
 
         await self.send_text(room_id, response)
+
+    async def _cross_silo_search(self, room_id, query):
+        """Search across all data silos in parallel."""
+        results = await asyncio.gather(
+            self.memory.unified_recall(room_id, query),
+            self._search_calendar(query),
+            self._search_photos(query),
+            return_exceptions=True
+        )
+
+        unified = results[0] if not isinstance(results[0], Exception) else {"facts": [], "chat": []}
+        calendar = results[1] if not isinstance(results[1], Exception) else []
+        photos = results[2] if not isinstance(results[2], Exception) else []
+
+        if isinstance(results[0], Exception):
+            logger.warning(f"Facts/chat search failed: {results[0]}")
+        if isinstance(results[1], Exception):
+            logger.warning(f"Calendar search failed: {results[1]}")
+        if isinstance(results[2], Exception):
+            logger.warning(f"Photo search failed: {results[2]}")
+
+        return {
+            "facts": unified.get("facts", []),
+            "chat": unified.get("chat", []),
+            "calendar": calendar,
+            "photos": photos,
+        }
+
+    async def _search_calendar(self, query):
+        """Search calendar events for cross-silo recall."""
+        try:
+            if not await self.calendar.is_available():
+                return []
+            return await self.calendar.search_events(query)
+        except Exception as e:
+            logger.warning(f"Calendar search failed: {e}")
+            return []
+
+    async def _search_photos(self, query):
+        """Search Immich photos for cross-silo recall."""
+        if not Config.IMMICH_API_KEY:
+            return []
+
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                url = f"{Config.IMMICH_API_URL}/api/search/smart"
+                headers = {'x-api-key': Config.IMMICH_API_KEY}
+                response = await client.post(url, headers=headers, json={"query": query})
+
+                if response.status_code == 200:
+                    data = response.json()
+                    # Handle different Immich response formats
+                    if "assets" in data:
+                        assets = data["assets"].get("items", [])
+                    elif isinstance(data, list):
+                        assets = data
+                    else:
+                        assets = []
+
+                    results = []
+                    for asset in assets[:10]:
+                        exif = asset.get("exifInfo", {}) or {}
+                        results.append({
+                            "filename": asset.get("originalFileName", ""),
+                            "date": asset.get("localDateTime", ""),
+                            "city": exif.get("city", "") or "",
+                            "description": exif.get("description", "") or "",
+                            "type": asset.get("type", "IMAGE"),
+                        })
+                    return results
+                else:
+                    logger.info(f"Immich smart search returned {response.status_code}")
+                    return []
+        except Exception as e:
+            logger.warning(f"Photo search failed: {e}")
+            return []
+
+    def _format_cross_silo_context(self, query, results):
+        """Format cross-silo results into context for LLM synthesis."""
+        parts = []
+
+        facts = results.get("facts", [])
+        if facts:
+            parts.append("## Saved Facts")
+            for fact in facts:
+                ts = fact['created_at']
+                if isinstance(ts, int):
+                    dt = datetime.fromtimestamp(ts / 1000)
+                    date_str = dt.strftime('%Y-%m-%d')
+                else:
+                    date_str = str(ts)
+                parts.append(f"- {fact['fact']} (saved {date_str})")
+
+        chat = results.get("chat", [])
+        if chat:
+            parts.append("\n## Chat History")
+            for msg in chat:
+                ts = msg['timestamp']
+                if isinstance(ts, int) and ts > 0:
+                    dt = datetime.fromtimestamp(ts / 1000)
+                    date_str = dt.strftime('%b %d')
+                else:
+                    date_str = "recently"
+                sender = msg['sender'].split(':')[0].replace('@', '')
+                body = msg['body'][:200]
+                parts.append(f"- {sender}: \"{body}\" ({date_str})")
+
+        calendar = results.get("calendar", [])
+        if calendar:
+            parts.append("\n## Calendar Events")
+            for event in calendar[:8]:
+                date_str = event['start'].strftime('%b %d, %Y') if event.get('start') else ''
+                time_str = ""
+                if event.get('start') and not event.get('all_day'):
+                    time_str = event['start'].strftime('%H:%M')
+                else:
+                    time_str = "All day"
+                location = f" at {event['location']}" if event.get('location') else ""
+                desc = f" - {event['description'][:100]}" if event.get('description') else ""
+                parts.append(f"- {event['summary']} ({date_str} {time_str}){location}{desc}")
+
+        photos = results.get("photos", [])
+        if photos:
+            parts.append("\n## Photos")
+            count = len(photos)
+            cities = set(p['city'] for p in photos if p.get('city'))
+            dates = [p['date'][:10] for p in photos if p.get('date')]
+
+            parts.append(f"- {count} matching photos found")
+            if dates:
+                parts.append(f"- Date range: {min(dates)} to {max(dates)}")
+            if cities:
+                parts.append(f"- Locations: {', '.join(cities)}")
+            for p in photos[:3]:
+                date_str = p['date'][:10] if p.get('date') else 'unknown date'
+                city = f" in {p['city']}" if p.get('city') else ""
+                desc = f" - {p['description']}" if p.get('description') else ""
+                parts.append(f"  - {p['filename']} ({date_str}){city}{desc}")
+
+        return "\n".join(parts)
 
     async def handle_add_to_list(self, room_id: str, sender: str, content: str):
         raw = content.replace('/addtolist', '').strip()
@@ -490,9 +684,9 @@ class MemuBot:
 • `/calendar week` - Show this week's events
 • `/calendar tomorrow` - Show tomorrow's events
 
-**Memory**
+**Memory & Search**
 • `/remember [fact]` - Save something to remember
-• `/recall [query]` - Search saved facts AND chat history
+• `/recall [query]` - Cross-silo search: facts, chat, calendar AND photos
 
 **Lists**
 • `/addtolist item1, item2` - Add items to shared list
@@ -516,6 +710,7 @@ class MemuBot:
 • "Add milk and eggs to the list"
 • "Remind me to call the dentist Friday"
 • "What's the WiFi password?"
+• "What have we been doing on Saturdays?" (searches across all your data)
 
 In group chats, mention me by name so I know you're talking to me.
 """

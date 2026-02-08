@@ -6,7 +6,9 @@
       "Bash(python -m pytest:*)",
       "Bash(\"C:/Users/Lenovo/Code/memu/memu-os/services/intelligence/venv/Scripts/python.exe\" -m pytest:*)",
       "Bash(\"C:/Users/Lenovo/Code/memu/memu-os/services/intelligence/venv/Scripts/python.exe\" -m pip install pytest pytest-asyncio)",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(git push:*)",
+      "WebSearch"
     ]
   }
 }

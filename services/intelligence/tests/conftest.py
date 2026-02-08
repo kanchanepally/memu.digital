@@ -1,10 +1,5 @@
-"""
-Pytest configuration for intelligence service tests.
-"""
-
 import sys
-from pathlib import Path
+from unittest.mock import MagicMock
 
-# Add src directory to Python path for imports
-src_path = Path(__file__).parent.parent / "src"
-sys.path.insert(0, str(src_path))
+# Mock asyncpg to avoid installation requirements (compilation on Windows)
+sys.modules["asyncpg"] = MagicMock()

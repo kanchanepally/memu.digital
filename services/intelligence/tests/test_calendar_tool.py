@@ -313,3 +313,65 @@ class TestFindFreeSlots:
             # All-day event should not block slots
             assert len(result) == 1
             assert result[0]['duration_minutes'] == 8 * 60
+
+
+class TestCalendarManagerSearch:
+    """Tests for calendar search logic."""
+
+    def test_search_events_logic(self, calendar_manager):
+        """Test that search correctly filters events."""
+        # Use the sync method directly as it contains the logic
+        with patch.object(calendar_manager, '_get_calendar') as mock_get_cal:
+            # Mock calendar search response
+            mock_cal_obj = MagicMock()
+            
+            # Setup mock event with data
+            event_match = MagicMock()
+            event_match.data = "mock_ical_data"
+            
+            event_no_match = MagicMock()
+            event_no_match.data = "mock_ical_data_2"
+            
+            mock_cal_obj.search.return_value = [event_match, event_no_match]
+            mock_get_cal.return_value = mock_cal_obj
+            
+            # Mock ical parsing
+            with patch('tools.calendar_tool.Calendar.from_ical') as mock_ical:
+                # Mock matching event
+                comp_match = MagicMock()
+                comp_match.name = "VEVENT"
+                # Mock return of _parse_vevent
+                parsed_match = {
+                    'summary': 'Soccer Practice',
+                    'description': 'Bring equipment',
+                    'location': 'Field',
+                    'start': datetime.now()
+                }
+                
+                # Mock non-matching event
+                comp_no_match = MagicMock()
+                comp_no_match.name = "VEVENT"
+                parsed_no_match = {
+                    'summary': 'Dentist',
+                    'description': 'Checkup',
+                    'location': 'Clinic',
+                    'start': datetime.now()
+                }
+                
+                # Mock walk() to return component for each event
+                # We need to configure _parse_vevent to return different values
+                with patch.object(calendar_manager, '_parse_vevent', side_effect=[parsed_match, parsed_no_match]):
+                    
+                    mock_ical_inst_1 = MagicMock()
+                    mock_ical_inst_1.walk.return_value = [comp_match]
+                    
+                    mock_ical_inst_2 = MagicMock()
+                    mock_ical_inst_2.walk.return_value = [comp_no_match]
+                    
+                    mock_ical.side_effect = [mock_ical_inst_1, mock_ical_inst_2]
+            
+                    results = calendar_manager._sync_search_events("soccer")
+                    
+                    assert len(results) == 1
+                    assert results[0]['summary'] == 'Soccer Practice'
+

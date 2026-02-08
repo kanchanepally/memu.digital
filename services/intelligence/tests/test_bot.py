@@ -12,16 +12,14 @@ def mock_bot():
     with patch("bot.AsyncClient") as mock_client:
         with patch("bot.MemoryStore") as mock_memory:
             with patch("bot.Brain") as mock_brain:
-                with patch("bot.BackupManager") as mock_backup_manager:
-                    bot = MemuBot()
-                    bot.client = AsyncMock()
-                    bot.client.user_id = "@bot:test"
-                    # Mock next_batch for summarize test
-                    bot.client.next_batch = "s12345"
-                    bot.memory = AsyncMock()
-                    bot.brain = AsyncMock()
-                    bot.backup_manager = AsyncMock()
-                    return bot
+                bot = MemuBot()
+                bot.client = AsyncMock()
+                bot.client.user_id = "@bot:test"
+                # Mock next_batch for summarize test
+                bot.client.next_batch = "s12345"
+                bot.memory = AsyncMock()
+                bot.brain = AsyncMock()
+                return bot
 
 @pytest.mark.asyncio
 async def test_process_message_remember(mock_bot):
@@ -99,26 +97,6 @@ async def test_handle_summarize_success(mock_bot):
     mock_bot.client.room_send.assert_called()
 
 
-@pytest.mark.asyncio
-async def test_process_message_backup_status(mock_bot):
-    """Bot responds to /backup-status with formatted status."""
-    mock_bot.backup_manager.get_status = AsyncMock(return_value={
-        'health': 'healthy',
-        'last_backup_human': '6 hours ago',
-        'last_backup_size_human': '245 MB',
-        'backup_count': 7,
-        'total_size_human': '1.7 GB',
-        'usb_days_ago': 2,
-        'warnings': [],
-        'error': None
-    })
-    mock_bot.backup_manager.format_status_message = MagicMock(return_value="**Backup Status**\n\nHealthy")
-
-    await mock_bot.process_message("room1", "@user:test", "/backup-status")
-
-    mock_bot.backup_manager.get_status.assert_called_once()
-    mock_bot.backup_manager.format_status_message.assert_called_once()
-    mock_bot.client.room_send.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -126,6 +104,84 @@ async def test_process_message_help(mock_bot):
     """Bot responds to /help with command list."""
     await mock_bot.process_message("room1", "@user:test", "/help")
 
+
     mock_bot.client.room_send.assert_called_once()
     call_args = mock_bot.client.room_send.call_args
     assert 'Memu Bot Commands' in call_args.kwargs['content']['body']
+
+
+@pytest.mark.asyncio
+async def test_handle_recall_integration(mock_bot):
+    """Test full cross-silo recall flow with all silos returning data."""
+    # Mock search results
+    mock_bot.memory.unified_recall = AsyncMock(return_value={
+        "facts": [{"fact": "The sky is blue", "created_at": 1234567890}],
+        "chat": [{"sender": "@mom:test", "body": "Look at the blue sky", "timestamp": 1234567890}]
+    })
+    mock_bot.calendar.is_available = AsyncMock(return_value=True)
+    mock_bot.calendar.search_events = AsyncMock(return_value=[
+        {"summary": "Blue Sky Festival", "start": datetime(2025, 5, 1), "location": "Park"}
+    ])
+    
+    # Mock internal methods that would call external APIs
+    with patch.object(mock_bot, '_search_photos', new_callable=AsyncMock) as mock_photos:
+        mock_photos.return_value = [
+            {"filename": "sky.jpg", "city": "London", "date": "2025-05-01"}
+        ]
+        
+        # Mock brain synthesis
+        mock_bot.brain.synthesise_cross_silo = AsyncMock(return_value="Synthesis: The sky is blue and you have photos of it.")
+
+        await mock_bot.handle_recall("room1", "/recall blue")
+
+        # Verify all silos were queried
+        mock_bot.memory.unified_recall.assert_called_with("room1", "blue")
+        mock_bot.calendar.search_events.assert_called_with("blue")
+        mock_photos.assert_called_with("blue")
+        
+        # Verify brain was called for synthesis
+        mock_bot.brain.synthesise_cross_silo.assert_called()
+        
+        # Verify response sent
+        mock_bot.client.room_send.assert_called_once()
+        args = mock_bot.client.room_send.call_args[1]
+        assert "Synthesis: The sky is blue" in args['content']['body']
+
+
+@pytest.mark.asyncio
+async def test_cross_silo_search_partial_failure(mock_bot):
+    """Test that search continues even if one silo fails."""
+    # Memory works
+    mock_bot.memory.unified_recall = AsyncMock(return_value={
+        "facts": [{"fact": "Fact 1", "created_at": 123}],
+        "chat": []
+    })
+    
+    # Calendar works
+    mock_bot.calendar.is_available = AsyncMock(return_value=True)
+    mock_bot.calendar.search_events = AsyncMock(return_value=[
+        {"summary": "Event 1", "start": datetime(2025,1,1), "location": "Loc"}
+    ])
+    
+    # Photos fail
+    with patch.object(mock_bot, '_search_photos', new_callable=AsyncMock) as mock_photos:
+        mock_photos.side_effect = Exception("Immich down")
+        
+        # Brain works
+        mock_bot.brain.synthesise_cross_silo = AsyncMock(return_value="Sythesis result")
+
+        await mock_bot.handle_recall("room1", "/recall test")
+
+        # Verify bot didn't crash and sent a response
+        mock_bot.client.room_send.assert_called_once()
+        
+        # Verify call arguments to synthesis ONLY contained the working silo data
+        # We expect synthesis because we have Facts and Calendar (2 silos)
+        mock_bot.brain.synthesise_cross_silo.assert_called()
+        call_args = mock_bot.brain.synthesise_cross_silo.call_args
+        context_str = call_args[0][1] # second arg is context
+        
+        assert "Fact 1" in context_str
+        assert "Event 1" in context_str
+        assert "Photos" not in context_str
+

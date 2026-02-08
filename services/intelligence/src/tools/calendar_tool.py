@@ -177,6 +177,66 @@ class CalendarManager:
             partial(self._sync_get_events, start, end)
         )
 
+    def _sync_search_events(self, query: str, months_back: int = 12) -> List[Dict[str, Any]]:
+        """Synchronous implementation of search_events."""
+        calendar = self._get_calendar()
+        if not calendar:
+            return []
+
+        now = datetime.now(self.timezone)
+        start = now - timedelta(days=months_back * 30)
+        end = now + timedelta(days=90)  # Also search 3 months ahead
+
+        events = []
+        try:
+            results = calendar.search(
+                start=start,
+                end=end,
+                event=True,
+                expand=True
+            )
+
+            query_lower = query.lower()
+            for event in results:
+                try:
+                    ical = Calendar.from_ical(event.data)
+                    for component in ical.walk():
+                        if component.name == "VEVENT":
+                            parsed = self._parse_vevent(component)
+                            searchable = f"{parsed['summary']} {parsed['description']} {parsed['location']}".lower()
+                            if query_lower in searchable:
+                                events.append(parsed)
+                except Exception as e:
+                    logger.warning(f"Failed to parse event during search: {e}")
+                    continue
+
+        except Exception as e:
+            logger.error(f"Failed to search events: {e}")
+
+        events.sort(key=lambda x: x['start'])
+        return events
+
+    async def search_events(
+        self,
+        query: str,
+        months_back: int = 12
+    ) -> List[Dict[str, Any]]:
+        """
+        Search calendar events by keyword across a wide date range.
+
+        Args:
+            query: Search term to match against event summary, description, or location
+            months_back: How many months back to search (default 12)
+
+        Returns:
+            List of matching event dictionaries
+        """
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            None,
+            partial(self._sync_search_events, query, months_back)
+        )
+
     def _sync_add_event(
         self,
         summary: str,
