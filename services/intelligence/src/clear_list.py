@@ -8,10 +8,9 @@ async def main():
     await m.connect()
     
     # Execute raw SQL to clear the table
-    # We can't use memory methods directly as we want a full wipe
     try:
-        await m.db.execute("DELETE FROM shopping_list")
-        await m.db.commit()
+        async with m.pool.acquire() as conn:
+            await conn.execute("DELETE FROM shared_lists")
         print("✅ Shopping list cleared.")
     except Exception as e:
         print(f"❌ Error: {e}")
