@@ -110,9 +110,12 @@ Valid intents:
 - CHAT: general conversation that doesn't match above
 - NONE: unclear or irrelevant
 
-"content" = the extracted relevant text (e.g., for LIST_ADD, just the items; for SCHEDULE, the event details)
+"content" = the extracted relevant text.
+- For LIST_ADD: return ONLY the items joined by commas (e.g., "milk, eggs, bread"). DO NOT include words like "added" or "item(s)".
+- For SCHEDULE: return the event details (e.g., "Soccer 5pm").
+- For REMINDER: return the task (e.g., "Call Mom 3pm").
 
-Respond with JSON only, no explanation."""
+Respond with JSON only, no explanation. No conversational text.
 
         try:
             result = await self.generate(prompt, json_mode=True)
