@@ -103,7 +103,14 @@ Respond with JSON only, no explanation."""
 
         try:
             result = await self.generate(prompt, json_mode=True)
-            parsed = json.loads(result)
+            # Clean up potential markdown from chatty models
+            if result.startswith('```json'):
+                result = result[7:]
+            if result.startswith('```'):
+                result = result[3:]
+            if result.endswith('```'):
+                result = result[:-3]
+            parsed = json.loads(result.strip())
             return {
                 "intent": parsed.get("intent", "NONE").upper(),
                 "content": parsed.get("content", content)

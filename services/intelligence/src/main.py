@@ -116,6 +116,7 @@ async def main():
         logger.info("Scheduler started")
 
         # Start the bot (this blocks until shutdown)
+        await bot.brain.pull_model_if_needed()
         await bot.start()
 
     except KeyboardInterrupt:

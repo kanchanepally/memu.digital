@@ -68,6 +68,7 @@ except ImportError:
 SERVER_IP = "127.0.0.1" # Default fallback
 
 app = Flask(__name__)
+app.url_map.strict_slashes = False
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', secrets.token_hex(32))
 app.permanent_session_lifetime = timedelta(days=7)
 
@@ -1027,6 +1028,11 @@ def generate_nginx_config(domain, https_domain=None):
         add_header Cache-Control "public, immutable";
     }}
 
+    # === Admin Redirect (Fixes 404 on /admin/) ===
+    location = /admin/ {{
+        return 301 /admin;
+    }}
+
     # === Admin & Setup Routes (Bootstrap Service) ===
     location ~ ^/(admin|setup|logout|welcome|api/|status) {{
         set $upstream_bootstrap http://bootstrap:8888;
@@ -1050,13 +1056,23 @@ def generate_nginx_config(domain, https_domain=None):
         set $upstream_calendar http://calendar:80;
         rewrite ^/calendar(/.*)$ $1 break;
         proxy_pass $upstream_calendar;
+        
+        # Rewrite redirects from upstream
         proxy_redirect ~^(https?://[^/]+)/(.*) $1/calendar/$2;
         proxy_redirect / /calendar/;
+        proxy_redirect http://$host/ /calendar/;
+        proxy_redirect https://$host/ /calendar/;
+        
+        # Rewrite link targets in HTML
         sub_filter 'href="/' 'href="/calendar/';
         sub_filter 'src="/' 'src="/calendar/';
         sub_filter 'action="/' 'action="/calendar/';
+        sub_filter 'url("/' 'url("/calendar/';
+        sub_filter 'url(/' 'url(/calendar/';
+        
         sub_filter_once off;
-        sub_filter_types text/html;
+        sub_filter_types text/css text/javascript application/javascript;
+        
         proxy_set_header Accept-Encoding "";
         proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header X-Forwarded-Proto $scheme;
@@ -1071,6 +1087,12 @@ def generate_nginx_config(domain, https_domain=None):
 
     location /.well-known/carddav {{
         return 301 $scheme://$host/calendar/dav.php;
+    }}
+
+    # === Photos (Immich) Shortcut ===
+    # Immich runs on port 2283. Redirect /photos there for convenience.
+    location /photos {{
+        return 301 http://$host:2283;
     }}
 
     # Chat UI (Cinny) with Memu branding
