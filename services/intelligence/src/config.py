@@ -20,7 +20,7 @@ class Config:
     # Ministral-3B recommended by community for better quality at similar resource cost
     OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "ministral:3b")
     AI_ENABLED = os.getenv("AI_ENABLED", "true").lower() == "true"
-    AI_TIMEOUT = int(os.getenv("AI_TIMEOUT", "30"))
+    AI_TIMEOUT = int(os.getenv("AI_TIMEOUT", "120"))
 
     # Calendar Configuration (Baikal CalDAV)
     CALDAV_URL = os.getenv("CALDAV_URL", "http://calendar/dav.php")
