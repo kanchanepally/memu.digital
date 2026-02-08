@@ -200,6 +200,67 @@
             display: block;
         }
 
+        .service-urls {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+
+        .url-card {
+            background: var(--color-bg);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            border: 1px solid var(--color-border);
+        }
+
+        .url-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.25rem;
+        }
+
+        .url-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--color-text);
+        }
+
+        .url-copy-btn {
+            background: var(--color-accent);
+            color: white;
+            border: none;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .url-copy-btn:hover {
+            opacity: 0.9;
+        }
+
+        .url-copy-btn.copied {
+            background: var(--color-success);
+        }
+
+        .url-value {
+            font-family: 'SF Mono', Monaco, Consolas, monospace;
+            font-size: 0.8rem;
+            color: var(--color-accent);
+            word-break: break-all;
+            margin-bottom: 0.25rem;
+        }
+
+        .url-hint {
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+        }
+
         @keyframes gentle-pulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
@@ -276,6 +337,7 @@
         <div class="error-box" id="errorBox"></div>
 
         <div class="success-content" id="successContent">
+            <div class="service-urls" id="serviceUrls"></div>
             <a href="/admin" class="cta-button">Open Your Dashboard</a>
         </div>
     </div>
@@ -337,6 +399,44 @@
                 stepEl.classList.remove('active');
                 stepEl.classList.add('complete');
                 stepEl.querySelector('.step-icon').textContent = '\u2713';
+            });
+
+            // Build service URL cards
+            const ts = data.tailscale_hostname;
+            const ip = data.server_ip || window.location.hostname;
+            const chatUrl = ts ? 'https://' + ts : 'http://' + ip;
+            const photosUrl = ts ? 'https://' + ts + ':8443' : 'http://' + ip + ':2283';
+            const calendarUrl = (ts ? 'https://' + ts : 'http://' + ip) + '/calendar/dav.php';
+
+            document.getElementById('serviceUrls').innerHTML =
+                '<div class="url-card">' +
+                    '<div class="url-card-header"><span class="url-label">Chat</span>' +
+                    '<button class="url-copy-btn" onclick="copyUrl(this, \'' + chatUrl.replace(/'/g, "\\'") + '\')">Copy</button></div>' +
+                    '<div class="url-value">' + chatUrl + '</div>' +
+                    '<div class="url-hint">Open in browser or use any Matrix app (Element, FluffyChat)</div>' +
+                '</div>' +
+                '<div class="url-card">' +
+                    '<div class="url-card-header"><span class="url-label">Photos</span>' +
+                    '<button class="url-copy-btn" onclick="copyUrl(this, \'' + photosUrl.replace(/'/g, "\\'") + '\')">Copy</button></div>' +
+                    '<div class="url-value">' + photosUrl + '</div>' +
+                    '<div class="url-hint">Download Immich app on your phone</div>' +
+                '</div>' +
+                '<div class="url-card">' +
+                    '<div class="url-card-header"><span class="url-label">Calendar</span>' +
+                    '<button class="url-copy-btn" onclick="copyUrl(this, \'' + calendarUrl.replace(/'/g, "\\'") + '\')">Copy</button></div>' +
+                    '<div class="url-value">' + calendarUrl + '</div>' +
+                    '<div class="url-hint">Add as CalDAV account in your phone\'s calendar settings</div>' +
+                '</div>';
+        }
+
+        function copyUrl(button, url) {
+            navigator.clipboard.writeText(url).then(function() {
+                button.textContent = 'Copied!';
+                button.classList.add('copied');
+                setTimeout(function() {
+                    button.textContent = 'Copy';
+                    button.classList.remove('copied');
+                }, 2000);
             });
         }
 

@@ -71,15 +71,46 @@ Respond ONLY with valid JSON in this format:
             logger.error("Failed to parse AI response for reminder")
             return {}
 
-    async def analyze_intent(self, content: str) -> str:
+    async def analyze_intent(self, content: str) -> Dict[str, str]:
         """
-        Determine if the message contains an implicit command.
+        Analyze natural language message and classify intent.
+
+        Returns dict with 'intent' and 'content' keys.
         """
-        prompt = f"""Analyze this message and determine if it contains an implicit command.
+        prompt = f"""Analyze this message and determine what the user wants.
+
 Message: "{content}"
-Respond with ONLY one word: CALENDAR, LIST, REMINDER, or NONE
-"""
-        return await self.generate(prompt)
+
+Respond with JSON only:
+{{"intent": "CALENDAR", "content": "the relevant extracted text"}}
+
+Valid intents:
+- CALENDAR: asking about schedule/events ("what's happening tomorrow?", "any events this week?")
+- SCHEDULE: wanting to ADD an event ("soccer practice Tuesday 5pm", "dentist appointment Friday")
+- LIST_ADD: adding items to shopping list ("we need milk and eggs", "add bread to the list")
+- LIST_SHOW: asking to see the list ("what's on the list?", "show shopping list")
+- REMINDER: setting a reminder ("remind me to call mom", "don't forget to pick up kids")
+- RECALL: searching for information ("what's the WiFi password?", "when is grandma's birthday?")
+- REMEMBER: storing a fact ("the WiFi password is ABC123", "grandma's birthday is March 15")
+- SUMMARIZE: requesting chat summary ("what did I miss?", "summarize today")
+- BRIEFING: requesting a briefing ("give me a briefing", "what's going on today?")
+- CHAT: general conversation that doesn't match above
+- NONE: unclear or irrelevant
+
+"content" = the extracted relevant text (e.g., for LIST_ADD, just the items; for SCHEDULE, the event details)
+
+Respond with JSON only, no explanation."""
+
+        try:
+            result = await self.generate(prompt, json_mode=True)
+            parsed = json.loads(result)
+            return {
+                "intent": parsed.get("intent", "NONE").upper(),
+                "content": parsed.get("content", content)
+            }
+        except (json.JSONDecodeError, Exception) as e:
+            logger.warning(f"Intent analysis failed: {e}")
+            return {"intent": "NONE", "content": content}
 
     async def summarize_chat(self, context: str) -> str:
         """

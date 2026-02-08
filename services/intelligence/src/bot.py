@@ -54,8 +54,20 @@ class MemuBot:
 
         logger.info(f"Received message in {room.room_id}: {event.body}")
 
-        # Process command
-        await self.process_message(room.room_id, event.sender, event.body)
+        content = event.body.strip()
+        is_dm = room.member_count == 2
+        is_slash = content.startswith('/')
+
+        # In group rooms, only respond to slash commands or @mentions
+        bot_display = 'memu'
+        bot_mentioned = bot_display.lower() in content.lower() or (
+            self.client.user_id and self.client.user_id.split(':')[0].lstrip('@').lower() in content.lower()
+        )
+
+        if not is_slash and not is_dm and not bot_mentioned:
+            return  # Stay silent in group rooms unless addressed
+
+        await self.process_message(room.room_id, event.sender, content)
 
     async def send_text(self, room_id: str, text: str):
         await self.client.room_send(
@@ -93,10 +105,37 @@ class MemuBot:
         elif content.startswith('/help'):
             await self.handle_help(room_id)
         else:
-            # Implicit check for future ambient context features
-            intent = await self.brain.analyze_intent(content)
-            if intent == 'LIST':
-                pass  # Future: auto-extract list items
+            # Natural language — classify intent and dispatch
+            result = await self.brain.analyze_intent(content)
+            intent = result.get('intent', 'NONE')
+            extracted = result.get('content', content)
+
+            if intent == 'CALENDAR':
+                await self.handle_calendar(room_id, f'/calendar {extracted}')
+            elif intent == 'SCHEDULE':
+                await self.handle_schedule(room_id, sender, f'/schedule {extracted}')
+            elif intent == 'LIST_ADD':
+                await self.handle_add_to_list(room_id, sender, f'/addtolist {extracted}')
+            elif intent == 'LIST_SHOW':
+                await self.handle_show_list(room_id)
+            elif intent == 'REMINDER':
+                await self.handle_remind(room_id, sender, f'/remind {extracted}')
+            elif intent == 'RECALL':
+                await self.handle_recall(room_id, f'/recall {extracted}')
+            elif intent == 'REMEMBER':
+                await self.handle_remember(room_id, sender, f'/remember {extracted}')
+            elif intent == 'SUMMARIZE':
+                await self.handle_summarize(room_id)
+            elif intent == 'BRIEFING':
+                await self.handle_briefing(room_id, '')
+            elif intent == 'CHAT':
+                response = await self.brain.generate(
+                    f'The user said: "{content}". Respond helpfully and briefly as a family assistant.',
+                    system_prompt='You are Memu, a friendly family assistant. Keep responses short and warm.'
+                )
+                if response:
+                    await self.send_text(room_id, response)
+            # NONE = not addressed to bot or irrelevant, stay silent
 
     async def handle_remember(self, room_id: str, sender: str, content: str):
         fact = content.replace('/remember', '').strip()
@@ -472,9 +511,13 @@ class MemuBot:
 • `/summarize` - AI summary of recent chat
 • `/help` - Show this message
 
-💡 Tips:
-• Sync the family calendar to your phone via CalDAV!
-• Morning briefings are sent automatically at 7am
+💡 You can also just talk to me naturally! Try:
+• "What's happening tomorrow?"
+• "Add milk and eggs to the list"
+• "Remind me to call the dentist Friday"
+• "What's the WiFi password?"
+
+In group chats, mention me by name so I know you're talking to me.
 """
         await self.send_text(room_id, help_text)
 

@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome Card - {{ display_name }}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --color-deep: #1a1a2e;
-            --color-accent: #e94560;
+            --color-accent: #667eea;
+            --color-accent-end: #764ba2;
             --color-success: #10b981;
             --color-bg: #f9fafb;
             --color-surface: #ffffff;
@@ -18,7 +18,7 @@
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: 'Inter', -apple-system, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background: var(--color-bg);
             padding: 2rem;
             display: flex;
@@ -32,7 +32,7 @@
             overflow: hidden;
         }
         .card-header {
-            background: linear-gradient(135deg, var(--color-deep) 0%, #2d2d4a 100%);
+            background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-end) 100%);
             padding: 1.5rem;
             text-align: center;
             color: white;
@@ -43,7 +43,7 @@
         }
         .welcome-to { font-size: 0.8rem; opacity: 0.8; }
         .family-name {
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             font-size: 1.25rem;
             font-weight: 700;
         }
@@ -118,7 +118,7 @@
             color: var(--color-text-secondary);
         }
         .card-footer a { color: var(--color-accent); text-decoration: none; }
-        
+
         /* Print styles */
         @media print {
             body { background: white; padding: 0; }
@@ -205,8 +205,8 @@
                 <div class="quick-start-title">Quick Start</div>
                 <ol>
                     <li>Scan the QR code above</li>
-                    <li>Install Tailscale, Element & Immich</li>
-                    <li>Use the credentials above for Element</li>
+                    <li>Install Tailscale, a Matrix chat app & Immich</li>
+                    <li>Use the credentials above for chat</li>
                     <li>Try <code>/calendar</code> to see family events!</li>
                 </ol>
             </div>

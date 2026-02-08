@@ -1,6 +1,6 @@
-# Memu - Product Bible 
+# Memu - Product Bible
 
-**Your Family's Context Layer.**  
+**Your Family's Chief of Staff.**
 *Own your conversations. Own your photos. Own your intelligence.*
 
 ---
@@ -21,16 +21,28 @@ Meanwhile, AI is transforming everything. Every app wants to be "AI-powered" —
 
 ### The Solution
 
-**Memu is your family's context layer.**
+**Memu is your family's Chief of Staff.**
 
-It consolidates your family's digital life — conversations, photos, memories — onto hardware you own. The AI assistant knows your family because it has your *complete* context, not because it's selling your data to advertisers.
+It consolidates your family's digital life — conversations, photos, memories, schedule — onto hardware you own. The AI assistant knows your family because it has your *complete* context, not because it's selling your data to advertisers.
 
 | What You Get | How It Works |
 |--------------|--------------|
 | **Ownership** | Data lives on your hardware. No landlord. |
-| **Unified Context** | Chat + Photos + Memory in one place |
+| **Unified Context** | Chat + Photos + Calendar + Memory in one place |
 | **Private Intelligence** | AI that serves you, not surveils you |
+| **Proactive Help** | Morning briefings, reminders, event scheduling |
 | **Inheritance** | Your kids get files, not account credentials |
+
+### The Identity Pivot
+
+Memu started as a "privacy server" — a box that hides your data. That framing was defensive and fear-based.
+
+The real value is **proactive intelligence**. Memu isn't a bunker. It's a Chief of Staff — an AI appliance that organizes your family's chaos (schedule, shopping, chores, memories) because it has the full picture.
+
+- **Old frame:** "A box that hides your data"
+- **New frame:** "An AI that organizes your family's life — on your hardware"
+
+Privacy is the foundation. Intelligence is the product.
 
 ### The Name
 
@@ -50,6 +62,7 @@ Memu is a **family appliance** — not a server to configure, but a product that
 |------------------|-----------------|----------------|
 | WhatsApp / iMessage | Memu Chat (Matrix) | You own the server |
 | Google Photos / iCloud | Memu Photos (Immich) | You own the storage |
+| Google Calendar | Memu Calendar (Baikal) | You own the schedule |
 | Siri / Alexa / Google Assistant | Memu Assistant (Ollama) | AI never leaves your house |
 
 ### The Magic: Unified Context
@@ -62,11 +75,21 @@ The AI searches your chat history where Mom mentioned tulips, AND your photos ta
 
 This is impossible with scattered services. It's natural with Memu.
 
+### The Triple-Graph Context Engine
+
+Memu's intelligence comes from connecting three data sources:
+
+1. **Semantic Graph:** Chat history, saved facts, documents (Matrix + Memory Store)
+2. **Visual Graph:** Photos, faces, places (Immich ML)
+3. **Time Graph:** Family schedule, events, reminders (Baikal CalDAV)
+
+The `memu_intelligence` service (Python) acts as the connector. It queries all three graphs to generate proactive value — morning briefings, natural language recall, event scheduling.
+
 ---
 
 ## 3. Architecture
 
-### The Three Layers
+### The Stack
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -74,23 +97,22 @@ This is impossible with scattered services. It's natural with Memu.
 │              (Mini PC / Intel N100 / Pi 5)                  │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│   ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
-│   │    CHAT     │  │   PHOTOS    │  │     AI      │        │
-│   │   Matrix    │  │   Immich    │  │   Ollama    │        │
-│   │  (Synapse)  │  │             │  │ (Llama 3.2) │        │
-│   └──────┬──────┘  └──────┬──────┘  └──────┬──────┘        │
-│          │                │                │                │
-│          └────────────────┼────────────────┘                │
+│   ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
+│   │   CHAT   │  │  PHOTOS  │  │    AI    │  │ CALENDAR │   │
+│   │  Matrix  │  │  Immich  │  │  Ollama  │  │  Baikal  │   │
+│   │ (Synapse)│  │          │  │(Llama3.2)│  │ (CalDAV) │   │
+│   └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘   │
+│        └──────────────┼─────────────┼─────────────┘         │
+│                       │             │                       │
+│              ┌────────▼─────────────▼───────┐               │
+│              │     CONTEXT ENGINE           │               │
+│              │   memu_intelligence (Python) │               │
+│              └────────────┬─────────────────┘               │
 │                           │                                 │
-│                  ┌────────▼────────┐                        │
-│                  │  CONTEXT ENGINE │                        │
-│                  │   (The Magic)   │                        │
-│                  └────────┬────────┘                        │
-│                           │                                 │
-│                  ┌────────▼────────┐                        │
-│                  │   PostgreSQL    │                        │
-│                  │   + pgvector    │                        │
-│                  └─────────────────┘                        │
+│              ┌────────────▼─────────────────┐               │
+│              │       PostgreSQL             │               │
+│              │       + pgvector             │               │
+│              └──────────────────────────────┘               │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
                            │
@@ -110,7 +132,7 @@ This is impossible with scattered services. It's natural with Memu.
 | Spec | Minimum | Recommended |
 |------|---------|-------------|
 | **Device** | Raspberry Pi 5 | Intel N100 Mini PC |
-| **RAM** | 4GB (limited AI) | 8GB+ (full features) |
+| **RAM** | 8GB | 16GB (recommended for AI) |
 | **Storage** | 256GB SSD | 1TB+ NVMe |
 | **Network** | Ethernet | Gigabit Ethernet |
 | **Cost** | ~$100 | ~$200-250 |
@@ -126,11 +148,14 @@ This is impossible with scattered services. It's natural with Memu.
 | **Database** | PostgreSQL 15 + pgvector | Unified data + vector search |
 | **Cache** | Redis 6.2 | Performance |
 | **Chat** | Matrix Synapse | Federated messaging |
-| **Chat UI** | Element Web/Mobile | User interface |
+| **Chat UI** | Cinny Web + Matrix mobile apps (Element, FluffyChat, SchildiChat) | User interface |
 | **Photos** | Immich | Photo backup + ML |
+| **Calendar** | Baikal | CalDAV/CardDAV |
 | **AI** | Ollama (Llama 3.2) | Local language model |
 | **Context** | Custom Python service | The glue that connects everything |
-| **Network** | Tailscale | Secure remote access |
+| **Network** | Tailscale | Secure remote access (auto-HTTPS) |
+
+> **Note:** Element Web was replaced by Cinny in Feb 2026 due to Element's WidgetStore crash on self-hosted setups. Cinny is lighter and more reliable. Mobile users can use any Matrix client.
 
 ---
 
@@ -148,7 +173,8 @@ This is impossible with scattered services. It's natural with Memu.
 | Media sharing | Photos, videos, files |
 | No ads, no mining | Your server, your rules |
 
-**Apps:** Element X (iOS/Android), Element Web
+**Web:** Cinny (built-in, branded as Memu Chat)
+**Mobile:** Any Matrix app — Element, FluffyChat, or SchildiChat (iOS/Android)
 
 ### 4.2 Memu Photos
 
@@ -165,24 +191,37 @@ This is impossible with scattered services. It's natural with Memu.
 
 **Apps:** Immich (iOS/Android)
 
-### 4.3 Memu Assistant
+### 4.3 Memu Calendar
+
+**User Story:** "I want a shared family calendar that doesn't live in Google."
+
+| Feature | Description |
+|---------|-------------|
+| Shared calendars | Family events visible to everyone |
+| CalDAV sync | Works with iPhone Calendar, Android DAVx5, Thunderbird |
+| Bot integration | Add events via chat: "Soccer practice Tuesday 5pm" |
+| Morning briefings | Today's schedule delivered at 7am |
+
+### 4.4 Memu Assistant
 
 **User Story:** "I want an AI that knows my family — without sending our data to OpenAI."
 
 | Command | What It Does |
 |---------|--------------|
 | `/remember [fact]` | Store family knowledge |
-| `/recall [query]` | Retrieve from memory |
+| `/recall [query]` | Retrieve from memory + chat history |
 | `/addtolist [items]` | Shared shopping list |
 | `/showlist` | Display current list |
 | `/done [item]` | Mark complete |
 | `/remind [task] [time]` | Natural language reminders |
-| `/summarize` | AI summary of today's chat |
+| `/schedule [event] [time]` | Add event to family calendar |
+| `/calendar` | Show today's events (also: `week`, `tomorrow`) |
+| `/briefing` | On-demand family briefing |
+| `/summarize` | AI summary of recent chat |
 
-**Future (Roadmap):**
-- Cross-silo queries: "Show photos from when we discussed Dad's birthday"
-- Voice commands via Whisper
-- Proactive suggestions: "Mom mentioned tulips last week — her birthday is coming up"
+**Natural Language:** You can also just talk naturally — "What's happening tomorrow?", "Add milk to the list", "Remind me to call the dentist". The bot understands intent without slash commands. In group chats, mention the bot by name.
+
+**Automatic:** Morning briefings are delivered daily at 7am with calendar, weather, shopping list, and photo memories.
 
 ---
 
@@ -208,17 +247,20 @@ This is impossible with scattered services. It's natural with Memu.
          ↓
 5. Click "Create My Memu Server"
          ↓
-6. Wait 2-3 minutes
+6. Wait 3-5 minutes
          ↓
-7. Done. Install Element + Immich apps on phones.
+7. Done. Service URLs shown on completion screen.
+   Install a Matrix chat app + Immich on phones.
 ```
 
 ### What Gets Created
 
 - Matrix homeserver with admin account
 - Immich server ready for photo backup
-- AI assistant bot in your chat
-- Secure remote access via Tailscale
+- Baikal calendar ready for CalDAV sync
+- AI assistant bot in your chat with morning briefings
+- Secure remote access via Tailscale (if key provided)
+- Admin dashboard for managing family members
 
 ---
 
@@ -232,6 +274,7 @@ This is impossible with scattered services. It's natural with Memu.
 | **Your network** | Tailscale encrypts all traffic |
 | **Your keys** | E2EE keys never leave your devices |
 | **Zero telemetry** | We don't know who uses Memu |
+| **Network isolation** | All services on internal Docker network, only nginx exposed |
 
 ### Encryption
 
@@ -249,43 +292,7 @@ This is impossible with scattered services. It's natural with Memu.
 
 ---
 
-## 7. Roadmap
-
-### Phase 1: Foundation ✅ Complete
-- [x] Matrix chat (Synapse + Element)
-- [x] Photo backup (Immich)
-- [x] Local AI (Ollama)
-- [x] Web setup wizard
-- [x] Basic bot commands
-
-### Phase 2: Validation 🚧 Current
-- [x] Open source release
-- [x] Documentation
-- [ ] Community feedback (Reddit)
-- [ ] Hardware compatibility testing
-- [ ] Tailscale integration (replacing Cloudflare)
-
-### Phase 3: Polish (Post-Validation)
-- [ ] RAM auto-detection and model selection
-- [ ] Improved error messages
-- [ ] Backup/restore automation
-- [ ] System health dashboard
-
-### Phase 4: Context Intelligence (Future)
-- [ ] Cross-silo queries (chat + photos)
-- [ ] Semantic search across all data
-- [ ] Voice commands (Whisper)
-- [ ] Proactive family assistant
-
-### Phase 5: Appliance (If Validated)
-- [ ] Pre-configured hardware bundles
-- [ ] One-click updates
-- [ ] Family member onboarding flow
-- [ ] Mobile app (unified Memu app)
-
----
-
-## 8. Business Model
+## 7. Business Model
 
 ### Software
 **Free forever.** AGPLv3 open source.
@@ -306,38 +313,19 @@ This is impossible with scattered services. It's natural with Memu.
 
 ---
 
-## 9. Success Metrics
-
-### For Validation (Now)
-- [ ] 50+ engaged comments on Reddit
-- [ ] 10+ "I would use this" responses
-- [ ] Clear feedback on what's missing
-- [ ] No critical security issues found
-
-### For Product (Future)
-| Metric | Target |
-|--------|--------|
-| Setup success rate | >90% |
-| Chat latency | <200ms |
-| AI response time | <5s |
-| Photo sync reliability | >99% |
-| Family adoption | 3+ members active |
-
----
-
-## 10. What Memu Is NOT
+## 8. What Memu Is NOT
 
 | Not This | Why |
 |----------|-----|
 | A server for nerds | It's an appliance for families |
-| A privacy bunker | It's about ownership, not hiding |
+| A privacy bunker | It's about intelligence, not hiding |
 | A Nextcloud clone | Nextcloud is files; Memu is context |
-| A startup (yet) | It's a side project seeking validation |
+| A startup (yet) | It's a side project heading to Kickstarter |
 | Feature-complete | It's alpha software, expect rough edges |
 
 ---
 
-## 11. The Ask
+## 9. The Ask
 
 If you're reading this, we need your help:
 
@@ -348,7 +336,7 @@ If you're reading this, we need your help:
 
 ---
 
-## 12. Links
+## 10. Links
 
 - **GitHub:** https://github.com/kanchanepally/memu.digital
 - **License:** AGPLv3

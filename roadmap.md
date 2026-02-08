@@ -1,299 +1,159 @@
-﻿# Memu Roadmap: From Working Prototype to Product
+# Memu Roadmap
 
-**Current Status:** Alpha (v0.1)  
-**Reality Check:** Works for my family. 2-step setup. Ready for validation.
-
----
-
-## Current State (December 2025)
-
-### ✅ What Works
-- **2-step setup:** `./scripts/install.sh` → Web wizard → Done (3-5 minutes)
-- **Core features:** Chat (Matrix), Photos (Immich), AI (Ollama)
-- **Web-based config:** No manual YAML editing required
-- **Family tested:** Running in production for months
-- **Open source:** AGPLv3, all code public
-
-### 🚨 Known Issues
-- **Network layer:** Cloudflare Tunnel violates ToS for video streaming (use Tailscale instead)
-- **Alpha quality:** Might break, limited testing
+**Current Status:** Alpha validated, entering Chief of Staff intelligence phase
+**Last Updated:** February 2026
 
 ---
 
-## The Network Crisis (BLOCKING)
+## Development Directives
 
-**Problem:** Using Cloudflare Tunnel for remote access, but it violates ToS for video streaming (Immich).
+Rules that apply to every phase:
 
-**Decision Needed:** Headscale vs Tailscale vs Hybrid
-
-**Timeline:** 
-- **Week 1-2:** Reddit validation + community input
-- **Week 3:** Make decision
-- **Week 4:** Implement chosen solution
-
-**Community Input:** [GitHub Issue #1](../../issues/1)
+1. **Do Not Break the Core:** Matrix (Chat), Immich (Photos), and Ollama (AI) MUST remain functional. We are adding capabilities, not replacing the foundation.
+2. **Security First:** Zero Trust Ingress. No new ports exposed to host unless proxied via nginx. All service-to-service communication on internal `memu_net` Docker network.
+3. **Idempotency:** All scripts (`install.sh`, `bootstrap/app.py`) must be safe to run multiple times without destroying user data.
+4. **Family-first validation:** Before shipping, ask: would a non-technical spouse use this without help?
 
 ---
 
-## Phase 1: Validation (Dec 2025 - Jan 2026)
+## Phase 1: Validation ✅ COMPLETE (Dec 2025 - Jan 2026)
 
-**Goal:** Confirm people actually want this. PMF
+Everything in this phase shipped and is running in production.
 
-### Week 1-2: Reddit Posts
-- [x] Create GitHub Issue #1 (Network Layer Discussion)
-- [ ] Post to r/selfhosted (Monday)
-  - Emphasize: 2-step setup, no config editing
-  - Ask: Headscale vs Tailscale preference?
-- [ ] Post to r/privacy (Wednesday) 
-  - Focus: Data sovereignty, local AI
-  - Emphasize: No telemetry
-- [ ] Post to r/homelab (Friday)
-  - Focus: Pi 5 performance benchmarks
-  - Share: Real hardware experience
+- [x] Reddit validation (r/selfhosted, r/LocalLLaMA — technical engagement, no dismissals)
+- [x] Tailscale integration replacing Cloudflare (auto-HTTPS via `tailscale cert`)
+- [x] Family calendar (Baikal CalDAV, `/schedule`, `/calendar` commands)
+- [x] Morning briefings (calendar + weather + Immich memories + shopping list)
+- [x] Family member onboarding (QR codes, welcome cards, welcome pages)
+- [x] Admin dashboard with service health monitoring
+- [x] Cinny replacing Element Web (Element WidgetStore crash on self-hosted)
+- [x] Cert renewal automation (weekly systemd timer)
+- [x] Unified recall (searches saved facts + chat history)
+- [x] Brand refresh (purple accent, system fonts, SVG badges, no Google Fonts)
 
-**Success Metrics:**
-- 50+ engaged comments across posts
-- 10+ people say "I'd actually try this"
-- Clear community preference on network layer
-- 0 critical security issues found
-
-### Week 3: Analysis & Decision
-- [ ] Compile all feedback
-- [ ] Create comparison doc: Headscale vs Tailscale
-- [ ] Poll community if still split
-- [ ] **Make network layer decision**
-- [ ] Document rationale publicly
-
-### Week 4: Implementation
-- [ ] Implement chosen network solution
-- [ ] Update documentation
-- [ ] Test on multiple Pis
-- [ ] Thank community for input
-
-**Go/No-Go Decision Point:**
-- **If positive (50+ interested):** Continue to Phase 2
-- **If lukewarm (10-20 interested):** Iterate, narrow focus
-- **If negative (<10 or harsh):** Keep as personal project
+**Validation Result:** Problem is real. At least 4 people building similar things. "Context beats capability" framing resonates.
 
 ---
 
-## Phase 2: Beta-Ready (Feb - Mar 2026)
+## Phase 2: Chief of Staff Intelligence 🚧 NOW (Feb - Mar 2026)
 
-**Goal:** Make it reliable enough for 10 beta testers.
+Ordered by priority. Each item is scoped to 1-3 evening sessions.
 
-**Only start if Phase 1 validates demand.**
+### 1. Natural language intent ✅ DONE
+Kill the slash command requirement. Users talk naturally ("What's happening tomorrow?", "Add milk to the list") and the bot classifies intent via `analyze_intent()` in brain.py (structured JSON), dispatches to existing handlers. DMs process all messages; group rooms require @mention or slash command.
 
-### Stability Improvements
-- [ ] Network layer fully tested (new solution from Phase 1)
-- [x] Automated backup system (nightly to external drive)
-- [ ] Health monitoring dashboard (alert if services down)
-- [ ] Graceful failure recovery
-- [ ] Update mechanism that actually works
+### 2. On This Day photo memories
+Surface Immich "on this day" photos in morning briefings and as a standalone command. Query Immich API for photos from this date in previous years.
+- **Effort:** 1 session
+- **Dependencies:** Immich API key in config
+- **Files:** `services/intelligence/src/agents/briefing.py`, new photo memory tool
 
-### Testing
-- [ ] Test on Pi 4 (8GB) - verify it works
-- [ ] Test on x86 mini PC - document differences  
-- [ ] Test fresh installs on 3 different Pis
-- [ ] Document all failure modes
+### 3. Weekly family digest
+Sunday evening summary: week's calendar highlights, shopping list activity, chat summary, upcoming week preview. Delivered to family room.
+- **Effort:** 1 session
+- **Dependencies:** Briefing agent pattern (already built)
+- **Files:** New `services/intelligence/src/agents/digest.py`, scheduler in `main.py`
 
-### Documentation
-- [ ] Video walkthrough (setup from scratch)
-- [ ] Troubleshooting guide expansion
-- [ ] Migration guides from other solutions
-- [ ] Cost breakdown (hardware + optional relay)
+### 4. Cross-silo recall
+When user asks "What did we discuss about Dad's birthday?", search chat history AND calendar events AND saved facts. Unified context response.
+- **Effort:** 3 sessions
+- **Dependencies:** Calendar tool + memory store + brain summarization
+- **Files:** `services/intelligence/src/memory.py` (add calendar search), `bot.py` (enhanced recall)
 
-### Beta Program
-- [ ] Select 10 beta testers
-  - Mix: 5 technical, 5 "family admin" types
-- [ ] Create beta Matrix room
-- [ ] Weekly check-ins
-- [ ] Iteration based on feedback
+### 5. Kitchen Dashboard
+Zero-friction tablet PWA for the kitchen fridge (iPad/tablet).
+- **Effort:** 5-6 sessions
+- **Dependencies:** FastAPI wrapper around intelligence service
 
-**Success Metrics:**
-- 7/10 beta testers complete setup successfully
-- <3 critical bugs found
-- Positive feedback on reliability
-- Clear pricing validation ($400-500 range)
+**Technical spec:**
+- Wrap `memu_intelligence` bot in FastAPI (`uvicorn` as entry point, bot as background task)
+- New API endpoints:
+  - `GET /api/dashboard/summary` — events, shopping list count, weather
+  - `GET /api/shopping-list` — current list
+  - `POST /api/shopping-list/add` — add item
+  - `GET /api/photos/random` — proxy to Immich for "on this day" or favorite photo
+- Frontend: React + Vite + TypeScript + Tailwind CSS in `services/kitchen-os/`
+- UI: 3-column grid (clock/calendar | shopping list | photo slideshow), dark mode default
+- Docker: multi-stage build (Node build -> nginx Alpine serve)
+- Routing: `/kitchen` -> kitchen_os, `/chat` -> Cinny, `/api` -> intelligence FastAPI
 
----
-
-## Phase 3: Public Beta (Apr - May 2026)
-
-**Goal:** Anyone technical can install and use it.
-
-**Only if Phase 2 succeeds.**
-
-### Hardware Options
-- [ ] Finalize Pi 5 as primary
-- [ ] Document x86 mini PC alternative
-- [ ] Test with 3 specific SSD models
-- [ ] Create "Golden Image" for SD cards
-
-### Pre-configured Hardware (Optional)
-- [ ] Partner with supplier for bulk orders
-- [ ] Pre-flash SD cards
-- [ ] Include printed quick-start guide
-- [ ] Test shipping/packaging
-
-### Pricing Model
-- **DIY:** Free forever (bring your own hardware)
-- **Pre-configured Kit:** $400-500 one-time
-  - Pi 5 (8GB) + 1TB SSD + HAT
-  - Pre-flashed SD card
-  - Printed guide
-- **Optional Relay:** $5/mo (for remote access)
-
-### Marketing
-- [ ] Product page on memu.digital
-- [ ] Email course: "Why your family needs this"
-- [ ] Partner with 2-3 tech YouTubers
-- [ ] Prepare for Hacker News (one shot)
-
-**Launch Metrics:**
-- 50 pre-orders in first month = viable
-- 100+ = quit day job territory
-- <20 = pivot or personal project
+### 6. Family knowledge graph
+Structured relationships between family members, preferences, and facts. "What flowers does Mom like?" becomes a graph query, not a keyword search.
+- **Effort:** 2 sessions
+- **Dependencies:** Memory store schema extension
+- **Files:** `services/intelligence/src/memory.py` (schema), `brain.py` (graph-aware prompts)
 
 ---
 
-## Phase 4: Production (Jun 2026+)
+## Phase 3: Kickstarter Prep (April 2026)
 
-**Only if Phase 3 hits targets.**
+**Only start if Phase 2 delivers 3+ features and family is using them daily.**
 
-### Product Polish
-- [ ] Mobile app with Memu branding
-- [ ] Dashboard UI (system status, storage)
-- [ ] One-click updates via web UI
-- [ ] User management (invite family)
-
-### Business Operations
-- [ ] Company structure
-- [ ] Orders/fulfillment
-- [ ] Support system
-- [ ] Security audits
-
-### Feature Expansion
-- [ ] Home automation integration
-- [ ] Voice assistant (Whisper)
-- [ ] Calendar/contacts sync
-- [ ] Document editing
+- [ ] 60-second demo video showing real family use
+- [ ] Landing page refresh (memu.digital)
+- [ ] Press outreach (1-2 tech publications)
+- [ ] 500+ email signups target
+- [ ] Open letter + Solid Forum post
+- [ ] Kickstarter page draft (reward tiers, stretch goals)
 
 ---
 
-## What We're NOT Doing (Kill List)
+## Phase 4: Production (Post-Kickstarter)
 
-### Never:
-- ❌ Video calls - Too resource-intensive
-- ❌ Email hosting - Deliverability nightmare
-- ❌ VPN server - Overlaps with relay
-- ❌ Public federation - Isolation is a feature
+- [ ] Pre-configured hardware bundles (Intel N100 + 1TB NVMe)
+- [ ] USB installer (boot, install Linux, install Memu automatically)
+- [ ] One-click updates via admin dashboard
+- [ ] Security audit
+- [ ] Backup/restore automation
 
-### Not Yet:
-- ⏸️ Custom mobile apps - Use Element/Immich
-- ⏸️ Multi-device clustering - Too complex
-- ⏸️ Automatic failover - Breaks ownership model
-- ⏸️ White-label reselling - Focus direct first
+---
+
+## Kill List
+
+### Never building:
+- Video calls — too resource-intensive for target hardware
+- Email hosting — deliverability nightmare, not worth the complexity
+- Public federation — isolation is a feature for family privacy
+- VPN server — Tailscale handles this better than we ever could
+
+### Deferred indefinitely:
+- WhatsApp bridge — fragile, Meta breaks it regularly, maintenance burden too high
+- Vector embeddings — keyword search works fine at family scale (~1000 facts)
+- Voice commands (Whisper) — too much hardware complexity for current stage
+- Custom mobile app — Element/FluffyChat/Immich work well enough
+- Multi-device clustering — breaks the single-box ownership model
+
+---
+
+## Security Checklist
+
+Before marking any feature complete:
+
+1. **Network Isolation:** New services do NOT have `ports:` in docker-compose.yml. Only accessible via nginx proxy.
+2. **Persistence:** Restarting the stack does not wipe data (calendar events, settings, photos).
+3. **Permissions:** Intelligence container has read-only access to Immich DB, read-write to its own memory store.
+4. **API Safety:** New endpoints verify requests come from internal network or use shared secret token.
 
 ---
 
 ## Decision Framework
 
-After each phase, ask:
-
-**Product-Market Fit:**
-- Do people actually want this?
-- Will they pay?
-- Is the problem real enough?
-
-**Technical Viability:**
-- Can we make it reliable?
-- Is hardware good enough?
-- Are costs sustainable?
-
-**Personal Sustainability:**
-- Can I maintain long-term?
-- Is it worth the effort?
-- Am I still excited?
-
-**If any answer is "no":** Pivot or shut down.
+After each phase:
+1. **Is the family actually using it?** If not, don't build more.
+2. **Would I explain this to a non-technical spouse?** If not, simplify.
+3. **Does this move toward Kickstarter?** If not, deprioritize.
 
 ---
 
-## Success Looks Like...
+## Success Metrics
 
-### 6 Months:
-- 100+ families running Memu
-- Active community
-- Network layer stable
-- 1-2 bug reports/week (manageable)
-
-### 12 Months:
-- 500+ installations
-- $5k/mo from relay subscriptions
-- 2-3 code contributors
-- Featured in tech publications
-
-### 24 Months:
-- 2,000+ families
-- Profitable, full-time work
-- Strong open source community
-- Real Big Tech alternative
-
----
-
-## Failure Looks Like...
-
-### Red Flags:
-- No interest after Reddit
-- Critical unfixable security issue
-- Hardware too unreliable
-- Can't make economics work
-- Support burnout
-
-**If we fail:** Document learnings publicly, keep code open, help others learn.
-
----
-
-## Principles (Don't Compromise)
-
-1. **Open Source Forever:** AGPLv3, no rug pulls
-2. **No Telemetry:** We don't know who uses this
-3. **Data Sovereignty:** User owns hardware and data
-4. **Honest Marketing:** Admit limitations
-5. **Sustainable:** If not profitable by Month 12, shut down gracefully
-
----
-
-## Current Next Steps (This Week)
-
-- [x] Clean up codebase (hearth → memu)
-- [x] Update bootstrap wizard
-- [x] Remove legacy files
-- [x] Create GitHub Issue #1
-- [ ] Add screenshots to README
-- [ ] Test fresh install
-- [ ] Write Reddit posts
-- [ ] Post to r/selfhosted (Monday)
-
----
-
-## Timeline Summary
-
-```
-Dec 2025: Reddit Validation
-Jan 2026: Network Layer Decision
-Feb-Mar 2026: Beta (if validated)
-Apr-May 2026: Public Beta (if beta succeeds)
-Jun 2026: Production (if demand proven)
-```
-
-Each phase is **contingent** on previous phase success.
-
----
-
-**Last Updated:** December 2025  
-**Next Milestone:** Reddit validation (Week 1)  
-**Decision Point:** End of January 2026
+| Milestone | Target | Status |
+|-----------|--------|--------|
+| Reddit validation | 10+ "I'd try this" | Done |
+| Family daily use | 3+ members active | Done |
+| Email signups | 500+ | In progress |
+| Demo video shared | People forward it | Not started |
+| Kickstarter launch | April 2026 | Planned |
 
 ---
 

@@ -830,6 +830,8 @@ def run_setup(clean_slug, domain, admin_password, tailscale_key, server_ip, admi
             final_ts_key = tailscale_key or env.get('TAILSCALE_AUTH_KEY', '')
             registration_secret = secrets.token_urlsafe(32)
             
+            setup_state['server_ip'] = server_ip
+
             # Save settings to DB
             db = get_db()
             db.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('family_name', ?)", (setup_state['family_name'],))
