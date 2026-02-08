@@ -47,6 +47,28 @@ class Brain:
             logger.error(f"Ollama generation failed: {e}")
             return ""
 
+    def _extract_json(self, text: str) -> Dict[str, Any]:
+        """
+        Robustly extract JSON from text, ignoring headers/footers/markdown.
+        """
+        try:
+            # Try direct parse first
+            return json.loads(text)
+        except json.JSONDecodeError:
+            pass
+
+        # Try finding the JSON object boundaries
+        start = text.find('{')
+        end = text.rfind('}')
+        
+        if start != -1 and end != -1:
+            try:
+                return json.loads(text[start:end+1])
+            except json.JSONDecodeError:
+                pass
+                
+        return {}
+
     async def extract_reminder(self, content: str) -> Dict[str, Any]:
         """
         Extract task and time from a reminder string using AI.
@@ -60,16 +82,7 @@ Respond ONLY with valid JSON in this format:
 }}
 """
         response = await self.generate(prompt, json_mode=True)
-        try:
-            # Clean up potential markdown
-            if response.startswith('```json'):
-                response = response[7:]
-            if response.endswith('```'):
-                response = response[:-3]
-            return json.loads(response)
-        except json.JSONDecodeError:
-            logger.error("Failed to parse AI response for reminder")
-            return {}
+        return self._extract_json(response)
 
     async def analyze_intent(self, content: str) -> Dict[str, str]:
         """
@@ -103,19 +116,13 @@ Respond with JSON only, no explanation."""
 
         try:
             result = await self.generate(prompt, json_mode=True)
-            # Clean up potential markdown from chatty models
-            if result.startswith('```json'):
-                result = result[7:]
-            if result.startswith('```'):
-                result = result[3:]
-            if result.endswith('```'):
-                result = result[:-3]
-            parsed = json.loads(result.strip())
+            parsed = self._extract_json(result)
+            
             return {
                 "intent": parsed.get("intent", "NONE").upper(),
                 "content": parsed.get("content", content)
             }
-        except (json.JSONDecodeError, Exception) as e:
+        except Exception as e:
             logger.warning(f"Intent analysis failed: {e}")
             return {"intent": "NONE", "content": content}
 
@@ -201,18 +208,8 @@ Respond ONLY with valid JSON in this format:
 }}
 """
         response = await self.generate(prompt, json_mode=True)
-        try:
-            # Clean up potential markdown
-            if response.startswith('```json'):
-                response = response[7:]
-            if response.startswith('```'):
-                response = response[3:]
-            if response.endswith('```'):
-                response = response[:-3]
-            return json.loads(response.strip())
-        except json.JSONDecodeError:
-            logger.error(f"Failed to parse AI response for calendar event: {response}")
-            return {}
+        response = await self.generate(prompt, json_mode=True)
+        return self._extract_json(response)
 
     async def is_model_available(self) -> bool:
         """
