@@ -37,7 +37,7 @@ Everything in this phase shipped and is running in production.
 
 ## Phase 2: Chief of Staff Intelligence 🚧 NOW (Feb - Mar 2026)
 
-Ordered by priority. Each item is scoped to 1-3 evening sessions.
+Ordered by priority. Items 1-4 are **critical path to Kickstarter** -- nothing else ships until these are done.
 
 ### 1. Natural language intent ✅ DONE
 Kill the slash command requirement. Users talk naturally ("What's happening tomorrow?", "Add milk to the list") and the bot classifies intent via `analyze_intent()` in brain.py (structured JSON), dispatches to existing handlers. DMs process all messages; group rooms require @mention or slash command.
@@ -48,63 +48,91 @@ Surface Immich "on this day" photos in morning briefings and as a standalone com
 - **Dependencies:** Immich API key in config
 - **Files:** `services/intelligence/src/agents/briefing.py`, new photo memory tool
 
-### 3. Weekly family digest
+### 3. Cross-silo recall ⭐ KEY DIFFERENTIATOR
+When user asks "What should I get Sarah for her birthday?", search chat history AND calendar events AND saved facts AND photo metadata. Synthesise a unified, insightful response -- not just retrieval, but intelligence across data sources.
+- **Effort:** 3 sessions
+- **Dependencies:** Calendar tool + memory store + Immich API + brain summarization
+- **Files:** `services/intelligence/src/memory.py` (add calendar + photo search), `bot.py` (enhanced recall)
+- **Why this is #3:** This is the feature that makes the demo video. No other product connects family chat + photos + calendar + AI into a single query. This is the purchase decision.
+
+### 4. Memu Guardian ⭐ SELF-MAINTAINING APPLIANCE
+A watchdog service that makes Memu self-maintaining. The principle: **after install.sh, the user never opens a terminal again.**
+
+- **Effort:** 4 sessions (core + notifications + dashboard)
+- **Dependencies:** Docker socket access, existing health check endpoints
+- **Files:** New `services/guardian/` service, updates to `bootstrap/templates/admin-dashboard.html`
+- **Why this is #4:** Without Guardian, every hardware buyer becomes a support ticket at month 3. With Guardian, Memu is a product, not a project.
+
+**What Guardian does automatically (no human needed):**
+
+| Problem | Detection | Auto-Fix |
+|---------|-----------|----------|
+| Container crashes | Health check fails 3x | `docker restart`, notify family room only if restart fails |
+| Disk at 80% | `df` check every 5 min | Prune old Docker images + rotate logs, notify with storage report |
+| Disk at 95% | `df` check | Pause Immich uploads, emergency prune, alert family room |
+| Cert expiring (<14 days) | Check cert file dates | Run `renew-certs.sh` automatically |
+| Tailscale disconnected | `tailscale status` | `tailscale up`, notify if reconnection fails |
+| Ollama model missing | Health check | `ollama pull` silently |
+| High memory pressure | `free -m` check | Restart largest non-essential container |
+
+**How Guardian communicates:**
+- Posts plain-language messages to the family chat room ("Photos service restarted. Everything is working now.")
+- Never shows container IDs, exit codes, or Docker jargon
+- Weekly "all systems healthy" message so silence doesn't mean "broken and nobody noticed"
+
+**Dashboard upgrade -- traffic light model:**
+- One big green/amber/red circle: "Everything is running perfectly. 47 days uptime. 23% storage used."
+- Amber: "Storage is filling up (82%). Cleaned up 3GB automatically."
+- Red: "Photos service is down. [Restart Photos] [Contact Support]"
+- No terminal needed. Single action buttons for any problem.
+
+### 5. Proactive family suggestions
+The AI notices patterns and surfaces them before you ask:
+- "Sarah's birthday is in 3 weeks. Last year you started planning 2 days before."
+- "The boiler service is overdue. Last mentioned done in March 2025."
+- "You have a parents' evening tomorrow. Last time you wanted to ask about maths."
+- **Effort:** 2 sessions
+- **Dependencies:** Cross-silo recall (item 3), scheduler
+- **Files:** New `services/intelligence/src/agents/insights.py`, scheduler in `main.py`
+
+### 6. Weekly family digest
 Sunday evening summary: week's calendar highlights, shopping list activity, chat summary, upcoming week preview. Delivered to family room.
 - **Effort:** 1 session
 - **Dependencies:** Briefing agent pattern (already built)
 - **Files:** New `services/intelligence/src/agents/digest.py`, scheduler in `main.py`
 
-### 4. Cross-silo recall
-When user asks "What did we discuss about Dad's birthday?", search chat history AND calendar events AND saved facts. Unified context response.
-- **Effort:** 3 sessions
-- **Dependencies:** Calendar tool + memory store + brain summarization
-- **Files:** `services/intelligence/src/memory.py` (add calendar search), `bot.py` (enhanced recall)
-
-### 5. Kitchen Dashboard
-Zero-friction tablet PWA for the kitchen fridge (iPad/tablet).
-- **Effort:** 5-6 sessions
-- **Dependencies:** FastAPI wrapper around intelligence service
-
-**Technical spec:**
-- Wrap `memu_intelligence` bot in FastAPI (`uvicorn` as entry point, bot as background task)
-- New API endpoints:
-  - `GET /api/dashboard/summary` — events, shopping list count, weather
-  - `GET /api/shopping-list` — current list
-  - `POST /api/shopping-list/add` — add item
-  - `GET /api/photos/random` — proxy to Immich for "on this day" or favorite photo
-- Frontend: React + Vite + TypeScript + Tailwind CSS in `services/kitchen-os/`
-- UI: 3-column grid (clock/calendar | shopping list | photo slideshow), dark mode default
-- Docker: multi-stage build (Node build -> nginx Alpine serve)
-- Routing: `/kitchen` -> kitchen_os, `/chat` -> Cinny, `/api` -> intelligence FastAPI
-
-### 6. Family knowledge graph
-Structured relationships between family members, preferences, and facts. "What flowers does Mom like?" becomes a graph query, not a keyword search.
-- **Effort:** 2 sessions
-- **Dependencies:** Memory store schema extension
-- **Files:** `services/intelligence/src/memory.py` (schema), `brain.py` (graph-aware prompts)
+### Deferred to post-Kickstarter:
+- **Kitchen Dashboard** — Nice but not a purchase driver. 5-6 sessions. Build after shipping to backers.
+- **Family knowledge graph** — Enhances cross-silo recall but keyword search works at family scale. 2 sessions. Build when cross-silo recall proves the concept.
 
 ---
 
 ## Phase 3: Kickstarter Prep (April 2026)
 
-**Only start if Phase 2 delivers 3+ features and family is using them daily.**
+**Gate:** Phase 2 items 1-4 must be done and family must be using them daily.
 
-- [ ] 60-second demo video showing real family use
-- [ ] Landing page refresh (memu.digital)
-- [ ] Press outreach (1-2 tech publications)
+- [ ] 60-second demo video showing real family use (cross-silo recall is the hero moment, Guardian health is a beat)
+- [ ] Landing page refresh (memu.digital) with video, email signup, Kickstarter countdown
 - [ ] 500+ email signups target
+- [ ] Press outreach (1-2 tech publications)
 - [ ] Open letter + Solid Forum post
 - [ ] Kickstarter page draft (reward tiers, stretch goals)
+- [ ] Identify 2 wholesale N100 mini PC suppliers, get sample units, test image flashing
 
 ---
 
-## Phase 4: Production (Post-Kickstarter)
+## Phase 4: Production (Post-Kickstarter, Pre-Ship)
 
-- [ ] Pre-configured hardware bundles (Intel N100 + 1TB NVMe)
-- [ ] USB installer (boot, install Linux, install Memu automatically)
-- [ ] One-click updates via admin dashboard
+Ship these before hardware reaches backers:
+
+- [ ] Guardian auto-updates: stable channel pulls tested images at 3am, verifies health, rolls back if broken. "Memu updated overnight." (2 sessions)
+- [ ] Guardian bot commands: "Is everything working?", "How much storage?", "Update Memu", "Restart photos" (1 session)
+- [ ] Pre-configured hardware bundles (Intel N100 + 1TB NVMe, white-label from wholesale supplier)
+- [ ] USB installer image (boot, install Linux, install Memu automatically)
+- [ ] Backup/restore automation via admin dashboard
 - [ ] Security audit
-- [ ] Backup/restore automation
+- [ ] Kitchen Dashboard (5-6 sessions)
+- [ ] Family knowledge graph (2 sessions)
 
 ---
 
