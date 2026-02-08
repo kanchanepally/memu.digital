@@ -115,7 +115,7 @@ Valid intents:
 - For SCHEDULE: return the event details (e.g., "Soccer 5pm").
 - For REMINDER: return the task (e.g., "Call Mom 3pm").
 
-Respond with JSON only, no explanation. No conversational text.
+Respond with JSON only, no explanation. No conversational text."""
 
         try:
             result = await self.generate(prompt, json_mode=True)
