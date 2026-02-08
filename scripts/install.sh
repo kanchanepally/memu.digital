@@ -101,7 +101,7 @@ if [ ! -f element-config.json ]; then
     cat > element-config.json << 'EOF'
 {
     "defaultHomeserver": 0,
-    "homeserverList": ["memu.local"],
+    "homeserverList": ["localhost"],
     "allowCustomHomeservers": true
 }
 EOF

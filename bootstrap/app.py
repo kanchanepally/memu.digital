@@ -852,8 +852,9 @@ def run_setup(clean_slug, domain, admin_password, tailscale_key, server_ip, admi
             nginx_config = generate_nginx_config(domain)
             (PROJECT_ROOT / 'nginx' / 'conf.d' / 'default.conf').write_text(nginx_config)
 
-            # Generate Cinny config for browser-based Matrix chat
-            element_config = generate_element_config(domain)
+            # Generate Cinny config - use localhost initially (works for local access)
+            # configure_tailscale() will rewrite with the Tailscale hostname later
+            element_config = generate_element_config('localhost')
             (PROJECT_ROOT / 'element-config.json').write_text(element_config)
             
             time.sleep(1)
@@ -914,8 +915,8 @@ def run_setup(clean_slug, domain, admin_password, tailscale_key, server_ip, admi
             # Step 10: Start remaining services (tailscale already running since step 2)
             update_state('services', 10, 'Starting all services...')
 
-            # Write Cinny config (homeserver discovery via .well-known)
-            (PROJECT_ROOT / 'element-config.json').write_text(generate_element_config(domain))
+            # Rewrite Cinny config with localhost (Tailscale hostname set in step 11)
+            (PROJECT_ROOT / 'element-config.json').write_text(generate_element_config('localhost'))
 
             # Start services except bootstrap (systemd handles it) and tailscale (already up)
             services_to_start = [
@@ -1246,8 +1247,8 @@ def configure_tailscale(domain, server_ip):
             nginx_config = generate_nginx_config(domain, https_domain=ts_hostname)
             (PROJECT_ROOT / 'nginx' / 'conf.d' / 'default.conf').write_text(nginx_config)
 
-            # 4. Regenerate Cinny config with domain
-            (PROJECT_ROOT / 'element-config.json').write_text(generate_element_config(domain))
+            # 4. Regenerate Cinny config with Tailscale hostname (what browsers can reach)
+            (PROJECT_ROOT / 'element-config.json').write_text(generate_element_config(ts_hostname))
 
             # 5. Reload nginx to pick up new certs and config
             run_cmd(['docker', 'exec', 'memu_proxy', 'nginx', '-s', 'reload'], check=False)
