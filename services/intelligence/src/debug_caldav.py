@@ -50,7 +50,8 @@ def test_connection():
     print(f"Trying URL: {principal_url}")
     
     try:
-        principal = client.principal(principal_url)
+        # Fix: explicit keyword argument 'url' required
+        principal = client.principal(url=principal_url)
         print(f"Test 1 (Constructed): {principal}")
         cals = principal.calendars()
         print(f"SUCCESS: Found {len(cals)} calendars")

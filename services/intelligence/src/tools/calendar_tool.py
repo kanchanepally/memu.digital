@@ -70,7 +70,8 @@ class CalendarManager:
                 base = self.caldav_url.rstrip('/')
                 principal_url = f"{base}/principals/users/{self.username}/"
                 logger.info(f"Attempting direct principal URL: {principal_url}")
-                principal = client.principal(principal_url)
+                # Fix: explicit keyword argument 'url' required
+                principal = client.principal(url=principal_url)
 
             calendars = principal.calendars()
 
