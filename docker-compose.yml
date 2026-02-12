@@ -199,7 +199,7 @@ services:
   ollama:
     container_name: memu_brain
     # Updated from 0.1.27 to recent stable
-    image: ollama/ollama:0.5.4
+    image: ollama/ollama:latest
     restart: unless-stopped
     volumes:
       - ollama_data:/root/.ollama
@@ -265,7 +265,7 @@ services:
     environment:
       - TZ=${TIMEZONE:-Europe/London}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/"]
+      test: [ "CMD", "curl", "-f", "http://localhost/" ]
       interval: 30s
       timeout: 10s
       retries: 3
