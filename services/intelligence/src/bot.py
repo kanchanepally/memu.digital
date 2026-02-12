@@ -198,7 +198,7 @@ class MemuBot:
             elif intent == 'CHAT':
                 response = await self.brain.generate(
                     f'The user said: "{content}". Respond helpfully and briefly as a family assistant.',
-                    system_prompt='You are Memu, a friendly family assistant. Keep responses short and warm.'
+                    system_prompt='You are Memu, a helpful and intelligent family assistant. Be concise, capable, and mature.'
                 )
                 if response:
                     await self.send_text(room_id, response)
