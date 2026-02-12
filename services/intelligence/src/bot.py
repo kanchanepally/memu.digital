@@ -22,6 +22,12 @@ class MemuBot:
         self.memory = MemoryStore()
         self.calendar = CalendarManager()
 
+        # Extract localpart for robust self-detection (e.g. "memu_bot" from "@memu_bot:domain")
+        configured = Config.MATRIX_BOT_USERNAME or ""
+        self._bot_localpart = configured.split(':')[0].lstrip('@').lower()
+        logger.info(f"Bot configured user_id: {configured}")
+        logger.info(f"Bot localpart for self-detection: {self._bot_localpart}")
+
     async def start(self):
         logger.info("Starting MemuBot...")
         await self.memory.connect()
@@ -35,6 +41,17 @@ class MemuBot:
         asyncio.create_task(self.check_reminders_loop())
 
         try:
+            # Do an initial sync to resolve the server-side user_id
+            await self.client.sync(timeout=10000)
+            logger.info(f"Bot resolved user_id after sync: {self.client.user_id}")
+            if self.client.user_id and self.client.user_id != Config.MATRIX_BOT_USERNAME:
+                logger.warning(
+                    f"MATRIX_BOT_USERNAME mismatch: configured={Config.MATRIX_BOT_USERNAME}, "
+                    f"server={self.client.user_id} — update .env to use: {self.client.user_id}"
+                )
+                # Update localpart from server-resolved ID for belt-and-braces safety
+                self._bot_localpart = self.client.user_id.split(':')[0].lstrip('@').lower()
+
             # Sync forever
             await self.client.sync_forever(timeout=30000)
         except Exception as e:
@@ -49,8 +66,19 @@ class MemuBot:
         await self.client.join(room.room_id)
 
     async def message_callback(self, room: MatrixRoom, event: RoomMessageText):
-        # Ignore messages from self
+        # Ignore messages from self — robust multi-layer check
+        # Layer 1: exact user_id match (works when .env has correct full ID)
         if event.sender == self.client.user_id:
+            return
+        # Layer 2: localpart match (catches domain mismatches like
+        # @memu_bot:memu.local vs @memu_bot:test15.memu.digital)
+        sender_localpart = event.sender.split(':')[0].lstrip('@').lower()
+        if self._bot_localpart and sender_localpart == self._bot_localpart:
+            logger.warning(
+                f"Self-message caught by localpart fallback: "
+                f"sender={event.sender}, client.user_id={self.client.user_id} — "
+                f"fix MATRIX_BOT_USERNAME in .env to match server domain"
+            )
             return
 
         logger.info(f"Received message in {room.room_id}: {event.body}")
