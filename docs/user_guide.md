@@ -213,6 +213,8 @@ This is where the magic happens. The **Memu Bot** lives in your chat and helps y
 | `/recall` | Cross-silo search | `/recall sailing` |
 | `/remind` | Set a reminder | `/remind call mom tomorrow 3pm` |
 | `/summarize` | Summarize today's chat | `/summarize` |
+| `/ai` | Control how chatty the bot is | `/ai quiet` |
+| `/private` | See what Memu protects | `/private` |
 
 ### Cross-Silo Search — The Magic Feature
 
@@ -240,6 +242,31 @@ When results come from multiple sources, the AI **connects the dots** and gives 
 > • WiFi password is sunshine123 (saved 2025-12-01)
 
 Simple queries that only match one source still work fast, without AI synthesis. The cross-silo intelligence kicks in when there's data across multiple sources to connect.
+
+### AI Volume Control
+
+Not everyone wants the bot to be chatty all the time. You can control how proactive the bot is in each room:
+
+| Command | What It Does |
+|---------|--------------|
+| `/ai off` | Bot only responds to /slash commands. Completely silent otherwise. |
+| `/ai quiet` | Bot responds to /slash commands and @mentions. Won't process natural language. |
+| `/ai active` | Full natural language processing. Bot responds to DMs and @mentions. **(Default)** |
+
+**Each room has its own setting.** You might want the family room on "quiet" but your DM with the bot on "active."
+
+Type `/ai` by itself to see the current mode.
+
+> **Tip:** Slash commands like `/showlist`, `/calendar`, and `/schedule` always work regardless of the AI mode. You never lose access to core features.
+
+### Privacy & Your Data
+
+Type `/private` to see what Memu already protects. In short:
+
+- **Chat** is end-to-end encrypted (even the server admin can't read your messages)
+- **Photos** are in separate per-person libraries
+- **AI** runs entirely on your hardware (nothing is sent to external services)
+- **Everything** stays on hardware your family owns
 
 ### How Families Use the Bot
 
@@ -427,11 +454,11 @@ This will show available backups and guide you through restoration.
 │                                                 │
 │  APPS TO INSTALL:                               │
 │    • Tailscale (required for connection)        │
-│    • Matrix chat app (Element/FluffyChat)        │
-│    • Immich (photos)                             │
-│    • DAVx⁵ (Android calendar sync, optional)    │
+│    • Matrix chat app (Element/FluffyChat)       │
+│    • Immich (photos)                            │
+│    • DAVx5 (Android calendar sync, optional)    │
 │                                                 │
-│  AI BOT IN CHAT:                                 │
+│  AI BOT IN CHAT:                                │
 │    @memu_bot:yourfamily.memu.digital            │
 │                                                 │
 │  CALENDAR COMMANDS:                             │
@@ -448,10 +475,16 @@ This will show available backups and guide you through restoration.
 │    /recall        - CROSS-SILO SEARCH (all data)│
 │    /remind        - set a reminder              │
 │    /summarize     - summarize chat              │
+│                                                 │
+│  CONTROL:                                       │
+│    /ai off        - slash commands only (silent) │
+│    /ai quiet      - slash + @mentions only      │
+│    /ai active     - full natural language       │
+│    /private       - see privacy protections     │
 │    /help          - show all commands           │
 │                                                 │
 │  AUTOMATIC:                                     │
-│    ☀️ Morning briefing at 7am daily             │
+│    Morning briefing at 7am daily                │
 │                                                 │
 │  NOT CONNECTING?                                │
 │    → Check Tailscale app is running             │

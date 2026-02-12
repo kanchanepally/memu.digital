@@ -209,7 +209,7 @@ The `memu_intelligence` service (Python) acts as the connector. It queries all t
 | Command | What It Does |
 |---------|--------------|
 | `/remember [fact]` | Store family knowledge |
-| `/recall [query]` | Retrieve from memory + chat history |
+| `/recall [query]` | Cross-silo search: facts, chat, calendar AND photos |
 | `/addtolist [items]` | Shared shopping list |
 | `/showlist` | Display current list |
 | `/done [item]` | Mark complete |
@@ -218,8 +218,12 @@ The `memu_intelligence` service (Python) acts as the connector. It queries all t
 | `/calendar` | Show today's events (also: `week`, `tomorrow`) |
 | `/briefing` | On-demand family briefing |
 | `/summarize` | AI summary of recent chat |
+| `/ai off/quiet/active` | Control how chatty the bot is (per room) |
+| `/private` | See what Memu protects (encryption, local AI, etc.) |
 
 **Natural Language:** You can also just talk naturally — "What's happening tomorrow?", "Add milk to the list", "Remind me to call the dentist". The bot understands intent without slash commands. In group chats, mention the bot by name.
+
+**AI Volume Control:** Each room can have its own AI mode. `/ai off` makes the bot respond only to slash commands (silent partner). `/ai quiet` adds @mentions. `/ai active` enables full natural language processing (the default). Slash commands always work regardless of mode.
 
 **Automatic:** Morning briefings are delivered daily at 7am with calendar, weather, shopping list, and photo memories.
 

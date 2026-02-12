@@ -43,15 +43,15 @@ Users talk naturally ("What's happening tomorrow?", "Add milk to the list") and 
 #### Bot stability improvements ✅
 Robust self-message detection with multi-layer identity checks and startup diagnostics. Prevents message processing loops across different deployment environments.
 
-### Building Now
-
-#### AI Volume Control
+#### AI Volume Control ✅
 Per-room control over how proactive the bot is:
 - `/ai off` — Bot only responds to slash commands
 - `/ai quiet` — Slash commands and explicit @mentions only
 - `/ai active` — Full natural language processing (default)
 
-Preference persists per-room so different spaces can have different settings.
+Preference persists per-room so different spaces can have different settings. `/private` command also added to surface existing privacy protections (E2EE chat, local AI, per-user photo libraries).
+
+### Building Now
 
 #### On This Day photo memories
 Surface Immich "on this day" photos in morning briefings and as a standalone command. Photos from this date in previous years.

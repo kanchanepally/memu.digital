@@ -304,7 +304,7 @@ memu-os/
 - Ollama local AI (Llama 3.2)
 - Natural language intent (no slash commands needed)
 - Morning briefings (7am daily)
-- Bot commands: /remember, /recall, /addtolist, /showlist, /done, /remind, /schedule, /calendar, /briefing, /summarize
+- Bot commands: /remember, /recall, /addtolist, /showlist, /done, /remind, /schedule, /calendar, /briefing, /summarize, /ai, /private, /help
 - Tailscale remote access with auto-HTTPS
 - Cert renewal automation (weekly)
 - Admin dashboard with service health

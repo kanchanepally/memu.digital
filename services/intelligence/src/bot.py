@@ -28,6 +28,9 @@ class MemuBot:
         logger.info(f"Bot configured user_id: {configured}")
         logger.info(f"Bot localpart for self-detection: {self._bot_localpart}")
 
+        # AI mode cache: {room_id: mode} — avoids DB hit on every message
+        self._ai_mode_cache = {}
+
     async def start(self):
         logger.info("Starting MemuBot...")
         await self.memory.connect()
@@ -94,14 +97,32 @@ class MemuBot:
             logger.info(f"Skipping old message (age: {event_age}ms): {content}")
             return
 
-        # In group rooms, only respond to slash commands or @mentions
+        # Check if bot is mentioned by name
         bot_display = 'memu'
         bot_mentioned = bot_display.lower() in content.lower() or (
             self.client.user_id and self.client.user_id.split(':')[0].lstrip('@').lower() in content.lower()
         )
 
-        if not is_slash and not is_dm and not bot_mentioned:
-            return  # Stay silent in group rooms unless addressed
+        # --- AI Volume Control ---
+        # Slash commands ALWAYS work in all modes
+        if is_slash:
+            await self.process_message(room.room_id, event.sender, content)
+            return
+
+        # For natural language, check the room's AI mode
+        mode = await self._get_ai_mode(room.room_id)
+
+        if mode == 'off':
+            return  # Only slash commands in this room
+
+        if mode == 'quiet':
+            # Only explicit @mentions get NL processing
+            if not bot_mentioned:
+                return
+        else:
+            # 'active' mode (default) — DMs + @mentions in groups
+            if not is_dm and not bot_mentioned:
+                return
 
         await self.process_message(room.room_id, event.sender, content)
 
@@ -115,10 +136,20 @@ class MemuBot:
             }
         )
 
+    async def _get_ai_mode(self, room_id: str) -> str:
+        """Get AI mode for a room, with in-memory cache."""
+        if room_id not in self._ai_mode_cache:
+            self._ai_mode_cache[room_id] = await self.memory.get_room_ai_mode(room_id)
+        return self._ai_mode_cache[room_id]
+
     async def process_message(self, room_id: str, sender: str, content: str):
         content = content.strip()
 
-        if content.startswith('/remember'):
+        if content.startswith('/ai'):
+            await self.handle_ai_mode(room_id, content)
+        elif content.startswith('/private'):
+            await self.handle_private(room_id)
+        elif content.startswith('/remember'):
             await self.handle_remember(room_id, sender, content)
         elif content.startswith('/recall'):
             await self.handle_recall(room_id, content)
@@ -708,44 +739,102 @@ class MemuBot:
             logger.error(f"Failed to generate briefing: {e}")
             await self.send_text(room_id, "❌ Failed to generate briefing. Check the logs for details.")
 
+    async def handle_ai_mode(self, room_id: str, content: str):
+        """Set how proactive the bot is in this room."""
+        VALID_MODES = {'off', 'quiet', 'active'}
+        MODE_DESCRIPTIONS = {
+            'off': '🔇 **AI Off** — I\'ll only respond to /slash commands in this room.',
+            'quiet': '🔉 **AI Quiet** — I\'ll respond to /slash commands and @mentions only.',
+            'active': '🔊 **AI Active** — I\'ll respond naturally to messages, mentions, and DMs.',
+        }
+
+        arg = content.replace('/ai', '').strip().lower()
+
+        if arg not in VALID_MODES:
+            current = await self._get_ai_mode(room_id)
+            await self.send_text(
+                room_id,
+                f"🎚️ **AI Volume Control**\n\n"
+                f"Current mode: {MODE_DESCRIPTIONS[current]}\n\n"
+                f"**Set a mode:**\n"
+                f"• `/ai off` — Slash commands only (silent)\n"
+                f"• `/ai quiet` — Slash commands + @mentions\n"
+                f"• `/ai active` — Full natural language (default)\n"
+            )
+            return
+
+        await self.memory.set_room_ai_mode(room_id, arg)
+        self._ai_mode_cache[room_id] = arg  # Update cache
+        await self.send_text(room_id, MODE_DESCRIPTIONS[arg])
+
+    async def handle_private(self, room_id: str):
+        """Explain what Memu already protects."""
+        await self.send_text(room_id, """🔒 **Your Privacy on Memu**
+
+**Chat — End-to-end encrypted**
+Your messages are encrypted on your device before they're sent. Not even the server admin can read them. This is the same level of encryption as Signal.
+
+**Photos — Separate per person**
+Each family member has their own Immich account and photo library. Your photos are only visible to you unless you choose to share them.
+
+**AI — Runs locally**
+The AI assistant runs entirely on your family's hardware. Your conversations with it never leave your home. No data is sent to OpenAI, Google, or anyone else.
+
+**Everything — On your hardware**
+All data stays on hardware your family owns. There are no cloud services, no subscriptions, and no company that can access, sell, or lose your data.
+
+**Control**
+• Use `/ai off` to silence the bot in any room
+• Use `/ai quiet` for slash commands and @mentions only
+• Every family member can take their data with them (coming soon)
+""")
+
     async def handle_help(self, room_id: str):
         """Show available commands."""
-        help_text = """🤖 **Memu Bot Commands**
+        current_mode = await self._get_ai_mode(room_id)
+        mode_display = {'off': '🔇 Off', 'quiet': '🔉 Quiet', 'active': '🔊 Active'}
+        help_text = f"""🤖 **Memu Bot Commands**
 
 **Calendar**
-• `/schedule [event] [time]` - Add to family calendar
+• `/schedule [event] [time]` — Add to family calendar
   Example: `/schedule Soccer practice Tuesday 5pm`
-• `/calendar` - Show today's events
-• `/calendar week` - Show this week's events
-• `/calendar tomorrow` - Show tomorrow's events
+• `/calendar` — Show today's events
+• `/calendar week` — Show this week's events
+• `/calendar tomorrow` — Show tomorrow's events
 
 **Memory & Search**
-• `/remember [fact]` - Save something to remember
-• `/recall [query]` - Cross-silo search: facts, chat, calendar AND photos
+• `/remember [fact]` — Save something to remember
+• `/recall [query]` — Cross-silo search: facts, chat, calendar AND photos
 
 **Lists**
-• `/addtolist item1, item2` - Add items to shared list
-• `/showlist` - Show current list
-• `/done [item]` - Mark item complete
+• `/addtolist item1, item2` — Add items to shared list
+• `/showlist` — Show current list
+• `/done [item]` — Mark item complete
 
 **Reminders**
-• `/remind [task] [time]` - Set a reminder
+• `/remind [task] [time]` — Set a reminder
   Example: `/remind call mom tomorrow 3pm`
 
 **Briefings**
-• `/briefing` - Get an on-demand family briefing
-• `/briefing debug` - Show raw data sources (for troubleshooting)
+• `/briefing` — Get an on-demand family briefing
+• `/briefing debug` — Show raw data sources
+
+**Control**
+• `/ai off` — Slash commands only (bot stays silent)
+• `/ai quiet` — Slash commands + @mentions
+• `/ai active` — Full natural language (default)
+• `/private` — See what Memu protects
+• Current mode: {mode_display.get(current_mode, '🔊 Active')}
 
 **Other**
-• `/summarize` - AI summary of recent chat
-• `/help` - Show this message
+• `/summarize` — AI summary of recent chat
+• `/help` — Show this message
 
 💡 You can also just talk to me naturally! Try:
 • "What's happening tomorrow?"
 • "Add milk and eggs to the list"
 • "Remind me to call the dentist Friday"
-• "What's the WiFi password?"
-• "What have we been doing on Saturdays?" (searches across all your data)
+• "What have we been doing on Saturdays?"
 
 In group chats, mention me by name so I know you're talking to me.
 """

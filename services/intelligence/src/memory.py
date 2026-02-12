@@ -67,6 +67,13 @@ class MemoryStore:
             processed BOOLEAN DEFAULT FALSE
         );
         CREATE INDEX IF NOT EXISTS idx_reminders_due_processed ON reminders(due_at, processed);
+
+        -- 4. Room Settings (AI volume control, per-room preferences)
+        CREATE TABLE IF NOT EXISTS room_settings (
+            room_id TEXT PRIMARY KEY,
+            ai_mode TEXT NOT NULL DEFAULT 'active',
+            updated_at TIMESTAMP DEFAULT NOW()
+        );
         """
         try:
             async with self.pool.acquire() as conn:
@@ -317,3 +324,26 @@ class MemoryStore:
                 RETURNING item
             """, room_id, f'%{item_name}%')
             return row['item'] if row else None
+
+    # =========================================================================
+    # ROOM SETTINGS (AI Volume Control)
+    # =========================================================================
+
+    async def get_room_ai_mode(self, room_id: str) -> str:
+        """Get the AI mode for a room. Returns 'active', 'quiet', or 'off'."""
+        async with self.pool.acquire() as conn:
+            row = await conn.fetchrow(
+                "SELECT ai_mode FROM room_settings WHERE room_id = $1",
+                room_id
+            )
+            return row['ai_mode'] if row else 'active'
+
+    async def set_room_ai_mode(self, room_id: str, mode: str) -> None:
+        """Set the AI mode for a room. Valid modes: 'active', 'quiet', 'off'."""
+        async with self.pool.acquire() as conn:
+            await conn.execute("""
+                INSERT INTO room_settings (room_id, ai_mode, updated_at)
+                VALUES ($1, $2, NOW())
+                ON CONFLICT (room_id) DO UPDATE
+                SET ai_mode = $2, updated_at = NOW()
+            """, room_id, mode)
