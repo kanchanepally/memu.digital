@@ -262,8 +262,15 @@
         }
 
         @keyframes gentle-pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
         }
     </style>
 </head>
@@ -405,35 +412,35 @@
             const ts = data.tailscale_hostname;
             const ip = data.server_ip || window.location.hostname;
             const chatUrl = ts ? 'https://' + ts : 'http://' + ip;
-            const photosUrl = ts ? 'https://' + ts + ':8443' : 'http://' + ip + ':2283';
+            const photosUrl = ts ? 'http://' + ts + ':2283' : 'http://' + ip + ':2283';
             const calendarUrl = (ts ? 'https://' + ts : 'http://' + ip) + '/calendar/dav.php';
 
             document.getElementById('serviceUrls').innerHTML =
                 '<div class="url-card">' +
-                    '<div class="url-card-header"><span class="url-label">Chat</span>' +
-                    '<button class="url-copy-btn" onclick="copyUrl(this, \'' + chatUrl.replace(/'/g, "\\'") + '\')">Copy</button></div>' +
-                    '<div class="url-value">' + chatUrl + '</div>' +
-                    '<div class="url-hint">Open in browser or use any Matrix app (Element, FluffyChat)</div>' +
+                '<div class="url-card-header"><span class="url-label">Chat</span>' +
+                '<button class="url-copy-btn" onclick="copyUrl(this, \'' + chatUrl.replace(/'/g, "\\'") + '\')">Copy</button></div>' +
+                '<div class="url-value">' + chatUrl + '</div>' +
+                '<div class="url-hint">Open in browser or use any Matrix app (Element, FluffyChat)</div>' +
                 '</div>' +
                 '<div class="url-card">' +
-                    '<div class="url-card-header"><span class="url-label">Photos</span>' +
-                    '<button class="url-copy-btn" onclick="copyUrl(this, \'' + photosUrl.replace(/'/g, "\\'") + '\')">Copy</button></div>' +
-                    '<div class="url-value">' + photosUrl + '</div>' +
-                    '<div class="url-hint">Download Immich app on your phone</div>' +
+                '<div class="url-card-header"><span class="url-label">Photos</span>' +
+                '<button class="url-copy-btn" onclick="copyUrl(this, \'' + photosUrl.replace(/'/g, "\\'") + '\')">Copy</button></div>' +
+                '<div class="url-value">' + photosUrl + '</div>' +
+                '<div class="url-hint">Download Immich app on your phone</div>' +
                 '</div>' +
                 '<div class="url-card">' +
-                    '<div class="url-card-header"><span class="url-label">Calendar</span>' +
-                    '<button class="url-copy-btn" onclick="copyUrl(this, \'' + calendarUrl.replace(/'/g, "\\'") + '\')">Copy</button></div>' +
-                    '<div class="url-value">' + calendarUrl + '</div>' +
-                    '<div class="url-hint">Add as CalDAV account in your phone\'s calendar settings</div>' +
+                '<div class="url-card-header"><span class="url-label">Calendar</span>' +
+                '<button class="url-copy-btn" onclick="copyUrl(this, \'' + calendarUrl.replace(/'/g, "\\'") + '\')">Copy</button></div>' +
+                '<div class="url-value">' + calendarUrl + '</div>' +
+                '<div class="url-hint">Add as CalDAV account in your phone\'s calendar settings</div>' +
                 '</div>';
         }
 
         function copyUrl(button, url) {
-            navigator.clipboard.writeText(url).then(function() {
+            navigator.clipboard.writeText(url).then(function () {
                 button.textContent = 'Copied!';
                 button.classList.add('copied');
-                setTimeout(function() {
+                setTimeout(function () {
                     button.textContent = 'Copy';
                     button.classList.remove('copied');
                 }, 2000);
