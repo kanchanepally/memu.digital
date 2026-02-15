@@ -42,5 +42,12 @@ class Config:
     IMMICH_API_URL = os.getenv("IMMICH_API_URL", "http://immich_server:2283")
     IMMICH_API_KEY = os.getenv("IMMICH_API_KEY", "")
 
+    # News feeds for morning briefing (comma-separated RSS URLs)
+    BRIEFING_NEWS_FEEDS = os.getenv("BRIEFING_NEWS_FEEDS",
+        "https://feeds.bbci.co.uk/news/uk/rss.xml,"
+        "https://feeds.bbci.co.uk/news/technology/rss.xml"
+    )
+    BRIEFING_NEWS_COUNT = int(os.getenv("BRIEFING_NEWS_COUNT", "5"))
+
     # Logging
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")

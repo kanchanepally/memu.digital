@@ -241,6 +241,8 @@ services:
       - WEATHER_COUNTRY=${WEATHER_COUNTRY:-UK}
       - IMMICH_API_URL=http://immich_server:2283
       - IMMICH_API_KEY=${IMMICH_API_KEY:-}
+      - BRIEFING_NEWS_FEEDS=${BRIEFING_NEWS_FEEDS:-https://feeds.bbci.co.uk/news/uk/rss.xml,https://feeds.bbci.co.uk/news/technology/rss.xml}
+      - BRIEFING_NEWS_COUNT=${BRIEFING_NEWS_COUNT:-5}
     depends_on:
       database:
         condition: service_healthy

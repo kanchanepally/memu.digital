@@ -2,12 +2,13 @@
 Morning Briefing Agent for Memu Intelligence Service
 
 Delivers a warm, personalized morning briefing to the family chat room.
-Synthesizes: Calendar, Weather, Photos ("On This Day"), and Shopping List.
+Synthesizes: Calendar, Weather, News, Photos ("On This Day"), and Shopping List.
 """
 
 import logging
+import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, TYPE_CHECKING
+from typing import Dict, Any, Optional, List, TYPE_CHECKING
 from zoneinfo import ZoneInfo
 import httpx
 
@@ -67,6 +68,7 @@ class MorningBriefingAgent:
 
                 return {
                     'available': True,
+                    'city': data.get('name', Config.WEATHER_CITY),
                     'temp': round(data['main']['temp']),
                     'feels_like': round(data['main']['feels_like']),
                     'description': data['weather'][0]['description'],
@@ -91,6 +93,51 @@ class MorningBriefingAgent:
             '50d': '🌫️', '50n': '🌫️',  # Mist
         }
         return mapping.get(icon_code, '🌤️')
+
+    async def gather_news(self) -> Dict[str, Any]:
+        """Get top headlines from configured RSS feeds."""
+        feeds_str = Config.BRIEFING_NEWS_FEEDS
+        if not feeds_str or not feeds_str.strip():
+            return {'available': False}
+
+        feed_urls = [u.strip() for u in feeds_str.split(',') if u.strip()]
+        if not feed_urls:
+            return {'available': False}
+
+        headlines: List[Dict[str, str]] = []
+        max_count = Config.BRIEFING_NEWS_COUNT
+
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                for feed_url in feed_urls:
+                    if len(headlines) >= max_count:
+                        break
+                    try:
+                        response = await client.get(feed_url)
+                        if response.status_code != 200:
+                            continue
+                        root = ET.fromstring(response.text)
+                        # Standard RSS 2.0 parsing
+                        for item in root.iter('item'):
+                            if len(headlines) >= max_count:
+                                break
+                            title_el = item.find('title')
+                            if title_el is not None and title_el.text:
+                                headlines.append({
+                                    'title': title_el.text.strip()
+                                })
+                    except Exception as e:
+                        logger.debug(f"Failed to fetch feed {feed_url}: {e}")
+                        continue
+
+            return {
+                'available': len(headlines) > 0,
+                'headlines': headlines
+            }
+
+        except Exception as e:
+            logger.warning(f"Failed to get news: {e}")
+            return {'available': False}
 
     async def gather_memories(self) -> Dict[str, Any]:
         """Get 'On This Day' photos from Immich."""
@@ -157,6 +204,7 @@ class MorningBriefingAgent:
         return {
             'calendar': await self.gather_calendar(),
             'weather': await self.gather_weather(),
+            'news': await self.gather_news(),
             'memories': await self.gather_memories(),
             'shopping': await self.gather_shopping_list(),
             'timestamp': datetime.now(self.timezone)
@@ -185,9 +233,16 @@ class MorningBriefingAgent:
         weather = data['weather']
         if weather['available']:
             parts.append(
-                f"Weather: {weather['icon']} {weather['description']}, "
+                f"Weather in {weather.get('city', Config.WEATHER_CITY)}: "
+                f"{weather['icon']} {weather['description']}, "
                 f"{weather['temp']}°C (feels like {weather['feels_like']}°C)"
             )
+
+        # News
+        news = data.get('news', {})
+        if news.get('available') and news.get('headlines'):
+            news_items = [f"- {h['title']}" for h in news['headlines']]
+            parts.append(f"Today's headlines:\n" + "\n".join(news_items))
 
         # Memories
         memories = data['memories']
@@ -219,7 +274,10 @@ Write a brief, friendly morning briefing (3-4 sentences max) for the family.
 Be conversational and encouraging. Highlight the most important things for the day.
 If there are photo memories, mention them warmly.
 Keep it concise - this is a quick morning update, not a detailed report.
-Use a friendly emoji or two where appropriate."""
+Use a friendly emoji or two where appropriate.
+IMPORTANT: Only describe weather using the EXACT data provided (temperature, description).
+Do NOT invent weather details or suggest enjoying weather that contradicts the data.
+If it says 'overcast clouds' and 5°C, do NOT say 'enjoy the sunshine'."""
 
         prompt = f"""Based on this information, write a warm morning briefing:
 
@@ -248,7 +306,13 @@ Morning briefing:"""
 
         weather = data['weather']
         if weather['available']:
-            lines.append(f"{weather['icon']} {weather['temp']}°C, {weather['description']}")
+            lines.append(f"{weather['icon']} {weather.get('city', 'Local')}: {weather['temp']}°C, {weather['description']}")
+
+        news = data.get('news', {})
+        if news.get('available') and news.get('headlines'):
+            lines.append("\n📰 Headlines:")
+            for h in news['headlines'][:3]:
+                lines.append(f"  • {h['title']}")
 
         memories = data['memories']
         if memories['available'] and memories['total_count'] > 0:

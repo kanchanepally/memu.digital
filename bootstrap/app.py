@@ -561,6 +561,145 @@ def admin_dashboard():
                           admin_name=admin_name)
 
 
+@app.route('/admin/settings')
+@login_required
+def admin_settings():
+    """Admin settings page"""
+    if not is_configured():
+        return redirect('/')
+
+    config = load_sanctuary_config()
+    env = read_env_file()
+
+    weather_api_key = env.get('WEATHER_API_KEY', '')
+    weather_city = env.get('WEATHER_CITY', 'London')
+    weather_country = env.get('WEATHER_COUNTRY', 'UK')
+    caldav_username = env.get('CALDAV_USERNAME', 'memu')
+    caldav_password = env.get('CALDAV_PASSWORD', '')
+    briefing_time = env.get('BRIEFING_TIME', '07:00')
+    briefing_enabled = env.get('BRIEFING_ENABLED', 'true').lower() == 'true'
+    briefing_room = env.get('PRIMARY_ROOM_ID', '')
+    timezone = env.get('TIMEZONE', 'Europe/London')
+    news_feeds = env.get('BRIEFING_NEWS_FEEDS',
+        'https://feeds.bbci.co.uk/news/uk/rss.xml,https://feeds.bbci.co.uk/news/technology/rss.xml')
+    news_count = env.get('BRIEFING_NEWS_COUNT', '5')
+    news_feeds_list = [f.strip() for f in news_feeds.split(',') if f.strip()]
+
+    return render_template('settings.html',
+                          family_name=config.get('family_name', 'Family'),
+                          domain=config.get('domain', 'memu.local'),
+                          tailscale_hostname=config.get('tailscale_hostname'),
+                          weather_configured=bool(weather_api_key),
+                          weather_city=weather_city,
+                          weather_country=weather_country,
+                          weather_api_key=weather_api_key,
+                          calendar_configured=bool(caldav_password),
+                          caldav_username=caldav_username,
+                          caldav_password=caldav_password,
+                          briefing_time=briefing_time,
+                          briefing_enabled=briefing_enabled,
+                          briefing_room=briefing_room,
+                          timezone=timezone,
+                          news_feeds=news_feeds,
+                          news_feeds_display='\n'.join(news_feeds_list),
+                          news_feed_count=len(news_feeds_list),
+                          news_count=news_count)
+
+
+@app.route('/api/settings/weather', methods=['POST'])
+@login_required
+def api_settings_weather():
+    """Save weather settings"""
+    data = request.get_json()
+    city = data.get('city', '').strip()
+    country = data.get('country', '').strip()
+    api_key = data.get('api_key', '').strip()
+
+    if city:
+        update_env_var('WEATHER_CITY', city)
+    if country:
+        update_env_var('WEATHER_COUNTRY', country)
+    if api_key:
+        update_env_var('WEATHER_API_KEY', api_key)
+
+    _restart_intelligence()
+    return jsonify({'success': True, 'message': 'Weather settings saved. Bot restarting...'})
+
+
+@app.route('/api/settings/calendar', methods=['POST'])
+@login_required
+def api_settings_calendar():
+    """Save calendar settings"""
+    data = request.get_json()
+    username = data.get('username', '').strip()
+    password = data.get('password', '').strip()
+
+    if not username or not password:
+        return jsonify({'success': False, 'error': 'Both username and password are required'})
+
+    update_env_var('CALDAV_USERNAME', username)
+    update_env_var('CALDAV_PASSWORD', password)
+
+    _restart_intelligence()
+    return jsonify({'success': True, 'message': 'Calendar settings saved. Bot restarting...'})
+
+
+@app.route('/api/settings/briefing', methods=['POST'])
+@login_required
+def api_settings_briefing():
+    """Save briefing settings"""
+    data = request.get_json()
+    enabled = data.get('enabled', 'true')
+    time = data.get('time', '07:00').strip()
+    room_id = data.get('room_id', '').strip()
+
+    update_env_var('BRIEFING_ENABLED', enabled)
+    update_env_var('BRIEFING_TIME', time)
+    if room_id:
+        update_env_var('PRIMARY_ROOM_ID', room_id)
+
+    _restart_intelligence()
+    return jsonify({'success': True, 'message': 'Briefing settings saved. Bot restarting...'})
+
+
+@app.route('/api/settings/news', methods=['POST'])
+@login_required
+def api_settings_news():
+    """Save news feed settings"""
+    data = request.get_json()
+    feeds = data.get('feeds', '').strip()
+    count = data.get('count', 5)
+
+    if feeds:
+        update_env_var('BRIEFING_NEWS_FEEDS', feeds)
+    update_env_var('BRIEFING_NEWS_COUNT', str(count))
+
+    _restart_intelligence()
+    return jsonify({'success': True, 'message': 'News feed settings saved. Bot restarting...'})
+
+
+@app.route('/api/settings/general', methods=['POST'])
+@login_required
+def api_settings_general():
+    """Save general settings"""
+    data = request.get_json()
+    timezone = data.get('timezone', '').strip()
+
+    if timezone:
+        update_env_var('TIMEZONE', timezone)
+
+    _restart_intelligence()
+    return jsonify({'success': True, 'message': 'Settings saved. Bot restarting...'})
+
+
+def _restart_intelligence():
+    """Restart the intelligence container to pick up new env vars"""
+    try:
+        run_cmd(['docker', 'compose', 'restart', 'intelligence'], check=False)
+    except Exception as e:
+        logger.warning(f"Failed to restart intelligence: {e}")
+
+
 @app.route('/api/sanctuary')
 @login_required
 def api_sanctuary():
@@ -605,7 +744,7 @@ def api_health():
     }
 
     # Add Calendar to checks
-    service_checks.append(('calendar', 'Calendar (Baikal)', '📅', 'http://localhost:8008/.well-known/caldav'))
+    service_checks.append(('calendar', 'Calendar (Baikal)', '📅', 'http://calendar:80/'))
 
     for service_id, name, icon, health_url in service_checks:
         status = 'unknown'

@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ family_name }} Sanctuary | Settings</title>
+    <style>
+        :root {
+            --color-deep: #1a1a2e;
+            --color-primary: #16213e;
+            --color-accent: #667eea;
+            --color-accent-hover: #5568d3;
+            --color-success: #10b981;
+            --color-success-soft: #ecfdf5;
+            --color-warning: #f59e0b;
+            --color-warning-soft: #fffbeb;
+            --color-error: #ef4444;
+            --color-error-soft: #fef2f2;
+            --color-bg: #f8fafc;
+            --color-surface: #ffffff;
+            --color-border: #e2e8f0;
+            --color-text: #1e293b;
+            --color-text-secondary: #64748b;
+            --color-text-muted: #94a3b8;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --font-family-display: var(--font-family);
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: var(--font-family); background: var(--color-bg); min-height: 100vh; color: var(--color-text); }
+        .layout { display: flex; min-height: 100vh; }
+
+        /* Sidebar - matches admin-dashboard.html */
+        .sidebar {
+            width: 260px; background: var(--color-deep); padding: 1.5rem;
+            display: flex; flex-direction: column; position: fixed; height: 100vh;
+        }
+        .sidebar-logo { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 2rem; }
+        .nav-section { margin-bottom: 1.5rem; }
+        .nav-section-title {
+            font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.05em; color: rgba(255,255,255,0.4); margin-bottom: 0.75rem; padding: 0 0.75rem;
+        }
+        .nav-item {
+            display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem;
+            color: rgba(255,255,255,0.7); text-decoration: none; border-radius: 0.5rem;
+            font-size: 0.9rem; font-weight: 500; transition: all 0.2s; margin-bottom: 0.25rem;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: var(--color-accent); color: white; }
+        .sidebar-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); }
+        .sanctuary-info { padding: 0.75rem; background: rgba(255,255,255,0.05); border-radius: 0.5rem; font-size: 0.8rem; }
+        .sanctuary-name { color: white; font-weight: 600; margin-bottom: 0.25rem; }
+        .sanctuary-url { color: rgba(255,255,255,0.5); font-family: monospace; font-size: 0.7rem; word-break: break-all; }
+
+        /* Main */
+        .main { flex: 1; margin-left: 260px; padding: 2rem; max-width: 800px; }
+        .page-header { margin-bottom: 2rem; }
+        .page-title { font-family: var(--font-family-display); font-size: 1.75rem; font-weight: 700; color: var(--color-deep); margin-bottom: 0.5rem; }
+        .page-subtitle { color: var(--color-text-secondary); font-size: 0.95rem; }
+
+        /* Settings sections */
+        .settings-section {
+            background: var(--color-surface); border-radius: var(--radius-xl);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid var(--color-border); margin-bottom: 1.5rem;
+        }
+        .settings-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--color-border);
+        }
+        .settings-title { font-family: var(--font-family-display); font-size: 1.1rem; font-weight: 600; color: var(--color-deep); }
+        .settings-body { padding: 1.5rem; }
+        .settings-status { font-size: 0.8rem; font-weight: 500; padding: 0.25rem 0.75rem; border-radius: 1rem; }
+        .settings-status.configured { background: var(--color-success-soft); color: var(--color-success); }
+        .settings-status.not-configured { background: var(--color-warning-soft); color: var(--color-warning); }
+
+        /* Form */
+        .form-group { margin-bottom: 1.25rem; }
+        .form-label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; }
+        .form-input {
+            width: 100%; padding: 0.75rem 1rem; font-size: 0.95rem; font-family: var(--font-family);
+            border: 2px solid var(--color-border); border-radius: var(--radius-lg);
+            background: var(--color-surface); color: var(--color-text); transition: border-color 0.2s;
+        }
+        .form-input:focus { outline: none; border-color: var(--color-accent); }
+        .form-hint { font-size: 0.8rem; color: var(--color-text-muted); margin-top: 0.5rem; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .form-link { color: var(--color-accent); text-decoration: none; }
+        .form-link:hover { text-decoration: underline; }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+            padding: 0.75rem 1.25rem; font-family: var(--font-family); font-size: 0.875rem;
+            font-weight: 600; border-radius: var(--radius-lg); border: none; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-primary { background: var(--color-accent); color: white; }
+        .btn-primary:hover { background: var(--color-accent-hover); transform: translateY(-1px); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-secondary { background: var(--color-bg); color: var(--color-text); border: 1px solid var(--color-border); }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 2rem; right: 2rem; padding: 1rem 1.5rem; border-radius: var(--radius-lg);
+            color: white; font-weight: 500; font-size: 0.9rem; z-index: 1000;
+            transform: translateY(100px); opacity: 0; transition: all 0.3s;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.success { background: var(--color-success); }
+        .toast.error { background: var(--color-error); }
+
+        /* Info box */
+        .info-box {
+            background: #eef2ff; border: 1px solid #c7d2fe; border-radius: var(--radius-lg);
+            padding: 1rem; margin-bottom: 1.25rem; font-size: 0.85rem; color: #4338ca;
+        }
+
+        @media (max-width: 900px) {
+            .sidebar { width: 100%; height: auto; position: relative; }
+            .main { margin-left: 0; }
+            .layout { flex-direction: column; }
+            .form-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <svg width="120" height="40" viewBox="0 0 400 120" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="memuGradient1" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <circle cx="35" cy="60" r="22" fill="url(#memuGradient1)" opacity="0.9" />
+                    <circle cx="55" cy="60" r="22" fill="url(#memuGradient1)" opacity="0.85" />
+                    <circle cx="45" cy="42" r="22" fill="url(#memuGradient1)" />
+                    <text x="95" y="75"
+                        font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif"
+                        font-size="48" font-weight="600" fill="white">memu</text>
+                </svg>
+            </div>
+
+            <nav>
+                <div class="nav-section">
+                    <div class="nav-section-title">Overview</div>
+                    <a href="/admin" class="nav-item"><span>🏠</span> Dashboard</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Family</div>
+                    <a href="/admin" class="nav-item"><span>👨‍👩‍👧‍👦</span> Members</a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Services</div>
+                    {% if tailscale_hostname %}
+                    <a href="http://{{ tailscale_hostname }}:2283" target="_blank" class="nav-item">
+                    {% else %}
+                    <a href="http://{{ domain }}:2283" target="_blank" class="nav-item">
+                    {% endif %}
+                        <span>📷</span> Photos
+                    </a>
+                    <a href="#" onclick="alert('The AI Assistant is built into the chat. Just mention @memu_bot!')" class="nav-item">
+                        <span>🤖</span> AI Assistant
+                    </a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">System</div>
+                    <a href="#" onclick="alert('Automatic backups are coming in the next update!')" class="nav-item">
+                        <span>💾</span> Backups
+                    </a>
+                    <a href="/admin/settings" class="nav-item active">
+                        <span>⚙️</span> Settings
+                    </a>
+                    <a href="/logout" class="nav-item" style="margin-top: 1rem; color: #ef4444;">
+                        <span>🚪</span> Logout
+                    </a>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="sanctuary-info">
+                    <div class="sanctuary-name">{{ family_name }} Sanctuary</div>
+                    <div class="sanctuary-url">{{ tailscale_hostname or domain }}</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div class="page-header">
+                <h1 class="page-title">Settings</h1>
+                <p class="page-subtitle">Configure your sanctuary's services and integrations.</p>
+            </div>
+
+            <!-- Weather -->
+            <div class="settings-section">
+                <div class="settings-header">
+                    <h2 class="settings-title">🌤️ Weather</h2>
+                    <span class="settings-status {{ 'configured' if weather_configured else 'not-configured' }}">
+                        {{ 'Connected' if weather_configured else 'Not configured' }}
+                    </span>
+                </div>
+                <div class="settings-body">
+                    <div class="info-box">
+                        Weather data appears in your morning briefing. Get a free API key from
+                        <a href="https://openweathermap.org/api" target="_blank" class="form-link">openweathermap.org</a>
+                        (sign up, then find your key under "API keys").
+                    </div>
+                    <form id="weatherForm" onsubmit="saveWeather(event)">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">City</label>
+                                <input type="text" class="form-input" id="weatherCity" value="{{ weather_city }}" placeholder="e.g., Manchester">
+                                <p class="form-hint">Your city name</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Country Code</label>
+                                <input type="text" class="form-input" id="weatherCountry" value="{{ weather_country }}" placeholder="e.g., UK" maxlength="2">
+                                <p class="form-hint">2-letter country code</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">OpenWeatherMap API Key</label>
+                            <input type="password" class="form-input" id="weatherApiKey" value="{{ weather_api_key }}" placeholder="Enter your API key">
+                            <p class="form-hint">Free tier gives 1,000 calls/day — more than enough for briefings.</p>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="weatherSaveBtn">Save Weather Settings</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Calendar -->
+            <div class="settings-section">
+                <div class="settings-header">
+                    <h2 class="settings-title">📅 Calendar</h2>
+                    <span class="settings-status {{ 'configured' if calendar_configured else 'not-configured' }}">
+                        {{ 'Connected' if calendar_configured else 'Not configured' }}
+                    </span>
+                </div>
+                <div class="settings-body">
+                    <div class="info-box">
+                        Your calendar runs on Baikal (CalDAV). Before configuring here, you need to
+                        complete Baikal's setup wizard and create a user account.<br><br>
+                        <strong>Step 1:</strong> Open
+                        {% if tailscale_hostname %}
+                        <a href="https://{{ tailscale_hostname }}/calendar/" target="_blank" class="form-link">your calendar admin</a>
+                        {% else %}
+                        <a href="http://{{ domain }}/calendar/" target="_blank" class="form-link">your calendar admin</a>
+                        {% endif %}
+                        and complete the setup wizard if prompted.<br>
+                        <strong>Step 2:</strong> In Baikal admin, go to Users and create a user (e.g., "memu").<br>
+                        <strong>Step 3:</strong> Enter those credentials below so the bot can read your calendar.
+                    </div>
+                    <form id="calendarForm" onsubmit="saveCalendar(event)">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">CalDAV Username</label>
+                                <input type="text" class="form-input" id="caldavUsername" value="{{ caldav_username }}" placeholder="e.g., memu">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">CalDAV Password</label>
+                                <input type="password" class="form-input" id="caldavPassword" value="{{ caldav_password }}" placeholder="Enter password">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="calendarSaveBtn">Save Calendar Settings</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Morning Briefing -->
+            <div class="settings-section">
+                <div class="settings-header">
+                    <h2 class="settings-title">🌅 Morning Briefing</h2>
+                    <span class="settings-status {{ 'configured' if briefing_room else 'not-configured' }}">
+                        {{ 'Active' if briefing_room else 'No room set' }}
+                    </span>
+                </div>
+                <div class="settings-body">
+                    <div class="info-box">
+                        The morning briefing is delivered daily to a Matrix room. It includes weather,
+                        calendar events, news headlines, photo memories, and shopping list status.
+                    </div>
+                    <form id="briefingForm" onsubmit="saveBriefing(event)">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Briefing Time</label>
+                                <input type="time" class="form-input" id="briefingTime" value="{{ briefing_time }}">
+                                <p class="form-hint">24-hour format, in your server's timezone</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Enabled</label>
+                                <select class="form-input" id="briefingEnabled">
+                                    <option value="true" {{ 'selected' if briefing_enabled else '' }}>Yes</option>
+                                    <option value="false" {{ 'selected' if not briefing_enabled else '' }}>No</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Target Room ID</label>
+                            <input type="text" class="form-input" id="briefingRoom" value="{{ briefing_room }}" placeholder="e.g., !abc123:yourserver.memu.digital">
+                            <p class="form-hint">The Matrix room ID where briefings are posted. Find it in your chat app's room settings.</p>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="briefingSaveBtn">Save Briefing Settings</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- News Feeds -->
+            <div class="settings-section">
+                <div class="settings-header">
+                    <h2 class="settings-title">📰 News Feeds</h2>
+                    <span class="settings-status {{ 'configured' if news_feeds else 'not-configured' }}">
+                        {{ news_feed_count }} feed(s)
+                    </span>
+                </div>
+                <div class="settings-body">
+                    <div class="info-box">
+                        News headlines appear in your morning briefing. Add RSS feed URLs (one per line).
+                        No API keys needed — RSS is free and private.<br><br>
+                        <strong>Suggested feeds:</strong>
+                        BBC UK, BBC Tech, Hacker News, Guardian, TechCrunch, The Register
+                    </div>
+                    <form id="newsForm" onsubmit="saveNews(event)">
+                        <div class="form-group">
+                            <label class="form-label">RSS Feed URLs (one per line)</label>
+                            <textarea class="form-input" id="newsFeeds" rows="5" placeholder="https://feeds.bbci.co.uk/news/uk/rss.xml&#10;https://feeds.bbci.co.uk/news/technology/rss.xml" style="resize: vertical; font-family: monospace; font-size: 0.85rem;">{{ news_feeds_display }}</textarea>
+                            <p class="form-hint">Each line should be a valid RSS feed URL.</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Headlines per briefing</label>
+                            <input type="number" class="form-input" id="newsCount" value="{{ news_count }}" min="1" max="10" style="width: 100px;">
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="newsSaveBtn">Save News Settings</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Timezone -->
+            <div class="settings-section">
+                <div class="settings-header">
+                    <h2 class="settings-title">🕐 General</h2>
+                </div>
+                <div class="settings-body">
+                    <form id="generalForm" onsubmit="saveGeneral(event)">
+                        <div class="form-group">
+                            <label class="form-label">Timezone</label>
+                            <input type="text" class="form-input" id="timezone" value="{{ timezone }}" placeholder="e.g., Europe/London">
+                            <p class="form-hint">Used for calendar events, briefing times, and scheduling. Format: Region/City</p>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="generalSaveBtn">Save</button>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast notification -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        async function saveSettings(endpoint, data, btnId) {
+            const btn = document.getElementById(btnId);
+            const originalText = btn.textContent;
+            btn.textContent = 'Saving...';
+            btn.disabled = true;
+
+            try {
+                const resp = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await resp.json();
+                if (result.success) {
+                    showToast(result.message || 'Settings saved!');
+                    // Update status badges
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showToast(result.error || 'Failed to save', 'error');
+                }
+            } catch (e) {
+                showToast('Error: ' + e.message, 'error');
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function saveWeather(e) {
+            e.preventDefault();
+            saveSettings('/api/settings/weather', {
+                city: document.getElementById('weatherCity').value.trim(),
+                country: document.getElementById('weatherCountry').value.trim().toUpperCase(),
+                api_key: document.getElementById('weatherApiKey').value.trim()
+            }, 'weatherSaveBtn');
+        }
+
+        function saveCalendar(e) {
+            e.preventDefault();
+            saveSettings('/api/settings/calendar', {
+                username: document.getElementById('caldavUsername').value.trim(),
+                password: document.getElementById('caldavPassword').value.trim()
+            }, 'calendarSaveBtn');
+        }
+
+        function saveBriefing(e) {
+            e.preventDefault();
+            saveSettings('/api/settings/briefing', {
+                enabled: document.getElementById('briefingEnabled').value,
+                time: document.getElementById('briefingTime').value,
+                room_id: document.getElementById('briefingRoom').value.trim()
+            }, 'briefingSaveBtn');
+        }
+
+        function saveNews(e) {
+            e.preventDefault();
+            // Convert newline-separated textarea to comma-separated
+            const feeds = document.getElementById('newsFeeds').value
+                .split('\n')
+                .map(f => f.trim())
+                .filter(f => f.length > 0)
+                .join(',');
+            saveSettings('/api/settings/news', {
+                feeds: feeds,
+                count: parseInt(document.getElementById('newsCount').value) || 5
+            }, 'newsSaveBtn');
+        }
+
+        function saveGeneral(e) {
+            e.preventDefault();
+            saveSettings('/api/settings/general', {
+                timezone: document.getElementById('timezone').value.trim()
+            }, 'generalSaveBtn');
+        }
+    </script>
+</body>
+</html>
