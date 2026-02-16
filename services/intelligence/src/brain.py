@@ -211,7 +211,6 @@ Respond ONLY with valid JSON in this format:
 }}
 """
         response = await self.generate(prompt, json_mode=True)
-        response = await self.generate(prompt, json_mode=True)
         return self._extract_json(response)
 
     async def is_model_available(self) -> bool:

@@ -587,9 +587,10 @@ class MemuBot:
         # Use AI to extract event details
         data = await self.brain.extract_calendar_event(raw)
 
-        summary = data.get('summary', raw.split(' at ')[0] if ' at ' in raw else raw[:50])
-        date_str = data.get('date', '')
-        time_str = data.get('time', '')
+        fallback_summary = raw.split(' at ')[0] if ' at ' in raw else raw[:50]
+        summary = data.get('summary') or fallback_summary
+        date_str = data.get('date') or ''
+        time_str = data.get('time') or ''
         location = data.get('location', '')
         duration_str = data.get('duration')
 
