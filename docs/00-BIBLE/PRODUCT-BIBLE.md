@@ -220,12 +220,28 @@ The `memu_intelligence` service (Python) acts as the connector. It queries all t
 | `/summarize` | AI summary of recent chat |
 | `/ai off/quiet/active` | Control how chatty the bot is (per room) |
 | `/private` | See what Memu protects (encryption, local AI, etc.) |
+| `/help` | Show all available commands |
 
 **Natural Language:** You can also just talk naturally — "What's happening tomorrow?", "Add milk to the list", "Remind me to call the dentist". The bot understands intent without slash commands. In group chats, mention the bot by name.
 
 **AI Volume Control:** Each room can have its own AI mode. `/ai off` makes the bot respond only to slash commands (silent partner). `/ai quiet` adds @mentions. `/ai active` enables full natural language processing (the default). Slash commands always work regardless of mode.
 
-**Automatic:** Morning briefings are delivered daily at 7am with calendar, weather, shopping list, and photo memories.
+**Automatic:** Morning briefings are delivered daily at a configurable time with calendar, weather, news headlines (from RSS feeds), shopping list, and photo memories. All briefing settings are managed through the Admin Settings page — no .env editing needed.
+
+### 4.5 Admin Settings
+
+**User Story:** "I want to configure weather, calendar, and briefing settings without editing config files."
+
+The Admin Settings page (`/admin/settings`) provides a web UI for all runtime configuration:
+
+| Section | What It Configures |
+|---------|--------------------|
+| **Weather** | City, country code, OpenWeatherMap API key |
+| **Calendar** | CalDAV username and password for Baikal |
+| **Morning Briefing** | Time, enabled/disabled, target room ID |
+| **News Feeds** | RSS feed URLs, headlines count per briefing |
+
+Each save automatically restarts the intelligence service to pick up changes. No terminal access needed.
 
 ---
 

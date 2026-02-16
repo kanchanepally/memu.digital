@@ -693,9 +693,14 @@ def api_settings_general():
 
 
 def _restart_intelligence():
-    """Restart the intelligence container to pick up new env vars"""
+    """Recreate the intelligence container to pick up new env vars.
+
+    NOTE: 'docker compose restart' does NOT re-read .env -- it reuses the
+    existing container config. We must use 'up -d' to recreate with fresh
+    env vars from .env and docker-compose.yml.
+    """
     try:
-        run_cmd(['docker', 'compose', 'restart', 'intelligence'], check=False)
+        run_cmd(['docker', 'compose', 'up', '-d', 'intelligence'], check=False)
     except Exception as e:
         logger.warning(f"Failed to restart intelligence: {e}")
 
@@ -1173,7 +1178,7 @@ def generate_nginx_config(domain, https_domain=None):
     }}
 
     # === Admin & Setup Routes (Bootstrap Service) ===
-    location ~ ^/(admin|setup|logout|welcome|api/|status) {{
+    location ~ ^/(admin|login|setup|logout|welcome|api|status|static) {{
         set $upstream_bootstrap http://bootstrap:8888;
         proxy_pass $upstream_bootstrap;
         proxy_set_header X-Forwarded-For $remote_addr;
@@ -1191,30 +1196,33 @@ def generate_nginx_config(domain, https_domain=None):
     }}
 
     # === Calendar (Baikal CalDAV) ===
+    # Supports WebDAV methods (PROPFIND, REPORT, MKCALENDAR, etc.) for DAVx5/iOS sync
     location /calendar/ {{
         set $upstream_calendar http://calendar:80;
         rewrite ^/calendar(/.*)$ $1 break;
         proxy_pass $upstream_calendar;
-        
-        # Rewrite redirects from upstream
+
+        # Rewrite redirects from upstream to add /calendar/ prefix
         proxy_redirect ~^(https?://[^/]+)/(.*) $1/calendar/$2;
         proxy_redirect / /calendar/;
-        proxy_redirect http://$host/ /calendar/;
-        proxy_redirect https://$host/ /calendar/;
-        
-        # Rewrite link targets in HTML
+        proxy_redirect http://$host/ $scheme://$host/calendar/;
+        proxy_redirect https://$host/ $scheme://$host/calendar/;
+
+        # Rewrite link targets in HTML (for admin UI)
         sub_filter 'href="/' 'href="/calendar/';
         sub_filter 'src="/' 'src="/calendar/';
         sub_filter 'action="/' 'action="/calendar/';
         sub_filter 'url("/' 'url("/calendar/';
         sub_filter 'url(/' 'url(/calendar/';
-        
+
         sub_filter_once off;
-        sub_filter_types text/css text/javascript application/javascript;
-        
+        sub_filter_types text/css text/javascript application/javascript text/xml application/xml;
+
         proxy_set_header Accept-Encoding "";
         proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Port $server_port;
         proxy_set_header Host $host;
         client_max_body_size 50M;
     }}

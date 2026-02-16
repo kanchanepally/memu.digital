@@ -10,7 +10,7 @@
 
 **Tagline:** Your Family's Chief of Staff.
 
-**Stage:** Alpha validated. Building toward Kickstarter (April 2026). Family has been using it daily for 3+ months.
+**Stage:** Alpha validated. Building toward Kickstarter (June 2026). Family has been using it daily for 3+ months.
 
 **What makes Memu different:** No other product connects family chat + photos + calendar + AI into a single query on hardware the family owns. The unique value is cross-silo intelligence -- "What should I get my wife for her birthday?" searches chats, photos, calendar, and memories to give a real answer.
 
@@ -70,7 +70,7 @@ Before building anything, run it through this filter (in order):
 
 ```
 1. Is it on the critical path to Kickstarter?
-   → Cross-silo recall > Guardian > Proactive suggestions > Demo video
+   → Memu Dashboard > Guardian > Demo video
    → If no, STOP. Defer it.
 
 2. Does it complete a thin slice?
@@ -303,8 +303,12 @@ memu-os/
 - Baikal CalDAV family calendar
 - Ollama local AI (Llama 3.2)
 - Natural language intent (no slash commands needed)
-- Morning briefings (7am daily)
+- Cross-silo recall (search across chat, photos, calendar, memories)
+- Morning briefings (weather, calendar, news headlines, photo memories, shopping list)
+- Admin Settings page (weather, calendar, news feeds, briefing config — all via UI)
 - Bot commands: /remember, /recall, /addtolist, /showlist, /done, /remind, /schedule, /calendar, /briefing, /summarize, /ai, /private, /help
+- AI volume control (/ai off/quiet/active per room)
+- /private command (show what Memu protects)
 - Tailscale remote access with auto-HTTPS
 - Cert renewal automation (weekly)
 - Admin dashboard with service health
@@ -312,11 +316,14 @@ memu-os/
 - Brand consistency (purple accent, system fonts, SVG badges)
 
 ### Building Now (Critical Path)
-See `roadmap.md` Phase 2 -- items 2-4 are the critical path to Kickstarter:
+See `roadmap.md` and `docs/DASHBOARD-PRD.md`:
 1. ~~Natural language intent~~ ✅
-2. On This Day photo memories
-3. Cross-silo recall (key differentiator)
-4. Memu Guardian (self-maintaining appliance)
+2. ~~Cross-silo recall~~ ✅
+3. ~~AI volume control + /private~~ ✅
+4. ~~Morning briefings with weather + news~~ ✅
+5. ~~Admin Settings page~~ ✅
+6. **Memu Dashboard** — touchscreen UI for the family (pre-Kickstarter priority)
+7. Memu Guardian (self-maintaining appliance)
 
 ---
 
@@ -386,7 +393,7 @@ Hareesh is building Memu as a side project while working full-time as a Portfoli
 - **Time:** Evening sessions only. Must prioritise ruthlessly.
 - **Budget:** Bootstrap, no external funding yet.
 - **Testing:** Family is primary QA team.
-- **Goal:** Kickstarter launch April 2026.
+- **Goal:** Kickstarter launch June 2026.
 
 When suggesting work:
 - Can this be done in a 2-hour evening session?

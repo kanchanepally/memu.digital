@@ -20,9 +20,10 @@ Rules that apply to every phase:
 
 - [x] Core stack: Matrix chat, Immich photos, Ollama AI, Baikal calendar
 - [x] Tailscale integration (auto-HTTPS, secure remote access)
-- [x] Morning briefings (calendar + weather + photo memories + shopping list)
+- [x] Morning briefings (calendar + weather + news headlines + photo memories + shopping list)
 - [x] Family member onboarding (QR codes, welcome cards)
 - [x] Admin dashboard with service health monitoring
+- [x] Admin Settings page (weather, calendar, news feeds, briefing config — all via UI)
 - [x] Cinny web client (replacing Element Web)
 - [x] Cert renewal automation
 - [x] Brand refresh (purple accent, system fonts, SVG badges)
@@ -53,17 +54,25 @@ Preference persists per-room so different spaces can have different settings. `/
 
 ### Building Now
 
+#### Memu Dashboard 🔥 PRE-KICKSTARTER PRIORITY
+A touchscreen-optimized web interface that gives the family AI a face. Vertical screen for kitchen counter or wall mount. See `docs/DASHBOARD-PRD.md` for full specification.
+
+**MVP screens (5):**
+1. Home — context carousel (weather, next event, photo memory), unified timeline
+2. The Pantry — shopping list with voice-add via local Whisper
+3. Logistics Command — calendar with AI conflict detection
+4. Node Status — hardware health, storage, privacy proof
+5. Memory Detail — photo with contextual recall from chat
+
+**New infrastructure:**
+- Memu API Gateway (FastAPI + WebSocket) — decouples bot brain from Matrix transport
+- Voice I/O — Whisper (input) + Piper TTS (output), all local on the server
+- Web frontend — React or vanilla JS + Tailwind, kiosk-mode optimised
+
+**Why before Kickstarter:** The dashboard IS the Kickstarter hero image. It makes Memu visible, photographable, demeable. Without it, you're selling "install Docker and type commands."
+
 #### On This Day photo memories
 Surface Immich "on this day" photos in morning briefings and as a standalone command. Photos from this date in previous years.
-
-#### Personal Data Export
-Any family member can export their data in standard formats:
-- Photos: original files in date folders
-- Chat: HTML/text export
-- Calendar: .ics file
-- Memories: JSON/text file
-
-Every family member should be able to take their data with them. Sovereignty means the freedom to leave.
 
 #### Memu Guardian
 A watchdog service that makes Memu self-maintaining. The principle: **after install.sh, the user never opens a terminal again.**
@@ -84,6 +93,17 @@ Guardian communicates in plain language to the family chat room. Never shows con
 - Amber: "Storage is filling up (82%). Cleaned up 3GB automatically."
 - Red: "Photos service is down. [Restart Photos] [Contact Support]"
 
+### Deferred to Post-Kickstarter
+
+#### Personal Data Export
+Any family member can export their data in standard formats:
+- Photos: original files in date folders
+- Chat: HTML/text export
+- Calendar: .ics file
+- Memories: JSON/text file
+
+Every family member should be able to take their data with them. Sovereignty means the freedom to leave.
+
 ### Coming Next
 
 #### Proactive family suggestions
@@ -100,12 +120,12 @@ Sunday evening summary: week's highlights, shopping list activity, chat summary,
 - **Parental controls** — Graduated freedom for teens: age-appropriate access levels that grow with the child
 - **Guardian auto-updates** — Stable channel pulls tested images at 3am, verifies health, rolls back if broken
 - **Guardian bot commands** — "Is everything working?", "How much storage?", "Update Memu"
-- **Kitchen Dashboard** — Family hub display for shared calendar, lists, and photos
 - **Family knowledge graph** — Enhanced cross-silo intelligence with relationship mapping
+- **Personal Data Export** — See deferred section above
 
 ---
 
-## Phase 3: Kickstarter Prep (April 2026)
+## Phase 3: Kickstarter Prep (June 2026)
 
 **Gate:** Phase 2 features must be done and family must be using them daily.
 
@@ -127,7 +147,6 @@ Sunday evening summary: week's highlights, shopping list activity, chat summary,
 - [ ] USB installer image
 - [ ] Backup/restore via admin dashboard
 - [ ] Security audit
-- [ ] Kitchen Dashboard
 - [ ] Family knowledge graph
 
 ---
@@ -140,7 +159,7 @@ Sunday evening summary: week's highlights, shopping list activity, chat summary,
 - VPN server — Tailscale handles this better
 - WhatsApp bridge — fragile, Meta breaks it regularly
 - Vector embeddings — keyword search works at family scale
-- Voice commands — too much hardware complexity for current stage
+- Voice commands beyond dashboard — dashboard gets Whisper, but no always-on wake word yet
 - Custom mobile app — existing Matrix/Immich clients work well
 - Multi-device clustering — breaks the single-box ownership model
 

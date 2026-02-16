@@ -120,16 +120,16 @@ Each family member's phone/laptop needs Tailscale:
 
 ### Step 2: Set Up Chat
 
-**Web (Laptop/Desktop):** Open `http://test15.memu.digital` in your browser.
+**Web (Laptop/Desktop):** Open `https://memu-hub.xxxxx.ts.net` (your Tailscale URL) in your browser.
 
 **Mobile Apps (Important):**
-Mobile apps block "insecure" connections. You must use your **Tailscale IP**.
+Mobile apps block "insecure" connections. You must use your **Tailscale HTTPS URL**.
 
 1.  Open **Tailscale** on your phone and activate it.
-2.  Open **Element/FluffyChat**.
-3.  Set Homeserver URL: `http://100.80.252.43`
-    *(Do NOT use the .digital address here)*
-4.  Log in with your username (`@admin:test15.memu.digital`) and password.
+2.  Open your Matrix chat app (Element, FluffyChat, or Cinny).
+3.  Set Homeserver URL: `https://memu-hub.xxxxx.ts.net`
+    *(replace xxxxx with your actual Tailscale hostname)*
+4.  Log in with your username (`@admin:yourfamily.memu.digital`) and password.
 
 ---
 
@@ -179,7 +179,64 @@ Your family calendar syncs with the built-in calendar on your phone — no extra
 
 ---
 
-## Part 5: Meet the AI Assistant 🤖
+## Part 5: Admin Settings
+
+After setup, configure weather, calendar, and briefing settings through the admin dashboard.
+
+### Access Settings
+
+1. Go to your admin dashboard: `http://<device-ip>/admin`
+   *(Or via Tailscale: `https://memu-hub.xxxxx.ts.net/admin`)*
+2. Log in with your admin password
+3. Click **"Settings"** in the sidebar
+
+### Weather
+
+Get real weather in your morning briefings:
+
+1. Get a free API key from [OpenWeatherMap](https://openweathermap.org/api)
+2. In Settings → Weather, enter:
+   - **City:** Your city name (e.g., "Birmingham")
+   - **Country Code:** Your country (e.g., "UK")
+   - **API Key:** Your OpenWeatherMap key
+3. Click **Save Weather Settings**
+
+> **Note:** New API keys can take up to 2 hours to activate.
+
+### Calendar
+
+Connect the bot to your Baikal calendar:
+
+1. In Settings → Calendar, enter:
+   - **CalDAV Username:** `memu` (or your Baikal user)
+   - **CalDAV Password:** Your Baikal user password
+2. Click **Save Calendar Settings**
+
+### Morning Briefing
+
+Configure the daily briefing:
+
+1. In Settings → Morning Briefing, enter:
+   - **Briefing Time:** When to send (e.g., `07:00`)
+   - **Enabled:** Yes
+   - **Target Room ID:** Your family chat room ID (starts with `!`, find it in room settings in your Matrix app)
+2. Click **Save Briefing Settings**
+
+### News Feeds
+
+Add RSS feeds for news headlines in your morning briefing:
+
+1. In Settings → News Feeds, enter RSS feed URLs (one per line)
+   - Default: BBC UK + BBC Tech
+   - Add any RSS feed you like
+2. Set **Headlines per briefing** (default: 5)
+3. Click **Save News Settings**
+
+Each save automatically restarts the bot to pick up the new settings.
+
+---
+
+## Part 6: Meet the AI Assistant 🤖
 
 This is where the magic happens. The **Memu Bot** lives in your chat and helps your family:
 - **Cross-silo search** — ask one question, get answers from chat, calendar, photos AND saved facts
@@ -304,16 +361,17 @@ We found 5 photo memories from this day! Have a great day! 💪
 The briefing includes:
 - Today's calendar events
 - Current weather (if configured)
+- News headlines from your RSS feeds
 - "On This Day" photo memories
 - Shopping list status
 
-**Configure the time:** Set `BRIEFING_TIME=07:00` in your `.env` file.
+**Configure:** Go to Admin Settings to set the time, target room, weather, and news feeds.
 
 **Get one now:** Type `/briefing` in any chat with the bot.
 
 ---
 
-## Part 6: Add Family Members
+## Part 7: Add Family Members
 
 ### Invite to Tailscale
 
@@ -335,8 +393,6 @@ The briefing includes:
 4.  Click **"Create"**
 
 You will see a **QR Code** and a **Welcome Link**.
-
-### Share These Instructions
 
 ### Share These Instructions
 
@@ -372,7 +428,7 @@ Copy and paste this message to your family group chat:
 
 ---
 
-## Daily Life with Memu
+## Part 8: Daily Life with Memu
 
 ### You Don't Need to Remember URLs
 
@@ -397,39 +453,11 @@ As long as Tailscale is running, your apps connect automatically — home, work,
 
 ## Backup Your Data
 
-Your family's data is precious. Memu automatically backs up everything:
-- Photos and videos
-- Chat messages and attachments
-- AI memories and lists
-- All configuration
-
-### Automatic Backups
-
-Memu runs automatic backups every night at 2am. You don't need to do anything!
-
-To check backup status, message the bot in chat:
-```
-/backup-status
-```
-
-The bot will tell you:
-- When the last backup ran
-- How many backups are stored
-- Whether you need to make a USB backup
-
-### USB Backups (Recommended Weekly)
-
-For extra safety, copy your backup to a USB drive weekly:
-
-1. Plug a USB drive into your Memu Hub
-2. The bot will automatically copy the latest backup
-3. You'll get a message when it's done: "Safe to remove the drive"
-
-Store this USB somewhere safe (different room, or a relative's house).
+Your family's data is precious. Here's how to back it up:
 
 ### Manual Backup
 
-If you want to run a backup manually:
+Back up your Memu data manually:
 ```bash
 sudo /opt/memu/scripts/backup.sh
 ```
@@ -441,7 +469,7 @@ If you need to restore (new hardware, disk failure):
 sudo /opt/memu/scripts/restore.sh
 ```
 
-This will show available backups and guide you through restoration.
+> **Coming soon:** Automated nightly backups, USB backup support, and backup status via the bot. See the [roadmap](../roadmap.md) for details.
 
 ---
 
