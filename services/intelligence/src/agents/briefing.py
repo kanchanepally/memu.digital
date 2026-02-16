@@ -146,34 +146,45 @@ class MorningBriefingAgent:
 
         try:
             async with httpx.AsyncClient(timeout=10) as client:
-                # Immich API endpoint for memories/on-this-day
-                url = f"{Config.IMMICH_API_URL}/api/asset/memory-lane"
+                url = f"{Config.IMMICH_API_URL}/api/memories"
                 headers = {'x-api-key': Config.IMMICH_API_KEY}
 
-                today = datetime.now(self.timezone)
-                params = {
-                    'day': today.day,
-                    'month': today.month
-                }
-
-                response = await client.get(url, headers=headers, params=params)
+                response = await client.get(url, headers=headers)
 
                 if response.status_code == 200:
                     data = response.json()
-                    # Group by year
-                    memories_by_year = {}
+                    today = datetime.now(self.timezone).date()
+
+                    # Filter to memories that should show today
+                    todays_memories = []
                     for memory in data:
-                        year = memory.get('yearsAgo', 0)
-                        if year not in memories_by_year:
-                            memories_by_year[year] = 0
-                        memories_by_year[year] += 1
+                        show_at = memory.get('showAt', '')
+                        if show_at:
+                            try:
+                                show_date = datetime.fromisoformat(show_at.replace('Z', '+00:00')).date()
+                                if show_date == today:
+                                    todays_memories.append(memory)
+                            except (ValueError, TypeError):
+                                continue
+
+                    # Count photos and group by year
+                    memories_by_year = {}
+                    total_photos = 0
+                    for memory in todays_memories:
+                        year_data = memory.get('data', {})
+                        year = year_data.get('year', 0)
+                        photo_count = len(memory.get('assets', []))
+                        total_photos += photo_count
+                        if year:
+                            memories_by_year[year] = photo_count
 
                     return {
-                        'available': True,
-                        'total_count': len(data),
+                        'available': total_photos > 0,
+                        'total_count': total_photos,
                         'by_year': memories_by_year
                     }
                 else:
+                    logger.warning(f"Immich memories API returned {response.status_code}")
                     return {'available': False}
 
         except Exception as e:
@@ -248,11 +259,8 @@ class MorningBriefingAgent:
         memories = data['memories']
         if memories['available'] and memories['total_count'] > 0:
             years_text = []
-            for years_ago, count in sorted(memories['by_year'].items()):
-                if years_ago == 1:
-                    years_text.append(f"{count} from last year")
-                else:
-                    years_text.append(f"{count} from {years_ago} years ago")
+            for year, count in sorted(memories['by_year'].items()):
+                years_text.append(f"{count} photo(s) from {year}")
             parts.append(f"Photo memories from this day: {', '.join(years_text)}")
 
         # Shopping
@@ -270,14 +278,18 @@ class MorningBriefingAgent:
         context = self.build_briefing_prompt(data)
 
         system_prompt = """You are a warm, helpful Family Chief of Staff.
-Write a brief, friendly morning briefing (3-4 sentences max) for the family.
-Be conversational and encouraging. Highlight the most important things for the day.
-If there are photo memories, mention them warmly.
-Keep it concise - this is a quick morning update, not a detailed report.
-Use a friendly emoji or two where appropriate.
+Write a morning briefing for the family with these sections:
+
+1. A warm greeting with weather (1-2 sentences)
+2. Today's schedule highlights (if any events)
+3. News headlines — list ALL provided headlines as bullet points. Do NOT skip or summarise them.
+4. Photo memories (if any)
+5. Shopping list status (if items pending)
+
+Be conversational and encouraging. Use a friendly emoji or two.
 IMPORTANT: Only describe weather using the EXACT data provided (temperature, description).
 Do NOT invent weather details or suggest enjoying weather that contradicts the data.
-If it says 'overcast clouds' and 5°C, do NOT say 'enjoy the sunshine'."""
+If news headlines are provided, you MUST include every single one as a bullet point."""
 
         prompt = f"""Based on this information, write a warm morning briefing:
 
