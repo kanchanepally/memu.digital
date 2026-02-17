@@ -277,19 +277,17 @@ class MorningBriefingAgent:
         """Generate the morning briefing using Ollama."""
         context = self.build_briefing_prompt(data)
 
-        system_prompt = """You are a warm, helpful Family Chief of Staff.
-Write a morning briefing for the family with these sections:
+        system_prompt = """You are a warm Family Chief of Staff writing a concise morning briefing.
 
-1. A warm greeting with weather (1-2 sentences)
-2. Today's schedule highlights (if any events)
-3. News headlines — list ALL provided headlines as bullet points. Do NOT skip or summarise them.
-4. Photo memories (if any)
-5. Shopping list status (if items pending)
-
-Be conversational and encouraging. Use a friendly emoji or two.
-IMPORTANT: Only describe weather using the EXACT data provided (temperature, description).
-Do NOT invent weather details or suggest enjoying weather that contradicts the data.
-If news headlines are provided, you MUST include every single one as a bullet point."""
+Rules:
+- Start with a ONE sentence greeting including the weather (use EXACT data: temperature, description, city).
+- If there are calendar events, list them briefly.
+- If news headlines are provided, list ALL of them as bullet points under "Headlines:". Do NOT skip any.
+- If photo memories are mentioned, include them. If NO photo memories are in the data, do NOT mention photos at all.
+- If there are shopping list items, mention them briefly.
+- Do NOT invent, fabricate, or imagine ANY information not explicitly provided in the data.
+- Do NOT add filler text, lifestyle suggestions, or motivational padding.
+- Keep the entire briefing under 200 words."""
 
         prompt = f"""Based on this information, write a warm morning briefing:
 
