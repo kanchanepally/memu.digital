@@ -1209,14 +1209,21 @@ def generate_nginx_config(domain, https_domain=None):
         proxy_redirect https://$host/ $scheme://$host/calendar/;
 
         # Rewrite link targets in HTML (for admin UI)
+        # Rewrite HTML link targets (for Baikal admin UI)
         sub_filter 'href="/' 'href="/calendar/';
         sub_filter 'src="/' 'src="/calendar/';
         sub_filter 'action="/' 'action="/calendar/';
         sub_filter 'url("/' 'url("/calendar/';
         sub_filter 'url(/' 'url(/calendar/';
 
+        # Rewrite CalDAV XML response bodies (critical for DAVx5/iOS sync)
+        # Baikal returns <d:href>/dav.php/calendars/...</d:href> without /calendar/ prefix.
+        # DAVx5 follows these paths literally, missing the /calendar/ location block.
+        sub_filter '>/dav.php/' '>/calendar/dav.php/';
+        sub_filter '>/card.php/' '>/calendar/card.php/';
+
         sub_filter_once off;
-        sub_filter_types text/css text/javascript application/javascript text/xml application/xml;
+        sub_filter_types text/css text/javascript application/javascript text/xml application/xml text/html;
 
         proxy_set_header Accept-Encoding "";
         proxy_set_header X-Forwarded-For $remote_addr;
