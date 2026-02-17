@@ -102,7 +102,7 @@ class CalendarManager:
                 start=start,
                 end=end,
                 event=True,
-                expand=True
+                expand=False
             )
 
             for event in results:
@@ -210,7 +210,7 @@ class CalendarManager:
                 start=start,
                 end=end,
                 event=True,
-                expand=True
+                expand=False
             )
 
             query_lower = query.lower()
