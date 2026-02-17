@@ -667,7 +667,8 @@ class MemuBot:
             events = await self.calendar.get_upcoming_events(days=7)
             header = "📅 **This Week's Schedule**"
         elif arg == 'tomorrow':
-            tomorrow = datetime.now() + timedelta(days=1)
+            tz = self.calendar.timezone
+            tomorrow = datetime.now(tz) + timedelta(days=1)
             start = tomorrow.replace(hour=0, minute=0, second=0, microsecond=0)
             end = start + timedelta(days=1)
             events = await self.calendar.get_events(start, end)
