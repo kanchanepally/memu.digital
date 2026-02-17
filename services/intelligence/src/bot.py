@@ -656,7 +656,7 @@ class MemuBot:
         /calendar week - This week's events
         /calendar tomorrow - Tomorrow's events
         """
-        arg = content.replace('/calendar', '').strip().lower()
+        arg = content.lower().replace('/calendar', '').strip()
 
         # Check if calendar is available
         if not await self.calendar.is_available():
@@ -692,7 +692,7 @@ class MemuBot:
         import json
         from agents.briefing import MorningBriefingAgent
 
-        arg = content.replace('/briefing', '').strip().lower()
+        arg = content.lower().replace('/briefing', '').strip()
 
         try:
             agent = MorningBriefingAgent(self)
@@ -749,7 +749,7 @@ class MemuBot:
             'active': '🔊 **AI Active** — I\'ll respond naturally to messages, mentions, and DMs.',
         }
 
-        arg = content.replace('/ai', '').strip().lower()
+        arg = content.lower().replace('/ai', '').strip()
 
         if arg not in VALID_MODES:
             current = await self._get_ai_mode(room_id)
