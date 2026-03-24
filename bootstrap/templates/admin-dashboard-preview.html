@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kanchanepally Sanctuary | Dashboard</title>
+    <style>
+        :root {
+            --color-deep: #1a1a2e;
+            --color-primary: #16213e;
+            --color-accent: #667eea;
+            --color-accent-hover: #5568d3;
+            --color-success: #10b981;
+            --color-success-soft: #ecfdf5;
+            --color-warning: #f59e0b;
+            --color-warning-soft: #fffbeb;
+            --color-error: #ef4444;
+            --color-error-soft: #fef2f2;
+            --color-bg: #f8fafc;
+            --color-surface: #ffffff;
+            --color-border: #e2e8f0;
+            --color-text: #1e293b;
+            --color-text-secondary: #64748b;
+            --color-text-muted: #94a3b8;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --font-family-display: var(--font-family);
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background: var(--color-bg);
+            min-height: 100vh;
+            color: var(--color-text);
+        }
+
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: var(--color-deep);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .nav-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .nav-section-title {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: rgba(255, 255, 255, 0.4);
+            margin-bottom: 0.75rem;
+            padding: 0 0.75rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            margin-bottom: 0.25rem;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .nav-item.active {
+            background: var(--color-accent);
+            color: white;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sanctuary-info {
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .sanctuary-name {
+            color: white;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .sanctuary-url {
+            color: rgba(255, 255, 255, 0.5);
+            font-family: monospace;
+            font-size: 0.7rem;
+            word-break: break-all;
+        }
+
+        /* Main */
+        .main {
+            flex: 1;
+            margin-left: 260px;
+            padding: 2rem;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-family: var(--font-family-display);
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--color-deep);
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtitle {
+            color: var(--color-text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--color-surface);
+            border-radius: var(--radius-xl);
+            padding: 1.25rem;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--color-border);
+        }
+
+        .stat-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .stat-value {
+            font-family: var(--font-family-display);
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--color-deep);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--color-text-secondary);
+        }
+
+        .stat-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            margin-top: 0.5rem;
+        }
+
+        .stat-status.healthy {
+            background: var(--color-success-soft);
+            color: var(--color-success);
+        }
+
+        /* Section */
+        .section {
+            background: var(--color-surface);
+            border-radius: var(--radius-xl);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--color-border);
+            margin-bottom: 1.5rem;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .section-title {
+            font-family: var(--font-family-display);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--color-deep);
+        }
+
+        .section-body {
+            padding: 1.5rem;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            font-family: var(--font-family);
+            font-size: 0.875rem;
+            font-weight: 600;
+            border-radius: var(--radius-lg);
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--color-accent);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--color-bg);
+            color: var(--color-text);
+            border: 1px solid var(--color-border);
+        }
+
+        .btn-sm {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.8rem;
+        }
+
+        /* Table */
+        .members-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .members-table th {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-text-muted);
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .members-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--color-border);
+            vertical-align: middle;
+        }
+
+        .members-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .member-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .member-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--color-accent) 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .member-name {
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .member-username {
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+            font-family: monospace;
+        }
+
+        .member-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-dot.online { background: var(--color-success); }
+        .status-dot.offline { background: var(--color-text-muted); }
+
+        /* Services */
+        .services-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .service-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: var(--color-bg);
+            border-radius: var(--radius-lg);
+        }
+
+        .service-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .service-icon { font-size: 1.25rem; }
+
+        .service-name {
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .service-desc {
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+        }
+
+        .service-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .service-status.running { color: var(--color-success); }
+        .service-status.stopped { color: var(--color-error); }
+
+        /* Preview banner */
+        .preview-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 0.6rem 1rem;
+            font-size: 0.82rem;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="preview-banner">
+        Static preview — data shown is representative sample &nbsp;|&nbsp; memu.digital
+    </div>
+
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <svg width="140" height="40" viewBox="0 0 400 120" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="memuGradient1" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <circle cx="35" cy="60" r="22" fill="url(#memuGradient1)" opacity="0.9" />
+                    <circle cx="55" cy="60" r="22" fill="url(#memuGradient1)" opacity="0.85" />
+                    <circle cx="45" cy="42" r="22" fill="url(#memuGradient1)" />
+                    <text x="95" y="75"
+                        font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif"
+                        font-size="48" font-weight="600" fill="white">memu</text>
+                </svg>
+            </div>
+
+            <nav>
+                <div class="nav-section">
+                    <div class="nav-section-title">Overview</div>
+                    <a href="#" class="nav-item active">
+                        <span>🏠</span> Dashboard
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Family</div>
+                    <a href="#" class="nav-item">
+                        <span>👨‍👩‍👧‍👦</span> Members
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Services</div>
+                    <a href="#" class="nav-item">
+                        <span>📷</span> Photos
+                    </a>
+                    <a href="#" class="nav-item">
+                        <span>🤖</span> AI Assistant
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">System</div>
+                    <a href="#" class="nav-item">
+                        <span>💾</span> Backups
+                    </a>
+                    <a href="#" class="nav-item">
+                        <span>⚙️</span> Settings
+                    </a>
+                    <a href="#" class="nav-item" style="margin-top: 1rem; color: #ef4444;">
+                        <span>🚪</span> Logout
+                    </a>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="sanctuary-info">
+                    <div class="sanctuary-name">Kanchanepally Sanctuary</div>
+                    <div class="sanctuary-url">kanchanepally.memu.digital</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div class="page-header">
+                <h1 class="page-title">Welcome back, Hareesh 👋</h1>
+                <p class="page-subtitle">Here's what's happening in your family's sanctuary.</p>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">👨‍👩‍👧‍👦</div>
+                    <div class="stat-value">3</div>
+                    <div class="stat-label">Family Members</div>
+                    <div class="stat-status healthy"><span>●</span> All connected</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📷</div>
+                    <div class="stat-value">4,821</div>
+                    <div class="stat-label">Photos</div>
+                    <div class="stat-status healthy"><span>●</span> Syncing</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💬</div>
+                    <div class="stat-value">2,340</div>
+                    <div class="stat-label">Messages</div>
+                    <div class="stat-status healthy"><span>●</span> Connected</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🤖</div>
+                    <div class="stat-value">147</div>
+                    <div class="stat-label">AI Requests</div>
+                    <div class="stat-status healthy"><span>●</span> Ready</div>
+                </div>
+            </div>
+
+            <!-- Family Members -->
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Family Members</h2>
+                    <button class="btn btn-primary"><span>+</span> Add Member</button>
+                </div>
+                <div class="section-body" style="padding: 0;">
+                    <table class="members-table">
+                        <thead>
+                            <tr>
+                                <th>Member</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div class="member-info">
+                                        <div class="member-avatar" style="background: linear-gradient(135deg, #667eea, #764ba2);">H</div>
+                                        <div>
+                                            <div class="member-name">Hareesh (You)</div>
+                                            <div class="member-username">@hareesh</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="member-status">
+                                        <span class="status-dot online"></span>
+                                        Online
+                                    </div>
+                                </td>
+                                <td>
+                                    <span style="color: var(--color-text-muted); font-size: 0.8rem;">Admin</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="member-info">
+                                        <div class="member-avatar" style="background: linear-gradient(135deg, #ec4899, #f472b6);">R</div>
+                                        <div>
+                                            <div class="member-name">Rachel</div>
+                                            <div class="member-username">@rach</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="member-status">
+                                        <span class="status-dot online"></span>
+                                        Online
+                                    </div>
+                                </td>
+                                <td>
+                                    <button class="btn btn-secondary btn-sm">📱 QR</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="member-info">
+                                        <div class="member-avatar" style="background: linear-gradient(135deg, #10b981, #34d399);">R</div>
+                                        <div>
+                                            <div class="member-name">Robin</div>
+                                            <div class="member-username">@robin</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="member-status">
+                                        <span class="status-dot offline"></span>
+                                        Offline
+                                    </div>
+                                </td>
+                                <td>
+                                    <button class="btn btn-secondary btn-sm">📱 QR</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Services -->
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Services</h2>
+                    <button class="btn btn-secondary btn-sm">Refresh</button>
+                </div>
+                <div class="section-body">
+                    <div class="services-list">
+                        <div class="service-item">
+                            <div class="service-info">
+                                <span class="service-icon">💬</span>
+                                <div>
+                                    <div class="service-name">Matrix Chat</div>
+                                    <div class="service-desc">Private family messaging</div>
+                                </div>
+                            </div>
+                            <div class="service-status running"><span>●</span> Running</div>
+                        </div>
+                        <div class="service-item">
+                            <div class="service-info">
+                                <span class="service-icon">📷</span>
+                                <div>
+                                    <div class="service-name">Immich Photos</div>
+                                    <div class="service-desc">4,821 photos · ML indexing active</div>
+                                </div>
+                            </div>
+                            <div class="service-status running"><span>●</span> Running</div>
+                        </div>
+                        <div class="service-item">
+                            <div class="service-info">
+                                <span class="service-icon">🤖</span>
+                                <div>
+                                    <div class="service-name">Ollama AI</div>
+                                    <div class="service-desc">Llama 3.2 · Local · Never phones home</div>
+                                </div>
+                            </div>
+                            <div class="service-status running"><span>●</span> Running</div>
+                        </div>
+                        <div class="service-item">
+                            <div class="service-info">
+                                <span class="service-icon">📅</span>
+                                <div>
+                                    <div class="service-name">Baikal Calendar</div>
+                                    <div class="service-desc">Family CalDAV · 3 calendars synced</div>
+                                </div>
+                            </div>
+                            <div class="service-status running"><span>●</span> Running</div>
+                        </div>
+                        <div class="service-item">
+                            <div class="service-info">
+                                <span class="service-icon">🔒</span>
+                                <div>
+                                    <div class="service-name">Tailscale</div>
+                                    <div class="service-desc">Secure remote access · Auto-HTTPS</div>
+                                </div>
+                            </div>
+                            <div class="service-status running"><span>●</span> Running</div>
+                        </div>
+                        <div class="service-item">
+                            <div class="service-info">
+                                <span class="service-icon">🧠</span>
+                                <div>
+                                    <div class="service-name">Memu Intelligence</div>
+                                    <div class="service-desc">Bot · 147 requests today</div>
+                                </div>
+                            </div>
+                            <div class="service-status running"><span>●</span> Running</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</body>
+
+</html>

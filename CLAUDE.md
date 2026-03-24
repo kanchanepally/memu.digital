@@ -54,8 +54,8 @@ Memu is built by a solo founder (Hareesh) in evening sessions, with Claude as en
 At the start of every Claude session:
 
 1. **Check the roadmap** (`roadmap.md`) -- what's the current priority?
-2. **Check the private strategy** (`C:\Users\Lenovo\Code\memu\STRATEGY-PRIVATE.md`) -- has anything changed?
-3. **Check the decision log** (`C:\Users\Lenovo\Code\memu\decisions\`) -- any recent decisions or feedback?
+2. **Check the private strategy** (`C:\Users\Lenovo\OneDrive\Obsidian-Ventures\01-Projects\Memu\STRATEGY-PRIVATE.md`) -- has anything changed?
+3. **Check the decision log** (`C:\Users\Lenovo\OneDrive\Obsidian-Ventures\01-Projects\Memu\decisions\`) -- any recent decisions or feedback?
 4. **Ask:** "What's the most important thing to build tonight?"
 
 At the end of every session that produces a meaningful insight:
@@ -115,16 +115,16 @@ The biggest risk for a solo founder is building a feature factory. Guard against
 
 | File | Purpose | Update Frequency |
 |------|---------|-----------------|
-| `../STRATEGY-PRIVATE.md` | Pricing, competitive intel, funnel strategy, market sizing, risk register | Monthly or when market shifts |
-| `../decisions/YYYY-MM-topic.md` | Decision log -- what was decided, why, what we learned | After significant decisions |
-| `../decisions/feedback-log.md` | Raw feedback from family, beta users, Reddit | As feedback arrives |
+| `C:\Users\Lenovo\OneDrive\Obsidian-Ventures\01-Projects\Memu\STRATEGY-PRIVATE.md` | Pricing, competitive intel, funnel strategy, market sizing, risk register | Monthly or when market shifts |
+| `C:\Users\Lenovo\OneDrive\Obsidian-Ventures\01-Projects\Memu\decisions\` | Decision log -- what was decided, why, what we learned | After significant decisions |
+| `C:\Users\Lenovo\OneDrive\Obsidian-Ventures\Writing\Memu\_drafts\` | Memu content drafts (blog posts, launch copy) | As content is created |
 | `.claude/memory/MEMORY.md` | Technical patterns Claude needs across sessions | After learning something reusable |
 
 **Rule:** Private docs contain the honest internal thinking. Pricing rationale, competitive weaknesses, funnel conversion assumptions, and "here's what's actually hard" notes. These inform decisions but never leak to the public repo.
 
 ### Decision Log Format
 
-When a meaningful decision is made, capture it in `../decisions/`:
+When a meaningful decision is made, capture it in `C:\Users\Lenovo\OneDrive\Obsidian-Ventures\01-Projects\Memu\decisions\`:
 
 ```markdown
 # Decision: [Short Title]

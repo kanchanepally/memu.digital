@@ -146,6 +146,7 @@ Sunday evening summary: week's highlights, shopping list activity, chat summary,
 - [ ] Pre-configured hardware bundles
 - [ ] USB installer image
 - [ ] Backup/restore via admin dashboard
+- [ ] Offsite backup destination — rclone sync to cloud (Backblaze B2 or DigitalOcean Spaces) triggered after daily backup.sh run. Currently backups are local-only on Z2; single point of failure.
 - [ ] Security audit
 - [ ] Family knowledge graph
 
