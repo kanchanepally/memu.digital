@@ -277,27 +277,10 @@ services:
     # NOTE: No ports exposed - accessible via Nginx proxy only
 
     # === NETWORK (TAILSCALE) ===
-
-  tailscale:
-    container_name: memu_tailscale
-    image: tailscale/tailscale:latest
-    hostname: memu-hub
-    environment:
-      - TS_AUTHKEY=${TAILSCALE_AUTH_KEY}
-      - TS_STATE_DIR=/var/lib/tailscale
-      - TS_USERSPACE=false
-      - TS_EXTRA_ARGS=--accept-dns=true
-    volumes:
-      - tailscale_data:/var/lib/tailscale
-      - tls_certs:/certs
-      - /dev/net/tun:/dev/net/tun
-    cap_add:
-      - NET_ADMIN
-      - NET_RAW
-    restart: unless-stopped
-    network_mode: host
-    # NOTE: Tailscale creates its own encrypted tunnel - no ports needed
-    # TODO (v1.0): Consider using Docker secrets for TS_AUTHKEY
+    # NOTE: Tailscale runs on the host OS (installed by scripts/install.sh),
+    # not inside Docker. This ensures remote access survives any
+    # `docker compose down` and isn't gated by the container stack.
+    # See docs/infrastructure-v1.1.md for the rationale.
 
     # === ROUTING (NGINX) ===
 
@@ -309,8 +292,8 @@ services:
       - ./assets:/usr/share/nginx/assets:ro
       - tls_certs:/etc/nginx/certs:ro
     depends_on:
-      - element
-      - synapse
+      synapse:
+        condition: service_healthy
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost/" ]
       interval: 30s
@@ -334,7 +317,6 @@ volumes:
   redisdata:
   model_cache:
   ollama_data:
-  tailscale_data:
   baikal_config:
   baikal_data:
   tls_certs:

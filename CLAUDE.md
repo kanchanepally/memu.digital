@@ -1,6 +1,23 @@
 # CLAUDE.md - Memu Operating Instructions
 
-**Last updated:** February 2026
+**Last updated:** April 2026 (v1.1 — infrastructure hardening)
+
+---
+
+## Platform Context
+
+Memu OS is one half of the Memu platform. The other half is **memu-core** (early-adopter intelligence layer with mobile app, WhatsApp, Claude API). They compose together: memu-core can dock into memu-os via `docker-compose.home.yml`.
+
+| Document | Location |
+|----------|----------|
+| memu-core instructions | `C:\Users\Lenovo\Code\memu-core\CLAUDE.md` |
+| Platform Vision | `C:\Users\Lenovo\Code\memu-platform\01-VISION.md` |
+| Architecture | `C:\Users\Lenovo\Code\memu-platform\02-ARCHITECTURE.md` |
+| Design System | `C:\Users\Lenovo\Code\memu-platform\03-UX-DESIGN-SYSTEM.md` |
+| Roadmap | `C:\Users\Lenovo\Code\memu-platform\04-ROADMAP.md` |
+| Pricing | `C:\Users\Lenovo\Code\memu-platform\05-PRICING-COMMERCE.md` |
+| Privacy Framework | `C:\Users\Lenovo\Code\memu-platform\06-PRIVACY-SECURITY.md` |
+| Agent Framework | `C:\Users\Lenovo\Code\memu-platform\07-AGENT-FRAMEWORK.md` |
 
 ---
 
@@ -186,7 +203,7 @@ When a meaningful decision is made, capture it in `C:\Users\Lenovo\OneDrive\Obsi
 | Bot | `memu_intelligence` | Python Matrix bot -- brain, memory, calendar tools |
 | Calendar | `memu_calendar` | Baikal CalDAV/CardDAV |
 | Database | `memu_postgres` | PostgreSQL + pgvector |
-| Network | `memu_tailscale` | Secure remote access |
+| Network | *host OS* (`tailscaled`) | Secure remote access (v1.1+: not in Docker) |
 | Proxy | `memu_proxy` | Nginx reverse proxy |
 | Bootstrap | `memu_bootstrap` | Setup wizard + admin dashboard |
 
@@ -294,7 +311,7 @@ memu-os/
 
 ---
 
-## Current State (February 2026)
+## Current State (April 2026 — v1.1)
 
 ### Working
 - 2-step installation (script + web wizard, 10 minutes)
@@ -309,11 +326,40 @@ memu-os/
 - Bot commands: /remember, /recall, /addtolist, /showlist, /done, /remind, /schedule, /calendar, /briefing, /summarize, /ai, /private, /help
 - AI volume control (/ai off/quiet/active per room)
 - /private command (show what Memu protects)
-- Tailscale remote access with auto-HTTPS
+- Tailscale remote access via host OS (survives Docker lifecycle)
+- Container watchdog with automatic recovery
+- Zero-downtime backups via pg_dumpall
+- Backup auto-detects secondary drive at /mnt/memu-data
 - Cert renewal automation (weekly)
 - Admin dashboard with service health
 - Family member onboarding (QR codes, welcome cards)
 - Brand consistency (purple accent, system fonts, SVG badges)
+
+### Known Issues / Not Yet Done
+- Daily backups include photos (~24GB). Daily/weekly split is planned but not yet done.
+- No disk-space alerting yet (watchdog is reactive, not preventive).
+- Watchdog catches stuck-in-"Created" containers but doesn't predict them.
+
+## Architecture Principles (v1.1+)
+
+1. **Remote access is independent of the application stack.** Tailscale runs on
+   the host OS, not inside Docker. Any Docker operation — down, up, restart,
+   rebuild — must never affect the admin's ability to reach the machine remotely.
+
+2. **No load-bearing single point of failure.** Every critical operation has
+   a watchdog, a health check, or a recovery path. The system should degrade
+   gracefully, not lock itself out.
+
+3. **Backups must not cause downtime.** Use pg_dumpall, not docker compose down.
+   The database is designed to handle this. The application stack is not
+   designed to be stopped and restarted every night.
+
+4. **Idempotent install scripts.** Running install.sh twice must not break an
+   existing install or duplicate anything. Every section guards with
+   `if ! command -v`, `if [ ! -f ]`, or equivalent.
+
+5. **Disk space monitoring.** Secondary drive (/mnt/memu-data) preferred for
+   backups. System disk fill is a silent killer — plan for it.
 
 ### Building Now (Critical Path)
 See `roadmap.md` and `docs/DASHBOARD-PRD.md`:

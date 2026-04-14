@@ -1,9 +1,13 @@
 #!/bin/bash
 # =============================================================================
-# Memu TLS Certificate Renewal Script
+# Memu TLS Certificate Renewal Script (v1.1)
 # =============================================================================
 # Renews Tailscale HTTPS certificates and reloads nginx.
 # Tailscale certs are valid for 90 days; this runs weekly via systemd timer.
+#
+# v1.1+: Tailscale runs on the host OS (not in Docker). We generate the cert
+# on the host and copy it into the shared `memu-suite_tls_certs` Docker volume
+# that nginx reads from.
 #
 # Usage: ./renew-certs.sh
 # Scheduled via systemd timer (memu-cert-renew.timer) weekly
@@ -22,17 +26,23 @@ error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+HOST_CERT_DIR="/tmp/memu-ts-certs"
 
 log "Starting TLS certificate renewal..."
 
-# Check if Tailscale container is running
-if ! docker ps --filter "name=memu_tailscale" --format '{{.Status}}' | grep -q "Up"; then
-    warn "Tailscale container is not running. Skipping cert renewal."
+# Check if host Tailscale is running
+if ! command -v tailscale &> /dev/null; then
+    warn "Tailscale CLI not found on host. Skipping cert renewal."
     exit 0
 fi
 
-# Get Tailscale FQDN
-TS_HOSTNAME=$(docker exec memu_tailscale tailscale status --json 2>/dev/null | jq -r '.Self.DNSName // empty' | sed 's/\.$//')
+if ! systemctl is-active --quiet tailscaled; then
+    warn "tailscaled is not running. Skipping cert renewal."
+    exit 0
+fi
+
+# Get Tailscale FQDN from host daemon
+TS_HOSTNAME=$(tailscale status --json 2>/dev/null | jq -r '.Self.DNSName // empty' | sed 's/\.$//')
 
 if [ -z "$TS_HOSTNAME" ]; then
     warn "Could not determine Tailscale hostname. Skipping cert renewal."
@@ -41,16 +51,30 @@ fi
 
 log "Renewing certificate for: ${TS_HOSTNAME}"
 
-# Generate/renew certificate
-if docker exec memu_tailscale tailscale cert \
-    --cert-file "/certs/${TS_HOSTNAME}.crt" \
-    --key-file "/certs/${TS_HOSTNAME}.key" \
+mkdir -p "$HOST_CERT_DIR"
+
+# Generate/renew certificate on host
+if tailscale cert \
+    --cert-file "${HOST_CERT_DIR}/${TS_HOSTNAME}.crt" \
+    --key-file "${HOST_CERT_DIR}/${TS_HOSTNAME}.key" \
     "${TS_HOSTNAME}" 2>&1; then
     log "Certificate renewed successfully."
 else
     error "Certificate renewal failed."
     exit 1
 fi
+
+# Copy into the shared Docker volume that nginx reads from
+docker run --rm \
+    -v memu-suite_tls_certs:/certs \
+    -v "${HOST_CERT_DIR}:/src:ro" \
+    alpine sh -c "
+        cp /src/${TS_HOSTNAME}.crt /certs/${TS_HOSTNAME}.crt &&
+        cp /src/${TS_HOSTNAME}.key /certs/${TS_HOSTNAME}.key
+    " || {
+    error "Failed to stage certs into Docker volume."
+    exit 1
+}
 
 # Reload nginx to pick up new certs
 if docker ps --filter "name=memu_proxy" --format '{{.Status}}' | grep -q "Up"; then

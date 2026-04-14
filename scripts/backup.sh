@@ -26,6 +26,9 @@ warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 # Configuration
+# BACKUP_DIR and TMPDIR can be overridden via environment (e.g. in the
+# systemd unit) to point at a secondary drive like /mnt/memu-data/backups.
+# If TMPDIR is set, `mktemp -d` below will use it automatically.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 BACKUP_DIR="${BACKUP_DIR:-$PROJECT_DIR/backups}"
@@ -87,7 +90,7 @@ mkdir -p "$TEMP_DIR/photos"
 # -----------------------------------------------------------------------------
 # Step 1: Backup configuration files (no downtime needed)
 # -----------------------------------------------------------------------------
-log "Step 1/6: Backing up configuration files..."
+log "Step 1/5: Backing up configuration files..."
 
 # Copy .env (contains secrets - essential for restore)
 if [ -f "$PROJECT_DIR/.env" ]; then
@@ -110,7 +113,7 @@ fi
 # -----------------------------------------------------------------------------
 # Step 2: Backup Synapse data (media, keys)
 # -----------------------------------------------------------------------------
-log "Step 2/6: Backing up Synapse data..."
+log "Step 2/5: Backing up Synapse data..."
 
 if [ -d "$PROJECT_DIR/synapse" ]; then
     # Copy everything except large log files
@@ -125,7 +128,7 @@ fi
 # -----------------------------------------------------------------------------
 # Step 3: Backup photos (can be large, may take time)
 # -----------------------------------------------------------------------------
-log "Step 3/6: Backing up photos..."
+log "Step 3/5: Backing up photos..."
 
 if [ -d "$UPLOAD_LOCATION" ]; then
     # Use rsync for efficient copy, fall back to cp
@@ -139,52 +142,41 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# Step 4: Stop services for consistent database backup
+# Step 4: Hot backup of PostgreSQL (no downtime)
 # -----------------------------------------------------------------------------
-log "Step 4/6: Stopping services for database consistency..."
+# pg_dumpall captures ALL databases (immich, synapse, memu_core, etc) in a
+# single consistent SQL dump. The database stays up — no compose-down,
+# which means no boot-ordering race the next morning.
+log "Step 4/5: Backing up database (hot backup - services stay running)..."
+
+mkdir -p "$TEMP_DIR/database"
 
 cd "$PROJECT_DIR"
-docker compose down 2>/dev/null || docker-compose down 2>/dev/null || {
-    error "Failed to stop services"
-    record_backup_status "failed" "Failed to stop Docker services"
+
+docker exec memu_postgres pg_dumpall -U "${DB_USER:-memu_user}" > "$TEMP_DIR/database/all_databases.sql" 2>/dev/null || {
+    error "Failed to backup database"
+    record_backup_status "failed" "pg_dumpall failed"
     exit 1
 }
 
-# -----------------------------------------------------------------------------
-# Step 5: Backup Docker volumes (PostgreSQL, Ollama)
-# -----------------------------------------------------------------------------
-log "Step 5/6: Backing up database and AI models..."
+log "  - PostgreSQL (all databases via pg_dumpall)"
 
-# Create volume backups using Alpine container
+# -----------------------------------------------------------------------------
+# Step 5: Backup Ollama models (no downtime needed - read-only copy)
+# -----------------------------------------------------------------------------
+log "Step 5/5: Backing up AI models..."
+
 docker run --rm \
-    -v memu-suite_pgdata:/data/pgdata:ro \
     -v memu-suite_ollama_data:/data/ollama:ro \
     -v "$TEMP_DIR:/backup" \
     alpine sh -c "
-        mkdir -p /backup/pgdata /backup/ollama
-        cp -a /data/pgdata/. /backup/pgdata/ 2>/dev/null || true
+        mkdir -p /backup/ollama
         cp -a /data/ollama/. /backup/ollama/ 2>/dev/null || true
     " || {
-    error "Failed to backup Docker volumes"
-    # Restart services before exiting
-    docker compose up -d 2>/dev/null || docker-compose up -d 2>/dev/null
-    record_backup_status "failed" "Failed to backup Docker volumes"
-    exit 1
+    warn "Failed to backup Ollama models (non-fatal - can re-download)"
 }
 
-log "  - pgdata (PostgreSQL)"
 log "  - ollama (AI models)"
-
-# -----------------------------------------------------------------------------
-# Step 6: Restart services
-# -----------------------------------------------------------------------------
-log "Step 6/6: Restarting services..."
-
-docker compose up -d 2>/dev/null || docker-compose up -d 2>/dev/null || {
-    error "Failed to restart services"
-    record_backup_status "failed" "Failed to restart Docker services"
-    exit 1
-}
 
 # -----------------------------------------------------------------------------
 # Create metadata.json
@@ -195,10 +187,11 @@ cat > "$TEMP_DIR/metadata.json" << EOF
 {
     "timestamp": "$TIMESTAMP",
     "created_at": "$(date -Iseconds)",
-    "memu_version": "1.0.0",
+    "memu_version": "1.1.0",
+    "backup_format": "sql_dump",
     "hostname": "$(hostname)",
     "data_sources": [
-        "pgdata",
+        "database_sql",
         "ollama",
         "photos",
         "synapse",

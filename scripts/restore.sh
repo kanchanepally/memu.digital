@@ -9,6 +9,13 @@
 #
 # Usage: ./restore.sh [backup_file]
 #        If no backup file specified, shows list of available backups.
+#
+# Supports two backup formats:
+#   - v1.1+ (SQL dump via pg_dumpall) — preferred
+#   - v1.0  (raw pgdata volume files) — legacy, kept for backward compat
+#
+# NOTE: This script is not automatically tested. Before shipping a change,
+# manually test against both a v1.1 backup and (if available) a legacy one.
 # =============================================================================
 
 set -e
@@ -108,13 +115,14 @@ verify_backup() {
         exit 1
     fi
 
-    # Check for required directories
+    # Check for required directories (support both v1.0 and v1.1 formats)
     local contents=$(tar -tzf "$backup")
+    local has_sqldump=$(echo "$contents" | grep -c "database/all_databases.sql" || true)
     local has_pgdata=$(echo "$contents" | grep -c "pgdata/" || true)
     local has_config=$(echo "$contents" | grep -c "config/" || true)
 
-    if [ "$has_pgdata" -eq 0 ]; then
-        warn "Backup does not contain PostgreSQL data (pgdata/)"
+    if [ "$has_sqldump" -eq 0 ] && [ "$has_pgdata" -eq 0 ]; then
+        warn "Backup does not contain PostgreSQL data (no SQL dump or pgdata/)"
     fi
 
     if [ "$has_config" -eq 0 ]; then
@@ -167,6 +175,7 @@ do_restore() {
     TEMP_DIR=$(mktemp -d)
 
     # Step 1: Stop all services
+    # Note: Tailscale runs on the host OS (v1.1+) so SSH access survives this.
     log "Step 1/5: Stopping all services..."
     cd "$PROJECT_DIR"
     docker compose down 2>/dev/null || docker-compose down 2>/dev/null || true
@@ -175,27 +184,66 @@ do_restore() {
     log "Step 2/5: Extracting backup archive..."
     tar -xzf "$backup" -C "$TEMP_DIR"
 
-    # Step 3: Restore Docker volumes
+    # Step 3: Restore database + AI models (format-aware)
     log "Step 3/5: Restoring database and AI models..."
 
-    # Remove existing volumes and recreate
-    docker volume rm memu-suite_pgdata 2>/dev/null || true
-    docker volume rm memu-suite_ollama_data 2>/dev/null || true
-    docker volume create memu-suite_pgdata
-    docker volume create memu-suite_ollama_data
+    if [ -f "$TEMP_DIR/database/all_databases.sql" ]; then
+        # New format (v1.1+): pg_dumpall SQL dump
+        log "  - Backup format: SQL dump (v1.1+)"
 
-    # Copy data back using Alpine container
-    docker run --rm \
-        -v memu-suite_pgdata:/data/pgdata \
-        -v memu-suite_ollama_data:/data/ollama \
-        -v "$TEMP_DIR:/backup:ro" \
-        alpine sh -c "
-            cp -a /backup/pgdata/. /data/pgdata/ 2>/dev/null || true
-            cp -a /backup/ollama/. /data/ollama/ 2>/dev/null || true
-        "
+        # Restore Ollama volume first (safe to do without DB running)
+        if [ -d "$TEMP_DIR/ollama" ]; then
+            docker volume rm memu-suite_ollama_data 2>/dev/null || true
+            docker volume create memu-suite_ollama_data
+            docker run --rm \
+                -v memu-suite_ollama_data:/data/ollama \
+                -v "$TEMP_DIR:/backup:ro" \
+                alpine sh -c "cp -a /backup/ollama/. /data/ollama/ 2>/dev/null || true"
+            log "  - ollama restored"
+        fi
 
-    log "  - pgdata restored"
-    log "  - ollama restored"
+        # Start ONLY database, then pipe SQL in
+        docker compose up -d database 2>/dev/null || docker-compose up -d database 2>/dev/null
+        log "  - Waiting for database to be ready..."
+        for i in $(seq 1 30); do
+            if docker exec memu_postgres pg_isready -U "${DB_USER:-memu_user}" > /dev/null 2>&1; then
+                break
+            fi
+            sleep 2
+        done
+
+        log "  - Restoring all databases from SQL dump..."
+        cat "$TEMP_DIR/database/all_databases.sql" | \
+            docker exec -i memu_postgres psql -U "${DB_USER:-memu_user}" > /dev/null || {
+            error "Database restore failed"
+            exit 1
+        }
+        log "  - database restored"
+
+    elif [ -d "$TEMP_DIR/pgdata" ]; then
+        # Legacy format: raw volume files
+        log "  - Backup format: legacy (raw volume files)"
+
+        docker volume rm memu-suite_pgdata 2>/dev/null || true
+        docker volume rm memu-suite_ollama_data 2>/dev/null || true
+        docker volume create memu-suite_pgdata
+        docker volume create memu-suite_ollama_data
+
+        docker run --rm \
+            -v memu-suite_pgdata:/data/pgdata \
+            -v memu-suite_ollama_data:/data/ollama \
+            -v "$TEMP_DIR:/backup:ro" \
+            alpine sh -c "
+                cp -a /backup/pgdata/. /data/pgdata/ 2>/dev/null || true
+                cp -a /backup/ollama/. /data/ollama/ 2>/dev/null || true
+            "
+
+        log "  - pgdata restored"
+        log "  - ollama restored"
+    else
+        error "Unknown backup format. Neither SQL dump nor pgdata directory found."
+        exit 1
+    fi
 
     # Step 4: Restore files
     log "Step 4/5: Restoring files..."
