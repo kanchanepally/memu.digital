@@ -52,6 +52,8 @@ I'm not anti-cloud. I use cloud services for lots of things. But my family's pho
 - ✅ AI bot for lists, reminders, and family memory
 - ✅ 10-minute setup wizard (no YAML editing)
 - ✅ Secure remote access via Tailscale (automatic HTTPS)
+- ✅ Resilient remote access that survives Docker restarts (Tailscale on host OS)
+- ✅ Zero-downtime nightly backups (pg_dumpall, no stack restart)
 - ✅ Runs on ~$250 hardware
 
 **What's in progress:**
@@ -94,11 +96,9 @@ Still works for:
 ### Prerequisites
 
 You'll need a **Tailscale account** (free) for your family to connect from anywhere.
-
-1. Create account at [tailscale.com](https://tailscale.com)
-2. Go to [Settings → Keys](https://login.tailscale.com/admin/settings/keys)
-3. Generate an **Auth Key**
-4. Copy it (looks like `tskey-auth-...`)
+Create one at [tailscale.com](https://tailscale.com) — you don't need to install
+anything on the Memu device yourself. The installer handles that, and the wizard
+will ask you for an auth key when you're ready.
 
 ### Step 1: Run the Installer
 
@@ -108,13 +108,19 @@ cd memu.digital
 sudo ./scripts/install.sh
 ```
 
+This installs Docker, Tailscale (on the host OS so remote access survives any
+Docker restart), a nightly backup timer, and a container watchdog. All
+idempotent — safe to re-run.
+
 ### Step 2: Open the Web Wizard
 
 1. Visit `http://<device-ip>:8888` in your browser (same network as the device)
 2. Fill in:
    - **Family name** (e.g., "smiths") — becomes part of your chat identity
    - **Admin password** — write it down, no reset option
-   - **Tailscale auth key** — connects your family's private network
+   - **Tailscale auth key** — generate one at
+     [tailscale.com/admin/settings/keys](https://login.tailscale.com/admin/settings/keys)
+     (looks like `tskey-auth-...`)
 3. Click **"Create My Family Server"**
 4. Wait 3-5 minutes
 

@@ -280,13 +280,16 @@ def generate_password(length=12):
 
 
 def get_tailscale_hostname():
-    """Get the Tailscale FQDN for this machine"""
+    """Get the Tailscale FQDN for this machine from the host daemon.
+
+    v1.1+: Tailscale runs on the host OS (installed by install.sh), not in
+    a Docker container. We call the host CLI directly.
+    """
     try:
         result = run_cmd([
-            'docker', 'exec', 'memu_tailscale',
             'tailscale', 'status', '--json'
         ], check=False)
-        
+
         if result.returncode == 0:
             status = json.loads(result.stdout)
             dns_name = status.get('Self', {}).get('DNSName', '')
@@ -294,7 +297,7 @@ def get_tailscale_hostname():
                 return dns_name.rstrip('.')
     except Exception as e:
         print(f"Could not get Tailscale hostname: {e}")
-    
+
     return None
 
 
@@ -309,6 +312,35 @@ def wait_for_tailscale(max_wait=90):
     return None
 
 
+def setup_tailscale(auth_key):
+    """Authenticate the host Tailscale daemon with the provided auth key.
+
+    Prerequisites: tailscaled must already be installed and running on the
+    host OS. This is handled by install.sh before the wizard runs.
+
+    v1.1+: Tailscale runs on the host OS, not inside Docker. Any Docker
+    operation (down, up, restart, rebuild) never affects remote access.
+    """
+    # Verify tailscale CLI is available
+    check = run_cmd(['which', 'tailscale'], check=False)
+    if check.returncode != 0:
+        raise Exception(
+            "Tailscale CLI not found on host. "
+            "Run install.sh to install Tailscale before running the wizard."
+        )
+
+    # Authenticate (idempotent — no-op if already authed to same tailnet)
+    result = run_cmd([
+        'sudo', 'tailscale', 'up',
+        f'--authkey={auth_key}',
+        '--hostname=memu-hub'
+    ], check=False)
+    if result.returncode != 0:
+        raise Exception(f"Tailscale authentication failed: {result.stderr}")
+
+    return get_tailscale_hostname()
+
+
 def get_base_url():
     """Get the base URL for the sanctuary (HTTPS if Tailscale certs exist)"""
     config = load_sanctuary_config()
@@ -316,11 +348,11 @@ def get_base_url():
     # Try Tailscale hostname first
     ts_hostname = config.get('tailscale_hostname') or get_tailscale_hostname()
     if ts_hostname:
-        # Check if TLS certs exist (HTTPS available)
+        # Check if TLS certs exist on the proxy (which holds the tls_certs volume)
         try:
             cert_check = run_cmd([
-                'docker', 'exec', 'memu_tailscale',
-                'test', '-f', f'/certs/{ts_hostname}.crt'
+                'docker', 'exec', 'memu_proxy',
+                'test', '-f', f'/etc/nginx/certs/{ts_hostname}.crt'
             ], check=False)
             if cert_check.returncode == 0:
                 return f"https://{ts_hostname}"
@@ -710,10 +742,13 @@ def _restart_intelligence():
 def api_sanctuary():
     """Get sanctuary information"""
     config = load_sanctuary_config()
-    ts_hostname = get_tailscale_hostname()
-    
+    # v1.1+: When Flask runs inside the bootstrap container, the `tailscale`
+    # CLI isn't available. Prefer the hostname persisted at setup time; fall
+    # back to a live query for the on-host setup flow.
+    ts_hostname = config.get('tailscale_hostname') or get_tailscale_hostname()
+
     base_url = f"https://{ts_hostname}" if ts_hostname else f"http://{request.host.split(':')[0]}"
-    
+
     return jsonify({
         'family_name': config.get('family_name', 'Family'),
         'domain': config.get('domain', 'memu.local'),
@@ -735,16 +770,15 @@ def api_health():
         ('immich_server', 'Photos (Immich)', '📷', 'http://localhost:2283/api/server-info/ping'),
         ('ollama', 'AI (Ollama)', '🤖', 'http://localhost:11434/api/tags'),
         ('database', 'Database', '🗄️', None),  # Check via docker
-        ('tailscale', 'Network (Tailscale)', '🌐', None),  # Check via docker
+        ('tailscale', 'Network (Tailscale)', '🌐', None),  # v1.1+: host daemon
     ]
-    
+
     # Service ID to Container Name mapping
     container_map = {
         'synapse': 'memu_synapse',
         'immich_server': 'memu_photos',
         'ollama': 'memu_brain',
         'database': 'memu_postgres',
-        'tailscale': 'memu_tailscale',
         'calendar': 'memu_calendar'
     }
 
@@ -753,7 +787,32 @@ def api_health():
 
     for service_id, name, icon, health_url in service_checks:
         status = 'unknown'
-        
+
+        # v1.1+: Tailscale runs on the host, not in Docker.
+        # When Flask is on host (memu-setup.service), the CLI is reachable.
+        # When Flask is in the bootstrap container, it isn't — degrade to
+        # "unknown" but treat the presence of a persisted hostname as a
+        # best-effort signal that Tailscale was working at setup time.
+        if service_id == 'tailscale':
+            cli_check = run_cmd(['which', 'tailscale'], check=False)
+            if cli_check.returncode == 0:
+                ts_result = run_cmd(['tailscale', 'status', '--json'], check=False)
+                if ts_result.returncode == 0:
+                    try:
+                        ts_status = json.loads(ts_result.stdout)
+                        backend = ts_status.get('BackendState', '')
+                        status = 'running' if backend == 'Running' else 'stopped'
+                    except Exception:
+                        status = 'stopped'
+                else:
+                    status = 'stopped'
+            else:
+                # CLI not present (running in container) — fall back to config
+                cfg = load_sanctuary_config()
+                status = 'running' if cfg.get('tailscale_hostname') else 'unknown'
+            services.append({'id': service_id, 'name': name, 'icon': icon, 'status': status})
+            continue
+
         # Try HTTP health check
         if health_url:
             try:
@@ -766,7 +825,7 @@ def api_health():
         # If stopped or no URL, double check via Docker status
         if not health_url or status == 'stopped':
             container_name = container_map.get(service_id, f'memu_{service_id}')
-            result = run_cmd(['docker', 'ps', '--filter', f'name={container_name}', 
+            result = run_cmd(['docker', 'ps', '--filter', f'name={container_name}',
                             '--format', '{{.Status}}'], check=False)
             if 'Up' in result.stdout:
                 status = 'running'
@@ -774,7 +833,7 @@ def api_health():
                 status = 'stopped'
             else:
                 status = 'not_found'
-        
+
         services.append({
             'id': service_id,
             'name': name,
@@ -972,7 +1031,9 @@ def run_setup(clean_slug, domain, admin_password, tailscale_key, server_ip, admi
             env = read_env_file()
             db_password = env.get('DB_PASSWORD', secrets.token_urlsafe(20))
             bot_password = secrets.token_urlsafe(20)
-            final_ts_key = tailscale_key or env.get('TAILSCALE_AUTH_KEY', '')
+            # v1.1+: Tailscale auth key is consumed during `tailscale up` on the
+            # host and is NOT persisted to .env (host daemon stores its own state).
+            final_ts_key = tailscale_key
             registration_secret = secrets.token_urlsafe(32)
             
             setup_state['server_ip'] = server_ip
@@ -990,9 +1051,17 @@ def run_setup(clean_slug, domain, admin_password, tailscale_key, server_ip, admi
             update_env_var('SETUP_DOMAIN', domain)
             update_env_var('DB_PASSWORD', db_password)
             update_env_var('MATRIX_BOT_USERNAME', f'@memu_bot:{domain}')
+            # v1.1+: Do NOT write TAILSCALE_AUTH_KEY to .env — the host daemon
+            # consumes it once via `tailscale up` and stores state in /var/lib/tailscale.
+
+            # Authenticate Tailscale on host (idempotent — safe if already up)
             if final_ts_key:
-                update_env_var('TAILSCALE_AUTH_KEY', final_ts_key)
-            
+                try:
+                    setup_tailscale(final_ts_key)
+                except Exception as e:
+                    print(f"Warning: Tailscale host auth failed: {e}")
+
+
             synapse_config = generate_synapse_config(domain, db_password, registration_secret)
             (PROJECT_ROOT / 'synapse' / 'homeserver.yaml').write_text(synapse_config)
             
@@ -1006,12 +1075,9 @@ def run_setup(clean_slug, domain, admin_password, tailscale_key, server_ip, admi
             
             time.sleep(1)
             
-            # Step 2-4: Database + Tailscale (start Tailscale early so it has time to connect)
+            # Step 2-4: Database (Tailscale now runs on host, not in Docker)
             update_state('database', 2, 'Setting up the foundation...')
-            if final_ts_key:
-                run_cmd(['docker', 'compose', 'up', '-d', 'database', 'tailscale'])
-            else:
-                run_cmd(['docker', 'compose', 'up', '-d', 'database'])
+            run_cmd(['docker', 'compose', 'up', '-d', 'database'])
             
             update_state('database', 3, 'Waiting for database...')
             if not wait_for_database(max_wait=60):
@@ -1059,13 +1125,13 @@ def run_setup(clean_slug, domain, admin_password, tailscale_key, server_ip, admi
             if bot_token:
                 update_env_var('MATRIX_BOT_TOKEN', bot_token)
             
-            # Step 10: Start remaining services (tailscale already running since step 2)
+            # Step 10: Start remaining services (Tailscale runs on host, not here)
             update_state('services', 10, 'Starting all services...')
 
             # Rewrite Cinny config with localhost (Tailscale hostname set in step 11)
             (PROJECT_ROOT / 'element-config.json').write_text(generate_element_config('localhost'))
 
-            # Start services except bootstrap (systemd handles it) and tailscale (already up)
+            # Start services except bootstrap (systemd handles it)
             services_to_start = [
                 'database', 'cache', 'synapse', 'element',
                 'immich_server', 'immich_ml', 'ollama',
@@ -1077,7 +1143,7 @@ def run_setup(clean_slug, domain, admin_password, tailscale_key, server_ip, admi
             if bot_token:
                 run_cmd(['docker', 'compose', 'up', '-d', '--force-recreate', 'intelligence'], check=False)
 
-            # Step 11: Wait for Tailscale (started at step 2, so ~3-4 min head start)
+            # Step 11: Wait for Tailscale (host daemon was authed at step 1)
             if final_ts_key:
                 update_state('network', 11, 'Connecting to your private network...')
                 ts_hostname = wait_for_tailscale(max_wait=90)
@@ -1410,7 +1476,12 @@ def get_user_token_with_retry(username, password, retries=5):
 
 
 def configure_tailscale(domain, server_ip):
-    """Configure Tailscale: discover FQDN, generate TLS certs, update nginx for HTTPS"""
+    """Configure Tailscale: discover FQDN, generate TLS certs, update nginx for HTTPS.
+
+    v1.1+: `tailscale cert` runs on the host (not inside Docker). We generate
+    certs into a host tmp dir then copy them into the `memu-suite_tls_certs`
+    Docker volume that nginx reads from.
+    """
     global setup_state
 
     # 1. Discover Tailscale FQDN
@@ -1422,18 +1493,30 @@ def configure_tailscale(domain, server_ip):
     setup_state['tailscale_hostname'] = ts_hostname
     print(f"Tailscale FQDN: {ts_hostname}")
 
-    # 2. Generate TLS certificate via Tailscale
+    # 2. Generate TLS certificate on host, then stage into the Docker volume
     try:
+        host_cert_dir = '/tmp/memu-ts-certs'
+        run_cmd(['mkdir', '-p', host_cert_dir], check=False)
+
         cert_result = run_cmd([
-            'docker', 'exec', 'memu_tailscale',
-            'tailscale', 'cert',
-            '--cert-file', f'/certs/{ts_hostname}.crt',
-            '--key-file', f'/certs/{ts_hostname}.key',
+            'sudo', 'tailscale', 'cert',
+            '--cert-file', f'{host_cert_dir}/{ts_hostname}.crt',
+            '--key-file', f'{host_cert_dir}/{ts_hostname}.key',
             ts_hostname
         ], check=False)
 
         if cert_result.returncode == 0:
             print(f"TLS certificate generated for {ts_hostname}")
+
+            # Copy host certs into the shared Docker volume via a throwaway container
+            run_cmd([
+                'docker', 'run', '--rm',
+                '-v', 'memu-suite_tls_certs:/certs',
+                '-v', f'{host_cert_dir}:/src:ro',
+                'alpine', 'sh', '-c',
+                f'cp /src/{ts_hostname}.crt /certs/{ts_hostname}.crt && '
+                f'cp /src/{ts_hostname}.key /certs/{ts_hostname}.key'
+            ], check=False)
 
             # 3. Regenerate nginx config with HTTPS
             nginx_config = generate_nginx_config(domain, https_domain=ts_hostname)
@@ -1453,7 +1536,7 @@ def configure_tailscale(domain, server_ip):
             print(f"Warning: TLS cert generation failed: {cert_result.stderr}")
             print("HTTPS not enabled. Chat will work over HTTP but E2E encryption requires HTTPS.")
             print("Enable HTTPS in Tailscale admin console and re-run setup, or manually run:")
-            print(f"  docker exec memu_tailscale tailscale cert --cert-file /certs/{ts_hostname}.crt --key-file /certs/{ts_hostname}.key {ts_hostname}")
+            print(f"  sudo tailscale cert --cert-file {host_cert_dir}/{ts_hostname}.crt --key-file {host_cert_dir}/{ts_hostname}.key {ts_hostname}")
     except Exception as e:
         print(f"Warning: Tailscale cert setup failed: {e}")
 

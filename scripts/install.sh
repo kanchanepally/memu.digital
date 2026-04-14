@@ -62,6 +62,23 @@ pip install flask requests --break-system-packages --ignore-installed -q 2>/dev/
 pip3 install flask requests --break-system-packages --ignore-installed -q 2>/dev/null || true
 
 # -----------------------------------------------------------------------------
+# A1.5: Install Tailscale on host OS (NOT inside Docker)
+# -----------------------------------------------------------------------------
+# CRITICAL: Remote access must be independent of the application stack.
+# If Tailscale ran inside Docker, `docker compose down` would lock us out.
+# Host-level Tailscale survives any Docker lifecycle operation.
+log "Installing Tailscale on host OS..."
+
+if ! command -v tailscale &> /dev/null; then
+    curl -fsSL https://tailscale.com/install.sh | sh > /dev/null 2>&1
+    systemctl enable tailscaled > /dev/null 2>&1
+    systemctl start tailscaled
+    log "Tailscale installed on host. Authentication happens in web wizard."
+else
+    log "Tailscale already installed on host, skipping install."
+fi
+
+# -----------------------------------------------------------------------------
 # A2: Check Hardware
 # -----------------------------------------------------------------------------
 TOTAL_RAM_MB=$(free -m | awk '/^Mem:/{print $2}')
@@ -303,6 +320,101 @@ systemctl enable memu-backup.timer 2>/dev/null || true
 
 # Enable cert renewal timer
 systemctl enable memu-cert-renew.timer 2>/dev/null || true
+
+# -----------------------------------------------------------------------------
+# A8: Install container watchdog
+# -----------------------------------------------------------------------------
+# Docker Compose has a known limitation where containers can get stuck in
+# "Created" state if their dependencies aren't healthy in time. The watchdog
+# catches these and starts them manually. Runs at boot+90s and daily at 02:05
+# (after the nightly backup, which is when we historically saw the issue).
+log "Installing container watchdog..."
+
+if [ ! -f /usr/local/bin/memu-watchdog.sh ]; then
+    cat > /usr/local/bin/memu-watchdog.sh << 'WATCHDOG_EOF'
+#!/bin/bash
+# Memu Watchdog — catches containers stuck in "Created" state
+sleep 30
+STUCK=$(docker ps -a --filter "status=created" --format "{{.Names}}" | grep memu_)
+if [ -n "$STUCK" ]; then
+    echo "[MEMU-WATCHDOG] Found stuck containers: $STUCK"
+    echo "$STUCK" | while read container; do
+        echo "[MEMU-WATCHDOG] Starting $container"
+        docker start "$container"
+    done
+    echo "[MEMU-WATCHDOG] Recovery complete"
+else
+    echo "[MEMU-WATCHDOG] All containers running normally"
+fi
+WATCHDOG_EOF
+    chmod +x /usr/local/bin/memu-watchdog.sh
+fi
+
+if [ ! -f /etc/systemd/system/memu-watchdog.service ]; then
+    cat > /etc/systemd/system/memu-watchdog.service << EOF
+[Unit]
+Description=Memu Watchdog - ensures all containers start
+After=memu-production.service docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/memu-watchdog.sh
+
+[Install]
+WantedBy=multi-user.target
+EOF
+fi
+
+if [ ! -f /etc/systemd/system/memu-watchdog.timer ]; then
+    cat > /etc/systemd/system/memu-watchdog.timer << EOF
+[Unit]
+Description=Memu Watchdog Timer
+
+[Timer]
+OnBootSec=90
+OnCalendar=*-*-* 02:05:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+fi
+
+systemctl daemon-reload
+systemctl enable --now memu-watchdog.timer > /dev/null 2>&1
+log "Watchdog installed and enabled."
+
+# -----------------------------------------------------------------------------
+# A9: Configure backup destination (prefer secondary drive if available)
+# -----------------------------------------------------------------------------
+# Backups on the system disk can fill it up (this happened in production).
+# Prefer a mounted secondary drive at /mnt/memu-data if present.
+log "Configuring backup destination..."
+
+if [ -d "/mnt/memu-data" ] && mountpoint -q "/mnt/memu-data"; then
+    BACKUP_DEST="/mnt/memu-data/backups"
+    TMP_DEST="/mnt/memu-data/tmp"
+    log "  - Using secondary drive: $BACKUP_DEST"
+else
+    BACKUP_DEST="${PROJECT_ROOT}/backups"
+    TMP_DEST="/tmp"
+    warn "  - No /mnt/memu-data detected. Backups will go to system disk."
+    warn "  - For production, mount a secondary drive at /mnt/memu-data."
+fi
+
+mkdir -p "$BACKUP_DEST" "$TMP_DEST"
+[ "$TMP_DEST" != "/tmp" ] && chmod 1777 "$TMP_DEST"
+
+# Inject environment variables into backup service (idempotent)
+if ! grep -q "Environment=BACKUP_DIR=" /etc/systemd/system/memu-backup.service 2>/dev/null; then
+    if [ -f /etc/systemd/system/memu-backup.service ]; then
+        sed -i "/^User=root/a Environment=BACKUP_DIR=${BACKUP_DEST}\nEnvironment=TMPDIR=${TMP_DEST}" \
+            /etc/systemd/system/memu-backup.service
+        systemctl daemon-reload
+        log "  - Backup service updated."
+    fi
+fi
 
 # -----------------------------------------------------------------------------
 # START WIZARD
