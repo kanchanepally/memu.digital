@@ -26,7 +26,7 @@ export default function ExploreFeatures() {
           <div className="card">
             <h3 style={{ marginBottom: '16px', color: 'var(--primary)' }}>Cross-Channel Access</h3>
             <p>
-              Don't force your family to download another app. Memu lives where you already are: WhatsApp, Matrix, SMS, or Email. Text Memu just like you'd text a partner.
+              Don't force your family to download another app. Memu lives where you already are: WhatsApp today, with Matrix, SMS and Email coming soon. Text Memu just like you'd text a partner.
             </p>
           </div>
         </div>
@@ -48,18 +48,18 @@ export default function ExploreFeatures() {
             <div className="card-ai-icon">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
             </div>
-            <h3 style={{ marginBottom: '16px' }}>Dynamic 'Spaces'</h3>
+            <h3 style={{ marginBottom: '16px' }}>Compiled Synthesis (Not RAG)</h3>
             <p>
-              Instead of endless scrolling, Memu compiles scattered family conversations into persistent, structured Markdown files called Spaces. It organizes your family's travel plans, school notices, and recipes automatically into readable pages that compound over time.
+              Instead of fragile "search and guess" across old messages, Memu actively maintains a durable memory graph of your family's routines and facts. It organizes your scattered conversations into readable pages — travel plans, school notices, recipes — that get richer over time.
             </p>
           </div>
           <div className="card-ai">
             <div className="card-ai-icon">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
             </div>
-            <h3 style={{ marginBottom: '16px' }}>Morning Briefings</h3>
+            <h3 style={{ marginBottom: '16px' }}>The Reflection Loop</h3>
             <p>
-              Every morning at 7am, get a synthesis in your group chat: upcoming calendar events, weather, photo memories from this day last year (via Immich), and a review of the shopping list.
+              Memu actively sweeps for inconsistencies. "Wait, Alice has ballet on Tuesdays now, but her old routine says swimming." It flags these contradictions and unaddressed commitments directly to your morning group chat.
             </p>
           </div>
           <div className="card-ai">

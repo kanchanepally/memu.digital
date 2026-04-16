@@ -31,9 +31,9 @@ export default function WhatIsMemu() {
           <div className="card-ai-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
           </div>
-          <h2 style={{ marginBottom: '16px', color: 'var(--primary)' }}>Compounding Knowledge (LLM Wiki)</h2>
+          <h2 style={{ marginBottom: '16px', color: 'var(--primary)' }}>Compiled Synthesis (Not Search)</h2>
           <p>
-            Memu builds a persistent, compounding knowledge graph modeled after the <strong>LLM Wiki</strong> concept. Instead of doing fragile search-and-guess (RAG) on every question, the AI actively compiles its understanding of you and your family into structured, human-readable markdown files called "Spaces". 
+            Memu builds a persistent, compounding knowledge graph covering your family routines. Instead of doing fragile search-and-guess (RAG) on every question, the AI actively compiles its understanding of you and your family into structured, human-readable markdown pages called "Spaces". 
           </p>
           <p style={{ marginBottom: 0 }}>
             With every interaction, these Spaces evolve. It doesn't forget. Your Chief of Staff gets richer and smarter with every passing day, seamlessly tracking context over years without degrading.

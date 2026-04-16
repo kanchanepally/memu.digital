@@ -24,7 +24,7 @@ export default function HowItWorks() {
           <div><span className="token-comment"># What you send:</span></div>
           <div><span className="token-string">"Can you check if Alice's swimming clashes?"</span></div>
           <br/>
-          <div><span className="token-comment"># What Claude sees:</span></div>
+          <div><span className="token-comment"># What the AI sees:</span></div>
           <div><span className="token-string">"Can you check if Child-1's Activity-3 clashes?"</span></div>
           <br/>
           <div><span className="token-comment"># What you receive back:</span></div>
@@ -35,8 +35,8 @@ export default function HowItWorks() {
       <div className="card" style={{ background: 'var(--surface-low)' }}>
         <h2 style={{ marginBottom: '24px' }}>Deployment Options</h2>
         <ul>
-          <li><strong>Memu Core:</strong> Cloud-safe and zero-friction. Start by messaging a WhatsApp contact, using BYOK (Bring Your Own Key) for your AI calls over Anthropic. </li>
-          <li><strong>Memu OS:</strong> True data sovereignty. Run the full Matrix, Immich (photos), Ollama (local AI), and Postgres stack directly on your own Intel N100 hardware at home. For the ultimate self-hoster.</li>
+          <li><strong>Memu Core (Tier 1 Cloud Engine):</strong> The frictionless tier powered by enterprise cloud intelligence (Gemini/Cloud APIs) paired with the local anonymisation proxy. Accessible via WhatsApp today.</li>
+          <li><strong>Memu OS (Tier 2/3 Self-Hosted):</strong> True data sovereignty. The full hardware orchestration layer running Matrix, Immich (photos), Ollama (local execution), and Postgres directly on your own Intel N100 hardware at home.</li>
         </ul>
       </div>
     </div>
