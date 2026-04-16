@@ -1,12 +1,12 @@
 export default function WhyDifferent() {
   return (
-    <div className="container section">
+    <div className="container-wide section">
       <h1 className="hero-title">Why it's different</h1>
       <p className="section-subtitle">
         Privacy is a promise. Sovereignty is an architecture. 
       </p>
 
-      <div className="grid-3" style={{ marginTop: '64px' }}>
+      <div className="grid-4" style={{ marginTop: '64px' }}>
         <div className="card">
           <div className="card-ai-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
@@ -23,7 +23,7 @@ export default function WhyDifferent() {
           </div>
           <h3 style={{ color: 'var(--primary)', marginBottom: '16px' }}>Show Your Work</h3>
           <p>
-            We don't just say we anonymize it. We prove it. Inside the Memu Mobile App, you can open the <strong>Privacy Ledger</strong> at any time. It shows you the exact prompt, exactly as Claude saw it, proving exactly what didn't leave your house.
+            We don't just say we anonymize it. We prove it. Inside the Memu Mobile App, you can open the <strong>Privacy Ledger</strong> at any time. It shows you the exact prompt, exactly as the AI model saw it, proving exactly what didn't leave your house.
           </p>
         </div>
 
@@ -34,6 +34,16 @@ export default function WhyDifferent() {
           <h3 style={{ color: 'var(--primary)', marginBottom: '16px' }}>Child Safety by Design</h3>
           <p>
             Current AI solutions oscillate between full restriction or dangerous blind access for children. Memu provides age-appropriate AI access while giving parents transparent context via the Ledger. It’s digital parenting through visibility, not aggressive policing.
+          </p>
+        </div>
+
+        <div className="card">
+          <div className="card-ai-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v18"></path><path d="M3 10v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M12 3L3 10"></path><path d="M12 3l9 7"></path></svg>
+          </div>
+          <h3 style={{ color: 'var(--primary)', marginBottom: '16px' }}>Equal Digital Sovereignty</h3>
+          <p>
+            Every adult in the household has equal control over their own data. If the family changes, any member can leave with their data instantly, without the other's permission.
           </p>
         </div>
       </div>

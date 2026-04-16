@@ -6,7 +6,7 @@ export const Masthead = () => {
     <header className="masthead">
       <div className="container masthead-inner">
         <Link href="/">
-          <Logo scale={0.3} />
+          <Logo scale={0.45} />
         </Link>
         <nav className="nav-links">
           <Link href="/explore" className="nav-link">Features</Link>
