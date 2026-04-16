@@ -8,7 +8,14 @@
       "Bash(\"C:/Users/Lenovo/Code/memu/memu-os/services/intelligence/venv/Scripts/python.exe\" -m pip install pytest pytest-asyncio)",
       "Bash(pip install:*)",
       "Bash(git push:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(docker compose *)",
+      "Bash(bash -n scripts/backup.sh)",
+      "Bash(bash -n scripts/install.sh)",
+      "Bash(bash -n scripts/restore.sh)",
+      "Bash(python -m py_compile bootstrap/app.py)",
+      "Bash(bash -n scripts/renew-certs.sh)",
+      "Bash(git commit *)"
     ]
   }
 }
