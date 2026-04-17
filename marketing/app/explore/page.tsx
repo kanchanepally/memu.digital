@@ -39,18 +39,18 @@ export default function ExploreFeatures() {
             <div className="card-ai-icon">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
             </div>
-            <h3 style={{ marginBottom: '16px' }}>Cross-Silo Recall</h3>
+            <h3 style={{ marginBottom: '16px' }}>Cross-Silo Context</h3>
             <p>
-              "What photos do we have from Dad's birthday?" Memu searches 4 data silos in parallel: saved facts, chat history, calendar events, and photo metadata—synthesizing a unified response.
+              "What photos do we have from Dad's birthday?" Memu merges 4 data silos in parallel: family group chats, shared calendars, school emails, and photo metadata — giving the AI a complete picture of your real world.
             </p>
           </div>
           <div className="card-ai">
             <div className="card-ai-icon">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
             </div>
-            <h3 style={{ marginBottom: '16px' }}>Compiled Synthesis (Not RAG)</h3>
+            <h3 style={{ marginBottom: '16px' }}>Automatic "Spaces" Creation</h3>
             <p>
-              Instead of fragile "search and guess" across old messages, Memu actively maintains a durable memory graph of your family's routines and facts. It organizes your scattered conversations into readable pages — travel plans, school notices, recipes — that get richer over time.
+              Instead of fragile "search and guess" across old messages, the AI actively translates your casual WhatsApp chats into durable Markdown profiles. It automatically creates highly accurate pages for family members, travel plans, and routines that get richer over time.
             </p>
           </div>
           <div className="card-ai">

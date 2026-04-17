@@ -14,7 +14,7 @@ export default function Home() {
             <a href="https://tally.so/r/ODDZvA" target="_blank" rel="noopener noreferrer" className="btn btn-primary">
               Request Early Access
             </a>
-            <Link href="/what" className="btn btn-secondary">
+            <Link href="/how" className="btn btn-secondary">
               See how it works
             </Link>
           </div>
