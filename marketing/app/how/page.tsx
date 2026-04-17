@@ -32,6 +32,44 @@ export default function HowItWorks() {
         </div>
       </div>
 
+      <div className="grid-2" style={{ marginBottom: '64px' }}>
+        <div className="code-block" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ color: 'var(--primary)', textAlign: 'center' }}>
+            <div><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg></div>
+            <div style={{ marginTop: '16px', fontWeight: 500 }}>Chat + Calendar + Email + Photos</div>
+          </div>
+        </div>
+        <div>
+          <h2 style={{ marginBottom: '24px' }}>The Context Engine</h2>
+          <p>
+            An AI is only as smart as what it remembers. Memu passively observes your life across four distinct silos — your family WhatsApp group, Google Calendar, school emails, and photo metadata (via Immich). 
+          </p>
+          <p>
+            It unifies these inputs into a single, searchable memory graph. When you ask a question, Memu doesn't just guess; it retrieves the exact intersecting context from across your digital life before asking the AI to reason about it.
+          </p>
+        </div>
+      </div>
+
+      <div className="grid-2" style={{ marginBottom: '80px' }}>
+        <div>
+          <h2 style={{ marginBottom: '24px' }}>Compiled Synthesis ("Spaces")</h2>
+          <p>
+            Memu doesn't just store an endlessly growing pile of raw messages. It actively distills chaos into structured understanding.
+          </p>
+          <p>
+            When you mention "Alice has ballet on Tuesdays" in a casual chat, Memu automatically updates Alice's dedicated Markdown profile ("Space") behind the scenes. Your scattered conversations are continuously compiled into readable, highly accurate profile pages for every family member, routine, and commitment.
+          </p>
+        </div>
+        <div className="code-block">
+          <div><span className="token-comment"># Generated Profile: Child-1 (Alice)</span></div>
+          <div><span className="token-string">- Routine: Ballet on Tuesdays (4pm-5pm)</span></div>
+          <div><span className="token-string">- Routine: Swimming on Thursdays</span></div>
+          <br/>
+          <div><span className="token-comment"># Active Commitments</span></div>
+          <div><span className="token-string">- Need to buy new ballet shoes by Oct 12th</span></div>
+        </div>
+      </div>
+
       <div className="card" style={{ background: 'var(--surface-low)' }}>
         <h2 style={{ marginBottom: '24px' }}>Deployment Options</h2>
         <ul>
