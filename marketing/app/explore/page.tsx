@@ -18,9 +18,9 @@ export default function ExploreFeatures() {
             </p>
           </div>
           <div className="card">
-            <h3 style={{ marginBottom: '16px', color: 'var(--primary)' }}>Calendar & Logistics</h3>
+            <h3 style={{ marginBottom: '16px', color: 'var(--primary)' }}>Anticipatory Chief of Staff</h3>
             <p>
-              Seamless syncing across family schedules. Memu doesn't just display events; it anticipates conflicts. "Heads up, Alice's swimming at 4pm clashes with Bob's dentist appointment."
+              It doesn't just display your calendar; it anticipates reality. Memu tracks your Minimum Standards of Care (like an overdue boiler check or dental appointment) and reminds you, even if nobody explicitly asked it to.
             </p>
           </div>
           <div className="card">
@@ -60,6 +60,15 @@ export default function ExploreFeatures() {
             <h3 style={{ marginBottom: '16px' }}>The Reflection Loop</h3>
             <p>
               Memu actively sweeps for inconsistencies. "Wait, Alice has ballet on Tuesdays now, but her old routine says swimming." It flags these contradictions and unaddressed commitments directly to your morning group chat.
+            </p>
+          </div>
+          <div className="card-ai">
+            <div className="card-ai-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
+            </div>
+            <h3 style={{ marginBottom: '16px' }}>Solid Identity Portability</h3>
+            <p>
+              When your child goes to university, they don't leave their data behind. They unplug their Physical USB Pod and carry their lifetime semantic timeline with them. Your data isn't trapped in our cloud; it's inter-operable and explicitly yours. 
             </p>
           </div>
           <div className="card-ai">

@@ -70,12 +70,14 @@ export default function HowItWorks() {
         </div>
       </div>
 
-      <div className="card" style={{ background: 'var(--surface-low)' }}>
-        <h2 style={{ marginBottom: '24px' }}>Deployment Options</h2>
-        <ul>
-          <li><strong>Memu Core (Tier 1 Cloud Engine):</strong> The frictionless tier powered by enterprise cloud intelligence (Gemini/Cloud APIs) paired with the local anonymisation proxy. Accessible via WhatsApp today.</li>
-          <li><strong>Memu OS (Tier 2/3 Self-Hosted):</strong> True data sovereignty. The full hardware orchestration layer running Matrix, Immich (photos), Ollama (local execution), and Postgres directly on your own Intel N100 hardware at home.</li>
-        </ul>
+      <div className="card text-center" style={{ background: 'var(--surface-low)' }}>
+        <h2 style={{ marginBottom: '16px' }}>Ready to run Memu?</h2>
+        <p style={{ maxWidth: '600px', margin: '0 auto 32px auto' }}>
+          Deployments range from frictionless Cloud access (Tier 1) to full absolute physical data sovereignty running locally via USB Pods in your living room (Tier 2/3).
+        </p>
+        <a href="/deploy" className="btn btn-primary">
+          Explore Architecture Tiers
+        </a>
       </div>
     </div>
   );
