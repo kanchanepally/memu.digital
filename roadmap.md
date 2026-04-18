@@ -1,7 +1,9 @@
 # Memu Roadmap
 
-**Current Status:** Alpha validated, building Chief of Staff intelligence features
-**Last Updated:** February 2026
+**Current Status:** v1.1 in production on Z2; convergence with memu-core in progress
+**Last Updated:** 2026-04-18
+
+> **Sequencing note (2026-04-18):** Active commercial direction is Founding-50 paid beta + Tier-2 in Hareesh's house. The "Kickstarter June 2026" framing throughout this file is **superseded**. Canonical sources: commercial = `C:\Users\Lenovo\Code\memu-platform\Pricing and economics\files\memu-gtm-pricing-funding-strategy.md`; engineering sequencing = `C:\Users\Lenovo\Code\memu-platform\memu-core-build-backlog 15 April 2026.md` Part 0. Phase 3 below is **deferred**; Phase 4 hardware-bundle items are deferred. New work for memu-os is **Story 3.5a–d (Pod drives)** which is Milestone B8–B11 in the backlog.
 
 ---
 
@@ -125,30 +127,42 @@ Sunday evening summary: week's highlights, shopping list activity, chat summary,
 
 ---
 
-## Phase 3: Kickstarter Prep (June 2026)
+## Phase 3: Pod drives + Founding-50 readiness (current — supersedes Kickstarter Prep)
 
-**Gate:** Phase 2 features must be done and family must be using them daily.
+**Gate:** Tier-2 (Hybrid) memu-core docked into memu-os on Z2 is stable for Hareesh's household for ~1 week of soak.
 
-- [ ] 60-second demo video showing real family use
-- [ ] Landing page refresh (memu.digital) with video and email signup
-- [ ] 500+ email signups
-- [ ] Press outreach
-- [ ] Kickstarter page (reward tiers, stretch goals)
-- [ ] Hardware supplier sourcing and testing
+**Active engineering work (Story 3.5 — moved here from memu-core, split into B8–B11):**
+- [ ] B8 — udev rule + `drive_manager.py` daemon + LUKS unlock flow
+- [ ] B9 — Per-person drive setup script + initial layout (Hareesh / Rach / Family)
+- [ ] B10 — `GET /drives/status` endpoint; memu-core graceful degradation when drive absent
+- [ ] B11 — Synthesis writes routed to correct drive; journal-on-server when absent + replay on remount
+
+**Sub-features explicitly deferred within 3.5:** laptop standalone server, children's lifecycle key transfer, drive backup integration. MVP gives Rach what she needs — her data lives on something she can unplug.
+
+**Deferred (was: "Kickstarter Prep") — revisit autumn 2026 only if Founding-50 evidence supports it:**
+- 60-second demo video
+- Landing page refresh
+- 500+ email signups
+- Press outreach
+- Kickstarter page + reward tiers
+- Hardware supplier sourcing
 
 ---
 
-## Phase 4: Production (Post-Kickstarter, Pre-Ship)
+## Phase 4: Production hardening (Post-Pod-drives)
 
+**Engineering items still active:**
 - [ ] Auto-updates with rollback
 - [ ] Bot maintenance commands
 - [ ] Parental controls
-- [ ] Pre-configured hardware bundles
-- [ ] USB installer image
 - [ ] Backup/restore via admin dashboard
 - [ ] Offsite backup destination — rclone sync to cloud (Backblaze B2 or DigitalOcean Spaces) triggered after daily backup.sh run. Currently backups are local-only on Z2; single point of failure.
 - [ ] Security audit
 - [ ] Family knowledge graph
+
+**Deferred — operations decision, not engineering:**
+- Pre-configured hardware bundles (revisit only when first beta family asks "can I just buy the box")
+- USB installer image (was tied to hardware bundle / Sanctuary Key concept)
 
 ---
 
