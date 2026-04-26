@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from 'react';
 
-const STAGE_MS = 1900;
+const STAGE_MS = 4500;
 
 type SegmentKind = 'plain' | 'real' | 'token';
 interface Seg { t: SegmentKind; v: string; }
