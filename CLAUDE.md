@@ -11,13 +11,19 @@ Memu OS is one half of the Memu platform. The other half is **memu-core** (early
 | Document | Location |
 |----------|----------|
 | memu-core instructions | `C:\Users\Lenovo\Code\memu-core\CLAUDE.md` |
-| Platform Vision | `C:\Users\Lenovo\Code\memu-platform\01-VISION.md` |
+| Platform README (umbrella entry) | `C:\Users\Lenovo\Code\memu-platform\README.md` |
+| Bible (vision + manifesto) | `C:\Users\Lenovo\Code\memu-platform\01-BIBLE.md` |
 | Architecture | `C:\Users\Lenovo\Code\memu-platform\02-ARCHITECTURE.md` |
-| Design System | `C:\Users\Lenovo\Code\memu-platform\03-UX-DESIGN-SYSTEM.md` |
+| Design System (Indigo Sanctuary) | `C:\Users\Lenovo\Code\memu-platform\03-DESIGN-SYSTEM.md` |
 | Roadmap | `C:\Users\Lenovo\Code\memu-platform\04-ROADMAP.md` |
-| Pricing | `C:\Users\Lenovo\Code\memu-platform\05-PRICING-COMMERCE.md` |
+| Pricing/GTM (canonical) | `C:\Users\Lenovo\Code\memu-platform\Pricing and economics\files\memu-gtm-pricing-funding-strategy.md` |
 | Privacy Framework | `C:\Users\Lenovo\Code\memu-platform\06-PRIVACY-SECURITY.md` |
-| Agent Framework | `C:\Users\Lenovo\Code\memu-platform\07-AGENT-FRAMEWORK.md` |
+| Mobile App Spec | `C:\Users\Lenovo\Code\memu-platform\08-MOBILE-APP-SPEC.md` |
+| Engineering backlog (cross-repo) | `C:\Users\Lenovo\Code\memu-platform\memu-core-build-backlog 15 April 2026.md` (read **Part 0** first) |
+| Z2 deploy procedure | `C:\Users\Lenovo\Code\memu-platform\12-Z2-DEPLOY.md` |
+| Household runbook | `C:\Users\Lenovo\Code\memu-platform\13-HOUSEHOLD-RUNBOOK.md` |
+
+*Note: 07-AGENT-FRAMEWORK and the original Vision/Pricing/UX-Design-System docs have been archived under `_legacy_archive/` pending V3-style rewrites.*
 
 ---
 
@@ -27,7 +33,7 @@ Memu OS is one half of the Memu platform. The other half is **memu-core** (early
 
 **Tagline:** Your Family's Chief of Staff.
 
-**Stage:** Alpha validated. Building toward Kickstarter (June 2026). Family has been using it daily for 3+ months.
+**Stage (2026-04-18):** v1.1 in production on Z2. Family using it daily for 6+ months. Active work: Tier-2 (Hybrid) convergence with memu-core (Milestone B in backlog) and Pod drives (Story 3.5 / B8–B11 — Rach's primary unmet need). Kickstarter June 2026 is **deferred**; commercial path is Founding-50 paid beta first (see `C:\Users\Lenovo\Code\memu-platform\Pricing and economics\files\memu-gtm-pricing-funding-strategy.md`).
 
 **What makes Memu different:** No other product connects family chat + photos + calendar + AI into a single query on hardware the family owns. The unique value is cross-silo intelligence -- "What should I get my wife for her birthday?" searches chats, photos, calendar, and memories to give a real answer.
 
@@ -86,21 +92,23 @@ At the end of every session that produces a meaningful insight:
 Before building anything, run it through this filter (in order):
 
 ```
-1. Is it on the critical path to Kickstarter?
-   → Memu Dashboard > Guardian > Demo video
+1. Is it on the critical path to Tier-2 in Hareesh's house OR
+   Tier-1 ready for the 20-family Founding-50 beta?
+   → Convergence (Milestone B) > Pod drives (B8-B11) > Tier-1 hardening (Milestone C)
+   → See backlog Part 0 for the active milestone sequence.
    → If no, STOP. Defer it.
 
 2. Does it complete a thin slice?
    → Works end-to-end, independently valuable
    → If no, scope it down until it does.
 
-3. Can a non-technical family member tell the difference?
+3. Will Hareesh, Rach, or a Founding-50 beta family notice the difference?
    → If they won't notice it, it's infrastructure, not product.
    → Infrastructure is fine, but don't confuse it with progress.
 
-4. Does it make the demo video better?
-   → The demo video is the product. Features that aren't demo-able
-     don't drive the Kickstarter.
+4. Does it move the evidence dashboard?
+   → Cost/family, MAU, 30-day retention, NPS, referral rate.
+   → These are the five numbers that unlock the next funding round.
 ```
 
 ### What NOT to Build
@@ -437,15 +445,15 @@ docker compose logs intelligence | grep -i error
 Hareesh is building Memu as a side project while working full-time as a Portfolio Director. Constraints:
 
 - **Time:** Evening sessions only. Must prioritise ruthlessly.
-- **Budget:** Bootstrap, no external funding yet.
-- **Testing:** Family is primary QA team.
-- **Goal:** Kickstarter launch June 2026.
+- **Budget:** Bootstrap. Google for Startups Cloud credits applied for; SEIS path open after Memu Ltd registration.
+- **Testing:** Family is primary QA team. Hareesh + Rach are the first paying customers under the Tier-2 framing.
+- **Goal (2026-04-18):** Tier-2 (Hybrid) working in Hareesh's house → Tier-1 hosted ready for ~20 Founding-50 beta families → evidence-based decision on Kickstarter (autumn 2026 at earliest).
 
 When suggesting work:
 - Can this be done in a 2-hour evening session?
-- Does this move toward Kickstarter readiness?
-- Will the family notice and use it?
-- Does this make the 60-second demo video better?
+- Does this move Milestone B (Tier-2 in house) or Milestone C (Tier-1 hosted ready) forward?
+- Will Hareesh, Rach, or a Founding-50 beta family notice and use it?
+- Does this move one of the five evidence-dashboard metrics?
 
 ---
 

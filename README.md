@@ -92,7 +92,9 @@ To gain ambient intelligence on top of this data, deploy **Memu Core** (the `mem
 
 For complete details on the overarching vision, architecture documentation, design systems, and roadmaps spanning the entire Memu platform (Memu Home + Memu Mobile App), please visit the `memu-platform` repository.
 
-- [Memu UX Design System](https://github.com/kanchanepally/memu-platform/blob/main/03-UX-DESIGN-SYSTEM.md)
+- [Memu Bible](https://github.com/kanchanepally/memu-platform/blob/main/01-BIBLE.md)
+- [Architecture](https://github.com/kanchanepally/memu-platform/blob/main/02-ARCHITECTURE.md)
+- [Design System (Indigo Sanctuary)](https://github.com/kanchanepally/memu-platform/blob/main/03-DESIGN-SYSTEM.md)
 - [Platform Roadmap](https://github.com/kanchanepally/memu-platform/blob/main/04-ROADMAP.md)
 
 ## Contributing
