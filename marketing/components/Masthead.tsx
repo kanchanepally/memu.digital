@@ -16,10 +16,10 @@ export const Masthead = () => {
         
         {/* Desktop Navigation */}
         <nav className="nav-links">
-          <Link href="/explore" className="nav-link">Features</Link>
-          <Link href="/what" className="nav-link">What it is</Link>
+          <Link href="/platform" className="nav-link">Platform</Link>
           <Link href="/how" className="nav-link">How it works</Link>
-          <Link href="/deploy" className="nav-link">Architecture</Link>
+          <Link href="/privacy" className="nav-link">Privacy</Link>
+          <Link href="/self-host" className="nav-link">Self-host</Link>
         </nav>
         
         {/* Mobile Hamburger Icon */}
@@ -52,10 +52,10 @@ export const Masthead = () => {
       {/* Mobile Dropdown */}
       {isOpen && (
         <div className="mobile-menu">
-          <Link href="/explore" className="nav-link-mobile" onClick={() => setIsOpen(false)}>Features</Link>
-          <Link href="/what" className="nav-link-mobile" onClick={() => setIsOpen(false)}>What it is</Link>
+          <Link href="/platform" className="nav-link-mobile" onClick={() => setIsOpen(false)}>Platform</Link>
           <Link href="/how" className="nav-link-mobile" onClick={() => setIsOpen(false)}>How it works</Link>
-          <Link href="/deploy" className="nav-link-mobile" onClick={() => setIsOpen(false)}>Architecture</Link>
+          <Link href="/privacy" className="nav-link-mobile" onClick={() => setIsOpen(false)}>Privacy</Link>
+          <Link href="/self-host" className="nav-link-mobile" onClick={() => setIsOpen(false)}>Self-host</Link>
           <a href="https://tally.so/r/ODDZvA" target="_blank" rel="noopener noreferrer" className="nav-btn-mobile" onClick={() => setIsOpen(false)}>
             Early Access
           </a>

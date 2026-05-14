@@ -2,12 +2,11 @@
 import { useState, useEffect } from 'react';
 
 const phrases = [
-  "Your personal Chief of Staff.",
-  "Your family's Chief of Staff.",
-  "Compound knowledge that never forgets.",
-  "Privately anonymous by architecture.",
-  "A morning briefing before you wake.",
-  "The AI that acts while you sleep.",
+  "for your family",
+  "for your work",
+  "for your ventures",
+  "for your research",
+  "for your thinking",
 ];
 
 export const HeroCycler = () => {
@@ -20,8 +19,8 @@ export const HeroCycler = () => {
       setTimeout(() => {
         setIndex(i => (i + 1) % phrases.length);
         setVisible(true);
-      }, 380);
-    }, 3200);
+      }, 500);
+    }, 3000);
     return () => clearInterval(timer);
   }, []);
 

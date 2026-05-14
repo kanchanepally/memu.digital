@@ -1,84 +1,76 @@
-export default function HowItWorks() {
+import Link from 'next/link';
+import { TwinDemo } from '@/components/TwinDemo';
+
+export const metadata = {
+  title: 'How it works | Memu',
+  description: 'See exactly what the AI sees. And what it doesn\'t.',
+};
+
+export default function HowPage() {
   return (
-    <div className="container section">
-      <h1 className="hero-title">How it works</h1>
-      <p className="section-subtitle">
-        Behind the scenes, Memu translates your reality into an anonymous digital twin before the AI ever sees it.
-      </p>
-
-      <div className="grid-2" style={{ marginBottom: '64px' }}>
-        <div>
-          <h2 style={{ marginBottom: '24px' }}>The Anonymous Digital Twin</h2>
-          <p>
-            Before your query reaches the cloud, Memu's local gateway strips out your defining identity. 
-            Real names, schools, addresses, and friends are mapped to persistent anonymous labels.
-          </p>
-          <p>
-            <strong>"Alice has swimming at Central Pool"</strong> becomes <strong>"Child-1 has Activity-3 at Location-2"</strong>.
-          </p>
-          <p>
-            The artificial intelligence provides a brilliant, context-rich answer using those labels. Memu translates it back. Your family sees real names. The AI saw nothing but anonymous tokens.
-          </p>
-        </div>
-        <div className="code-block">
-          <div><span className="token-comment"># What you send:</span></div>
-          <div><span className="token-string">"Can you check if Alice's swimming clashes?"</span></div>
-          <br/>
-          <div><span className="token-comment"># What the AI sees:</span></div>
-          <div><span className="token-string">"Can you check if Child-1's Activity-3 clashes?"</span></div>
-          <br/>
-          <div><span className="token-comment"># What you receive back:</span></div>
-          <div><span className="token-string">"Yes, Alice's swimming at 4pm clashes with Bob's dentist appointment at 3:30pm."</span></div>
-        </div>
-      </div>
-
-      <div className="grid-2" style={{ marginBottom: '64px' }}>
-        <div className="code-block" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ color: 'var(--primary)', textAlign: 'center' }}>
-            <div><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg></div>
-            <div style={{ marginTop: '16px', fontWeight: 500 }}>Chat + Calendar + Email + Photos</div>
+    <>
+      <section className="section text-center" style={{ paddingTop: '120px', paddingBottom: '60px' }}>
+        <div className="container">
+          <h1 className="hero-title" style={{ marginBottom: 24 }}>
+            See exactly what the AI sees.<br />
+            <span className="gradient-text">And what it doesn&rsquo;t.</span>
+          </h1>
+          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+            <p className="hero-subtitle">
+              Memu&rsquo;s intelligence runs on external AI models — but those models never learn whose life they&rsquo;re reasoning about.
+            </p>
           </div>
         </div>
-        <div>
-          <h2 style={{ marginBottom: '24px' }}>The Context Engine</h2>
-          <p>
-            An AI is only as smart as what it remembers. Memu passively observes your life across four distinct silos — your family WhatsApp group, Google Calendar, school emails, and photo metadata (via Immich). 
-          </p>
-          <p>
-            It unifies these inputs into a single, searchable memory graph. When you ask a question, Memu doesn't just guess; it retrieves the exact intersecting context from across your digital life before asking the AI to reason about it.
-          </p>
-        </div>
-      </div>
+      </section>
 
-      <div className="grid-2" style={{ marginBottom: '80px' }}>
-        <div>
-          <h2 style={{ marginBottom: '24px' }}>Compiled Synthesis ("Spaces")</h2>
-          <p>
-            Memu doesn't just store an endlessly growing pile of raw messages. It actively distills chaos into structured understanding.
-          </p>
-          <p>
-            When you mention "Alice has ballet on Tuesdays" in a casual chat, Memu automatically updates Alice's dedicated Markdown profile ("Space") behind the scenes. Your scattered conversations are continuously compiled into readable, highly accurate profile pages for every family member, routine, and commitment.
-          </p>
+      {/* ── TwinDemo section ── */}
+      <section className="section" style={{ background: 'var(--surface-low)', paddingTop: 80, paddingBottom: 80 }}>
+        <div className="container">
+          <div className="text-center" style={{ marginBottom: 40, maxWidth: '800px', margin: '0 auto 56px' }}>
+            <h2 className="section-title">The Digital Twin</h2>
+            <p style={{ fontSize: '1.1rem', lineHeight: 1.6, marginBottom: '1.5rem', textAlign: 'left' }}>
+              Before anything leaves Memu, a layer called the Digital Twin replaces every identifying detail — names, family members, places, specifics — with stable anonymous labels. &ldquo;Does Jamie&rsquo;s swimming on Thursday clash with my dentist?&rdquo; becomes a question about [Child-1] and [Appointment-2]. The AI reasons over the shape of the problem. It never sees the people.
+            </p>
+            <p style={{ fontSize: '1.1rem', lineHeight: 1.6, textAlign: 'left' }}>
+              When the answer comes back, the Twin translates the labels back to the real thing — for your eyes only.
+            </p>
+          </div>
+          
+          <TwinDemo />
         </div>
-        <div className="code-block">
-          <div><span className="token-comment"># Generated Profile: Child-1 (Alice)</span></div>
-          <div><span className="token-string">- Routine: Ballet on Tuesdays (4pm-5pm)</span></div>
-          <div><span className="token-string">- Routine: Swimming on Thursdays</span></div>
-          <br/>
-          <div><span className="token-comment"># Active Commitments</span></div>
-          <div><span className="token-string">- Need to buy new ballet shoes by Oct 12th</span></div>
-        </div>
-      </div>
+      </section>
 
-      <div className="card text-center" style={{ background: 'var(--surface-low)' }}>
-        <h2 style={{ marginBottom: '16px' }}>Ready to run Memu?</h2>
-        <p style={{ maxWidth: '600px', margin: '0 auto 32px auto' }}>
-          Deployments range from frictionless Cloud access (Tier 1) to full absolute physical data sovereignty running locally via USB Pods in your living room (Tier 2/3).
-        </p>
-        <a href="/deploy" className="btn btn-primary">
-          Explore Architecture Tiers
-        </a>
-      </div>
-    </div>
+      {/* ── Details ── */}
+      <section className="section" style={{ paddingTop: 100, paddingBottom: 100 }}>
+        <div className="container">
+          <div className="grid-3">
+            <div className="card">
+              <h3 style={{ marginBottom: 12 }}>The Privacy Ledger</h3>
+              <p style={{ marginBottom: 0 }}>
+                Every one of those exchanges is logged where you can see it. Every query. Every response. Exactly what was sent, exactly what wasn&rsquo;t. Other products ask for your trust. Memu hands you the evidence and lets you check.
+              </p>
+            </div>
+            <div className="card">
+              <h3 style={{ marginBottom: 12 }}>It compiles, it doesn&rsquo;t just retrieve</h3>
+              <p style={{ marginBottom: 0 }}>
+                Memu doesn&rsquo;t keep a pile of your messages and search it when you ask. It actively compiles what it learns into living pages of understanding — one for each person, routine, project, and commitment that matters — and keeps them current as your life moves. Ask a question and it&rsquo;s drawing on understanding it has already built, not guessing from fragments.
+              </p>
+            </div>
+            <div className="card">
+              <h3 style={{ marginBottom: 12 }}>It&rsquo;s proactive — never unsupervised</h3>
+              <p style={{ marginBottom: 0 }}>
+                Memu surfaces what&rsquo;s slipping, drafts what you need, plans from what it knows. Then it brings it to you. Everything it does, it shows you. A Chief of Staff anticipates; it doesn&rsquo;t act behind your back.
+              </p>
+            </div>
+          </div>
+          
+          <div className="text-center" style={{ marginTop: 64 }}>
+            <a href="https://tally.so/r/ODDZvA" target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+              Get Early Access
+            </a>
+          </div>
+        </div>
+      </section>
+    </>
   );
 }
