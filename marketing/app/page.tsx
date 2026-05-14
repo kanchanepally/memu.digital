@@ -77,19 +77,19 @@ export default function Home() {
             <div className="card">
               <h3 style={{ marginBottom: 12 }}>Your life isn&rsquo;t one pile. It&rsquo;s separate worlds.</h3>
               <p style={{ marginBottom: 0 }}>
-                Your household. Your work. A venture. A research project. Memu calls each one a workspace — and keeps them genuinely separate. Each has its own memory, its own understanding, its own boundary. They don&rsquo;t bleed into each other. They can&rsquo;t — the separation is built into the architecture, not promised in a policy.
+                Your household. Your work. A venture. A research project. Memu calls each one a collective — and keeps them genuinely separate. Each has its own memory, its own understanding, its own boundary. They don&rsquo;t bleed into each other. They can&rsquo;t — the separation is built into the architecture, not promised in a policy.
               </p>
             </div>
             <div className="card">
               <h3 style={{ marginBottom: 12 }}>One engine, pointed wherever you need it.</h3>
               <p style={{ marginBottom: 0 }}>
-                The same intelligence runs in every workspace. Point it at family logistics and it&rsquo;s a household Chief of Staff. Point it at a research project and it organises your fieldwork. Point it at your work and it tracks what you can&rsquo;t afford to drop. You&rsquo;re not buying four apps. You&rsquo;re getting one mind that adapts to each part of your life — and keeps each part to itself.
+                The same intelligence runs in every collective. Point it at family logistics and it&rsquo;s a household Chief of Staff. Point it at a research project and it organises your fieldwork. Point it at your work and it tracks what you can&rsquo;t afford to drop. You&rsquo;re not buying four apps. You&rsquo;re getting one mind that adapts to each part of your life — and keeps each part to itself.
               </p>
             </div>
             <div className="card">
               <h3 style={{ marginBottom: 12 }}>You are the thread. So you get the whole picture.</h3>
               <p style={{ marginBottom: 0 }}>
-                Here&rsquo;s what makes Memu a real Chief of Staff and not just a tidy set of folders: you can look across all your workspaces, because you own all of them. Ask &ldquo;what does my week actually look like&rdquo; and Memu assembles the answer from every part of your life at once. That cross-life view is yours — invoked by you, shown to you, the moment you ask. It&rsquo;s a lens you pick up, never a pile someone else keeps.
+                Here&rsquo;s what makes Memu a real Chief of Staff and not just a tidy set of folders: you can look across all your collectives, because you own all of them. Ask &ldquo;what does my week actually look like&rdquo; and Memu assembles the answer from every part of your life at once. That cross-life view is yours — invoked by you, shown to you, the moment you ask. It&rsquo;s a lens you pick up, never a pile someone else keeps.
               </p>
             </div>
           </div>

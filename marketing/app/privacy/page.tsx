@@ -34,13 +34,13 @@ export default function PrivacyPage() {
             <div className="card">
               <h3 style={{ marginBottom: 12 }}>Your worlds can&rsquo;t be correlated — even by us</h3>
               <p style={{ marginBottom: 0 }}>
-                Each workspace has its own separate identity map. The same real person is a different anonymous label in your household and in your work. There is no master key that joins them. We couldn&rsquo;t build the complete picture of you if we wanted to — and not wanting to isn&rsquo;t good enough, so we made it impossible.
+                Each collective has its own separate identity map. The same real person is a different anonymous label in your household and in your work. There is no master key that joins them. We couldn&rsquo;t build the complete picture of you if we wanted to — and not wanting to isn&rsquo;t good enough, so we made it impossible.
               </p>
             </div>
             <div className="card">
               <h3 style={{ marginBottom: 12 }}>You hold the only lens that sees across</h3>
               <p style={{ marginBottom: 0 }}>
-                You can look across your own workspaces, because you own them. Nothing and no one else can — not another user, not an external AI, not Memu itself acting on its own. The whole-life view exists for exactly one person: you.
+                You can look across your own collectives, because you own them. Nothing and no one else can — not another user, not an external AI, not Memu itself acting on its own. The whole-life view exists for exactly one person: you.
               </p>
             </div>
             <div className="card">
