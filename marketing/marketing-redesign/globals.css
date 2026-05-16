@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 /* ===================================================================
    Memu Marketing — Design Tokens
@@ -40,9 +41,9 @@
   --glow-hero: radial-gradient(ellipse 800px 600px at 50% 0%, var(--brand-glow), transparent 70%);
 
   /* Type */
-  --font-ui: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-serif: var(--font-newsreader), 'Newsreader', 'Source Serif 4', Georgia, serif;
-  --font-mono: var(--font-jetbrains), 'JetBrains Mono', ui-monospace, monospace;
+  --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-serif: 'Newsreader', 'Source Serif 4', Georgia, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
   /* Layout */
   --container-max: 1080px;

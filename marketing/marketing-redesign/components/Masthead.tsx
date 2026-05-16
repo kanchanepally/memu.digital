@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { LogoLockup } from './Logo';
-import { ThemeToggle } from './ThemeToggle';
 
 export function Masthead() {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,40 +29,36 @@ export function Masthead() {
           ))}
         </nav>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <ThemeToggle />
+        <button
+          className="mobile-menu-btn"
+          onClick={() => setIsOpen(!isOpen)}
+          aria-label="Toggle navigation"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            {isOpen ? (
+              <>
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </>
+            ) : (
+              <>
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </>
+            )}
+          </svg>
+        </button>
 
-          <button
-            className="mobile-menu-btn"
-            onClick={() => setIsOpen(!isOpen)}
-            aria-label="Toggle navigation"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              {isOpen ? (
-                <>
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </>
-              ) : (
-                <>
-                  <line x1="3" y1="6" x2="21" y2="6" />
-                  <line x1="3" y1="12" x2="21" y2="12" />
-                  <line x1="3" y1="18" x2="21" y2="18" />
-                </>
-              )}
-            </svg>
-          </button>
-
-          <a
-            href="https://tally.so/r/ODDZvA"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="nav-cta"
-            style={{ display: typeof window !== 'undefined' && window.innerWidth < 720 ? 'none' : 'inline-flex' }}
-          >
-            Early Access
-          </a>
-        </div>
+        <a
+          href="https://tally.so/r/ODDZvA"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="nav-cta"
+          style={{ display: typeof window !== 'undefined' && window.innerWidth < 720 ? 'none' : 'inline-flex' }}
+        >
+          Early Access
+        </a>
       </div>
 
       {isOpen && (
@@ -78,9 +73,6 @@ export function Masthead() {
               {l.label}
             </Link>
           ))}
-          <div style={{ paddingTop: 16 }}>
-            <ThemeToggle />
-          </div>
           <a
             href="https://tally.so/r/ODDZvA"
             target="_blank"

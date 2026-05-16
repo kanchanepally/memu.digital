@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { HeroCycler } from '@/components/HeroCycler';
 import {
   MarkLens,
   MarkWalls,
@@ -41,9 +40,6 @@ export default function Home() {
             Your private<br />
             <em>chief of staff</em>.
           </h1>
-          <div style={{ marginBottom: 36 }}>
-            <HeroCycler />
-          </div>
           <p className="hero-subtitle">
             One private mind across every part of your life — and each part stays its own world.
           </p>
