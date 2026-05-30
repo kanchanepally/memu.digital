@@ -19,7 +19,7 @@ Memu OS is one half of the Memu platform. The other half is **memu-core** (early
 | Pricing/GTM (canonical) | `C:\Users\Lenovo\Code\memu-platform\Pricing and economics\files\memu-gtm-pricing-funding-strategy.md` |
 | Privacy Framework | `C:\Users\Lenovo\Code\memu-platform\06-PRIVACY-SECURITY.md` |
 | Mobile App Spec | `C:\Users\Lenovo\Code\memu-platform\08-MOBILE-APP-SPEC.md` |
-| Engineering backlog (cross-repo) | `C:\Users\Lenovo\Code\memu-platform\memu-core-build-backlog 15 April 2026.md` (read **Part 0** first) |
+| Engineering backlog (cross-repo) | `C:\Users\Lenovo\Code\memu-platform\memu-build-plan.md` (read **Part 0** first) |
 | Z2 deploy procedure | `C:\Users\Lenovo\Code\memu-platform\12-Z2-DEPLOY.md` |
 | Household runbook | `C:\Users\Lenovo\Code\memu-platform\13-HOUSEHOLD-RUNBOOK.md` |
 
@@ -376,7 +376,7 @@ See `roadmap.md` and `docs/DASHBOARD-PRD.md`:
 3. ~~AI volume control + /private~~ ✅
 4. ~~Morning briefings with weather + news~~ ✅
 5. ~~Admin Settings page~~ ✅
-6. **Memu Dashboard** — touchscreen UI for the family (pre-Kickstarter priority)
+6. **Memu Dashboard** — touchscreen UI for the family (pre-beta priority)
 7. Memu Guardian (self-maintaining appliance)
 
 ---
