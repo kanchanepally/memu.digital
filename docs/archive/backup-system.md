@@ -1,6 +1,8 @@
+> ⚠️ **ARCHIVED / OBSOLETE DESIGN (2026-05-30).** Backup **shipped**, but the design CHANGED: it is now a **hot `pg_dumpall` (zero downtime)**, NOT the "stop all services during backup" approach this spec describes. That approach was explicitly reversed in `infrastructure-v1.1.md` (Incident 3). The "stop services" sections below are obsolete — do not follow them. Canonical backup doc: `infrastructure-v1.1.md`.
+
 # Automated Backup System - Feature Specification
 
-**Status:** In Development
+**Status:** ✅ Shipped April 2026 — design changed (see banner above)
 **Version:** 1.0
 **Last Updated:** 2025-01-26
 

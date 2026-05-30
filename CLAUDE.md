@@ -191,7 +191,7 @@ When a meaningful decision is made, capture it in `C:\Users\Lenovo\OneDrive\Obsi
 │              └──────────────┬───────────────┘                │
 │                             │                                │
 │              ┌──────────────▼───────────────┐                │
-│              │       PostgreSQL + pgvector   │                │
+│              │     PostgreSQL + pgvecto.rs   │                │
 │              └──────────────────────────────┘                │
 ├─────────────────────────────────────────────────────────────┤
 │   Bootstrap (Flask) ──► Setup Wizard + Admin Dashboard       │
@@ -205,12 +205,12 @@ When a meaningful decision is made, capture it in `C:\Users\Lenovo\OneDrive\Obsi
 | Service | Container | Purpose |
 |---------|-----------|---------|
 | Chat Backend | `memu_synapse` | Matrix homeserver |
-| Chat UI | `memu_cinny` | Cinny web client (replaced Element Feb 2026) |
+| Chat UI | `memu_element` (runs Cinny) | Cinny web client; container is named `memu_element` for historical reasons (replaced Element Web Feb 2026) |
 | Photos | `memu_photos` | Immich server + ML |
 | AI | `memu_brain` | Ollama LLM (Llama 3.2) |
 | Bot | `memu_intelligence` | Python Matrix bot -- brain, memory, calendar tools |
 | Calendar | `memu_calendar` | Baikal CalDAV/CardDAV |
-| Database | `memu_postgres` | PostgreSQL + pgvector |
+| Database | `memu_postgres` | PostgreSQL 15 + pgvecto.rs (`tensorchord/pgvecto-rs:pg15`) |
 | Network | *host OS* (`tailscaled`) | Secure remote access (v1.1+: not in Docker) |
 | Proxy | `memu_proxy` | Nginx reverse proxy |
 | Bootstrap | `memu_bootstrap` | Setup wizard + admin dashboard |

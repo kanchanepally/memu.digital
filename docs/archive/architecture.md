@@ -1,4 +1,6 @@
-﻿# Memu OS Architecture
+﻿> ⚠️ **ARCHIVED 2026-05-30.** This overview has been merged into `TECHNICAL_REFERENCE.md`, the single canonical engineering + architecture doc. Kept for history only — do not edit or rely on it (some details here predate the v1.1 host-Tailscale change).
+
+# Memu OS Architecture
 
 ## System Overview
 

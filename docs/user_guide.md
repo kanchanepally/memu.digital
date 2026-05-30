@@ -471,7 +471,7 @@ If you need to restore (new hardware, disk failure):
 sudo /opt/memu/scripts/restore.sh
 ```
 
-> **Coming soon:** Automated nightly backups, USB backup support, and backup status via the bot. See the [roadmap](../roadmap.md) for details.
+> Automated nightly backups (hot `pg_dumpall`, zero downtime), USB backup support, and backup status via the bot are **live**. Backups auto-target a secondary drive at `/mnt/memu-data` when present. See `infrastructure-v1.1.md` for the shipped design.
 
 ---
 

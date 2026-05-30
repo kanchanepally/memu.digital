@@ -27,7 +27,7 @@ The solution operates as a Docker-based microservices architecture on top of a s
   - `memu-production.service`: Ensures the Docker Compose stack is up.
   - `memu-setup.service`: Bootstrap wizard (disabled after setup).
   - `memu-backup.service` & `memu-backup.timer`: Daily backups.
-- **Network (Tailscale):** The device runs a Tailscale node in `host` networking mode. ALL remote access happens via this private mesh VPN layer. No firewall ports are open to the public internet.
+- **Network (Tailscale):** The host OS runs `tailscaled` as a systemd service (not a Docker container — see `infrastructure-v1.1.md`). ALL remote access happens via this private mesh VPN layer. No firewall ports are open to the public internet.
 
 ### 2.3 Container Stack (`docker-compose.yml`)
 
@@ -35,11 +35,11 @@ The stack is composed of 5 logical planes:
 
 1.  **Routing Plane:**
     -   **Nginx (`memu_proxy`)**: The *only* container exposing port 80. Routes traffic based on hostname/path to internal containers.
-    -   **Tailscale (`memu_tailscale`)**: Provides the secure tunnel.
+    -   **Tailscale (host OS, not a container)**: Provides the secure tunnel via the `tailscaled` systemd service — independent of the Docker stack (see `infrastructure-v1.1.md`).
 
 2.  **Communication Plane (Matrix):**
     -   **Synapse (`memu_synapse`)**: The reference Matrix homeserver.
-    -   **Element (`memu_element`)**: Web-based chat client (highly config-stripped).
+    -   **Cinny (`memu_element`)**: Web-based Matrix chat client. The container is named `memu_element` for historical reasons; the image is `ghcr.io/cinnyapp/cinny`. Highly config-stripped.
 
 3.  **Memory Plane (Immich):**
     -   **Immich Server (`memu_photos`)**: Photo storage, API, and web UI.
@@ -52,6 +52,19 @@ The stack is composed of 5 logical planes:
 5.  **State Plane:**
     -   **Postgres (`memu_postgres`)**: Shared database (pgvecto.rs extension installed for vector search).
     -   **Redis (`memu_redis`)**: Shared cache.
+
+### 2.4 Request Data Flow
+
+1.  **User device** (phone/laptop on Tailscale) requests `http://memu-hub` (MagicDNS).
+2.  **Tailscale** (host OS) accepts the traffic and forwards it to host port 80.
+3.  **Nginx (`memu_proxy`)** routes by path: `/admin` → `bootstrap:8888`; `/` → the `memu_element` container (Cinny); `/photos` (or port 2283) → `immich_server:2283`; `/_matrix` → `synapse`.
+4.  The target **service** processes the request and queries `memu_postgres` or `memu_redis`.
+
+### 2.5 Backup Protocol
+
+- **Database:** hot `pg_dumpall` of `memu_postgres` — **no service downtime** (see `infrastructure-v1.1.md`).
+- **Files:** the `./photos` directory.
+- **Config:** `.env` and `docker-compose.yml`.
 
 ---
 

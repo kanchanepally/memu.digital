@@ -118,7 +118,7 @@ Copy the `.tar.gz` file to a USB stick and plug it into the new machine.
 1. Follow the steps above exactly.
 2. **Tailscale:** Your new hardware will generate a *new* local IP.
    - If you used the Setup Wizard to generate a `TAILSCALE_AUTH_KEY`, check if the new device automatically connected.
-   - If not, run `docker compose logs tailscale` to see the auth link.
+   - If not, check the host daemon with `sudo tailscale status` (Tailscale runs on the host OS, not in Docker; re-authenticate with `sudo tailscale up` if needed).
 
 ### Hardware ➡️ Hardware (Upgrade)
 **Use Case:** Moving from Raspberry Pi 5 to Intel N100.

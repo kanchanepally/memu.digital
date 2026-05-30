@@ -111,7 +111,7 @@ The `memu_intelligence` service (Python) acts as the connector. It queries all t
 │                           │                                 │
 │              ┌────────────▼─────────────────┐               │
 │              │       PostgreSQL             │               │
-│              │       + pgvector             │               │
+│              │       + pgvecto.rs           │               │
 │              └──────────────────────────────┘               │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
@@ -145,7 +145,7 @@ The `memu_intelligence` service (Python) acts as the connector. It queries all t
 |-------|------------|---------|
 | **OS** | Debian 12 / Ubuntu 24 | Stable Linux base |
 | **Orchestration** | Docker Compose | Container management |
-| **Database** | PostgreSQL 15 + pgvector | Unified data + vector search |
+| **Database** | PostgreSQL 15 + pgvecto.rs (`tensorchord/pgvecto-rs:pg15`) | Unified data + vector search |
 | **Cache** | Redis 6.2 | Performance |
 | **Chat** | Matrix Synapse | Federated messaging |
 | **Chat UI** | Cinny Web + Matrix mobile apps (Element, FluffyChat, SchildiChat) | User interface |
@@ -340,7 +340,7 @@ Each save automatically restarts the intelligence service to pick up changes. No
 | A server for nerds | It's an appliance for families |
 | A privacy bunker | It's about intelligence, not hiding |
 | A Nextcloud clone | Nextcloud is files; Memu is context |
-| A startup (yet) | It's a side project heading to Kickstarter |
+| A startup (yet) | It's a side project; commercial path is a Founding-50 paid beta. Kickstarter is deferred to autumn 2026 at earliest |
 | Feature-complete | It's alpha software, expect rough edges |
 
 ---
