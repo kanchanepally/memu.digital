@@ -135,12 +135,14 @@ Mobile apps block "insecure" connections. You must use your **Tailscale HTTPS UR
 
 ### Step 3: Set Up Photos (Immich)
 
-**Web:** `http://test15.memu.digital:2283`
+**Web:** `https://memu-hub.xxxxx.ts.net:2283`
+*(replace xxxxx with your actual Tailscale hostname)*
 
 **Mobile App:**
 1.  Open **Tailscale** and activate it.
 2.  Open **Immich**.
-3.  Set Server URL: `http://100.80.252.43:2283`
+3.  Set Server URL: `http://memu-hub.xxxxx.ts.net:2283`
+    *(your Tailscale hostname, or the Tailscale IP shown in the Tailscale app)*
 4.  Log in.
 
 **Enable automatic backup:**
